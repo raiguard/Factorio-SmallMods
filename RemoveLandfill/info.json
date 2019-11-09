@@ -1,0 +1,9 @@
+{
+    "name": "RemoveLandfill",
+    "version": "1.0.0",
+    "title": "Remove Landfill",
+    "author": "raiguard",
+    "factorio_version": "0.17",
+    "dependencies": ["base >= 0.17.65"],
+    "description": "Allows the removal of landfill by hand or with bots. To avoid balance issues, removing landfill will leave behind shallow water, which can be walked on, but cannot be built on. Also allows offshore pumps to work in shallow water."
+}

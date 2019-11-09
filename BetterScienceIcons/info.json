@@ -1,0 +1,10 @@
+{
+    "name": "BetterScienceIcons",
+    "version": "1.0.0",
+    "title": "Better Science Icons",
+    "author": "raiguard",
+    "contact": "https://twitter.com/raiguard_",
+    "factorio_version": "0.17",
+    "dependencies": ["base >= 0.17.1"],
+    "description": "Replaces science icons with new hi-res and mipmapped versions based on FFF-275."
+}
