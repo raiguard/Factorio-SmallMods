@@ -1,21 +1,23 @@
 data:extend{
     {
         type = 'sprite',
-        name = 'me_sprite_retract',
+        name = 'me_expand',
+        filename = '__MapEditorGuiDemo__/graphics/gui/expand.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_retract',
         filename = '__MapEditorGuiDemo__/graphics/gui/retract.png',
         size = 32,
+        mipmap_count = 2,
         flags = {'icon'}
     },
     {
         type = 'sprite',
-        name = 'me_sprite_retract_dark',
-        filename = '__MapEditorGuiDemo__/graphics/gui/retract-dark.png',
-        size = 32,
-        flags = {'icon'}
-    },
-    {
-        type = 'sprite',
-        name = 'me_sprite_decoratives',
+        name = 'me_decoratives',
         filename = '__MapEditorGuiDemo__/graphics/gui/decoratives.png',
         size = 32,
         mipmap_count = 2,
@@ -23,7 +25,7 @@ data:extend{
     },
     {
         type = 'sprite',
-        name = 'me_sprite_entities',
+        name = 'me_entities',
         filename = '__MapEditorGuiDemo__/graphics/gui/entities.png',
         size = 32,
         mipmap_count = 2,
@@ -31,7 +33,7 @@ data:extend{
     },
     {
         type = 'sprite',
-        name = 'me_sprite_forces',
+        name = 'me_forces',
         filename = '__MapEditorGuiDemo__/graphics/gui/forces.png',
         size = 32,
         mipmap_count = 2,
@@ -39,7 +41,15 @@ data:extend{
     },
     {
         type = 'sprite',
-        name = 'me_sprite_surfaces',
+        name = 'me_resources',
+        filename = '__MapEditorGuiDemo__/graphics/gui/resources.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_surfaces',
         filename = '__MapEditorGuiDemo__/graphics/gui/surfaces.png',
         size = 32,
         mipmap_count = 2,
@@ -47,7 +57,7 @@ data:extend{
     },
     {
         type = 'sprite',
-        name = 'me_sprite_tiles',
+        name = 'me_tiles',
         filename = '__MapEditorGuiDemo__/graphics/gui/tiles.png',
         size = 32,
         mipmap_count = 2,
@@ -55,8 +65,72 @@ data:extend{
     },
     {
         type = 'sprite',
-        name = 'me_sprite_clone',
+        name = 'me_clone',
         filename = '__MapEditorGuiDemo__/graphics/gui/clone.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_areapositions',
+        filename = '__MapEditorGuiDemo__/graphics/gui/areapositions.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_time',
+        filename = '__MapEditorGuiDemo__/graphics/gui/time.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_cliffs',
+        filename = '__MapEditorGuiDemo__/graphics/gui/cliffs.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_brush',
+        filename = '__MapEditorGuiDemo__/graphics/gui/brush.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_spraycan',
+        filename = '__MapEditorGuiDemo__/graphics/gui/spraycan.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_fill',
+        filename = '__MapEditorGuiDemo__/graphics/gui/fill.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_cursor',
+        filename = '__MapEditorGuiDemo__/graphics/gui/cursor.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_area',
+        filename = '__MapEditorGuiDemo__/graphics/gui/area.png',
         size = 32,
         mipmap_count = 2,
         flags = {'icon'}

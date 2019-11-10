@@ -25,3 +25,41 @@ styles['nav_page_button_dark'] = {
         shadow = default_dirt
     }
 }
+
+styles['shortcut_bar_button_selected'] = {
+    type = 'button_style',
+    parent = 'shortcut_bar_button',
+    default_graphical_set = {
+        base = {position={225,17}, corner_size=8},
+        shadow = default_dirt
+    },
+    hovered_font_color = button_hovered_font_color,
+    hovered_graphical_set = {
+        base = {position={369,17}, corner_size=8},
+        shadow = default_dirt
+    },
+    clicked_font_color = button_hovered_font_color,
+    clicked_graphical_set = {
+        base = {position={352,17}, corner_size=8},
+        shadow = default_dirt
+    }
+}
+
+styles['tool_button_selected'] = {
+    type = 'button_style',
+    parent = 'tool_button',
+    default_graphical_set = {
+        base = {position={225,17}, corner_size=8},
+        shadow = default_dirt
+    },
+    hovered_font_color = button_hovered_font_color,
+    hovered_graphical_set = {
+        base = {position={369,17}, corner_size=8},
+        shadow = default_dirt
+    },
+    clicked_font_color = button_hovered_font_color,
+    clicked_graphical_set = {
+        base = {position={352,17}, corner_size=8},
+        shadow = default_dirt
+    }
+}
