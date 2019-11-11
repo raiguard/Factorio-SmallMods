@@ -63,11 +63,24 @@ local function create_gui(parent)
     return window, content_frame, buttons_frame
 end
 
+local function setup_player(index, player)
+    local window, content_frame, buttons_frame = create_gui(player.gui.screen)
+    player.gui.screen.me_window.location = {x=0, y=(player.display_resolution.height - (56*player.display_scale))}
+    local data = {}
+    data.window = window
+    data.content_frame = content_frame
+    data.buttons_frame = buttons_frame
+    global.players[index] = data
+end
+
 -- ----------------------------------------------------------------------------------------------------
 -- LISTENERS
 
 event.on_init(function(e)
     global.players = {}
+    for i,p in pairs(game.players) do
+        setup_player(i,p)
+    end
 end)
 
 -- position the GUI
@@ -78,13 +91,7 @@ end)
 
 -- add GUI to player
 on_event(defines.events.on_player_created, function(e)
-    local player = game.players[e.player_index]
-    local window, content_frame, buttons_frame = create_gui(player.gui.screen)
-    local data = {}
-    data.window = window
-    data.content_frame = content_frame
-    data.buttons_frame = buttons_frame
-    global.players[e.player_index] = data
+    setup_player(e.player_index, game.players[e.player_index])
 end)
 
 gui.on_click('me_show_hide_button', function(e)
