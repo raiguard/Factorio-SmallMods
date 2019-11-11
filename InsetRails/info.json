@@ -1,0 +1,9 @@
+{
+    "name": "InsetRails",
+    "version": "1.0.0",
+    "title": "Inset Rails",
+    "author": "raiguard",
+    "factorio_version": "0.17",
+    "dependencies": ["base >= 0.17.65", "stdlib >= 1.2.0"],
+    "description": "Rails can (optionally) be inset into the tile they're on. Meant to simulate how train tracks are integrated with roads in the real world."
+}
