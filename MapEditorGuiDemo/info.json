@@ -4,6 +4,6 @@
     "title": "Map Editor GUI Demo",
     "author": "raiguard",
     "factorio_version": "0.17",
-    "dependencies": ["base >= 0.17.65", "stdlib >= 1.2.0"],
+    "dependencies": ["base >= 0.17.65"],
     "description": "Experimenting with redesigning the map editor GUI."
 }

@@ -1,8 +1,3 @@
-local event = require('__stdlib__/stdlib/event/event')
-local on_event = event.register
-local gui = require('__stdlib__/stdlib/event/gui')
-local position = require('__stdlib__/stdlib/area/position')
-
 -- ----------------------------------------------------------------------------------------------------
 -- GUI
 
@@ -85,7 +80,7 @@ end
 -- ----------------------------------------------------------------------------------------------------
 -- LISTENERS
 
-event.on_init(function(e)
+script.on_init(function(e)
     global.players = {}
     for i,p in pairs(game.players) do
         setup_player(i,p)
@@ -93,40 +88,17 @@ event.on_init(function(e)
 end)
 
 -- position the GUI
-on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
+script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
     local player = game.players[e.player_index]
     player.gui.screen.me_window.location = {x=0, y=(player.display_resolution.height - (56*player.display_scale))}
 end)
 
 -- add GUI to player
-on_event(defines.events.on_player_created, function(e)
+script.on_event(defines.events.on_player_created, function(e)
     setup_player(e.player_index, game.players[e.player_index])
 end)
 
-gui.on_click('me_show_hide_button', function(e)
-    local element = e.element
-    local player = game.players[e.player_index]
-    local player_data = global.players[e.player_index]
-    local buttons_frame = player_data.buttons_frame
-    local content_frame = player_data.content_frame
-    if buttons_frame.visible then
-        buttons_frame.visible = false
-        content_frame.visible = false
-        element.sprite = 'me_expand'
-        element.tooltip = 'Show editor tools'
-        player_data.window.location = {x=0, y=(player.display_resolution.height - (56*player.display_scale))}
-    else
-        buttons_frame.visible = true
-        if player_data.selected_button then
-            content_frame.visible = true
-            player_data.window.location = {x=0, y=(player.display_resolution.height - (314*player.display_scale))}
-        end
-        element.sprite = 'me_retract'
-        element.tooltip = 'Hide editor tools'
-    end
-end)
-
-on_event(defines.events.on_gui_click, function(e)
+script.on_event(defines.events.on_gui_click, function(e)
     if string.match(e.element.name, 'me_main_button_') then
         local player_data = global.players[e.player_index]
         local player = game.players[e.player_index]
@@ -154,6 +126,27 @@ on_event(defines.events.on_gui_click, function(e)
         else
             e.element.style = 'tool_button_selected'
             player_data.selected_tool_button = e.element.name
+        end
+    elseif string.match(e.element.name, 'me_show_hide_button') then
+        local element = e.element
+        local player = game.players[e.player_index]
+        local player_data = global.players[e.player_index]
+        local buttons_frame = player_data.buttons_frame
+        local content_frame = player_data.content_frame
+        if buttons_frame.visible then
+            buttons_frame.visible = false
+            content_frame.visible = false
+            element.sprite = 'me_expand'
+            element.tooltip = 'Show editor tools'
+            player_data.window.location = {x=0, y=(player.display_resolution.height - (56*player.display_scale))}
+        else
+            buttons_frame.visible = true
+            if player_data.selected_button then
+                content_frame.visible = true
+                player_data.window.location = {x=0, y=(player.display_resolution.height - (314*player.display_scale))}
+            end
+            element.sprite = 'me_retract'
+            element.tooltip = 'Hide editor tools'
         end
     end
 end)
