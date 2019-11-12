@@ -134,5 +134,37 @@ data:extend{
         size = 32,
         mipmap_count = 2,
         flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_settings',
+        filename = '__MapEditorGuiDemo__/graphics/gui/settings.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_variations',
+        filename = '__MapEditorGuiDemo__/graphics/gui/variations.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_square',
+        filename = '__MapEditorGuiDemo__/graphics/gui/square.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_circle',
+        filename = '__MapEditorGuiDemo__/graphics/gui/circle.png',
+        size = 32,
+        mipmap_count = 2,
+        flags = {'icon'}
     }
 }

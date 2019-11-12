@@ -16,15 +16,17 @@ local main_buttons = {
     'clone',
     'areapositions',
     'time',
-    'cliffs'
+    'cliffs',
+    'settings'
 }
 
 local tool_buttons = {
     'brush',
-    'spraycan',
+    -- 'spraycan',
     'fill',
     'cursor',
-    'area'
+    'area',
+    'variations'
 }
 
 local function create_gui(parent)
@@ -32,21 +34,28 @@ local function create_gui(parent)
     local window = parent.add{type='frame', name='me_window', style='quick_bar_window_frame', direction='vertical'}
     window.style.minimal_height = 56
     -- content frame
-    local content_frame = window.add{type='frame', name='me_content_frame', style='window_content_frame', direction='horizontal'}
+    local content_frame = window.add{type='frame', name='me_content_frame', style='window_content_frame', direction='vertical'}
     content_frame.visible = false
     content_frame.style.horizontally_stretchable = true
-    content_frame.style.height = 200
+    content_frame.style.height = 250
     content_frame.style.bottom_margin = 4
     content_frame.visible = false
     -- dummy content
     local toolbar = content_frame.add{type='frame', name='me_content_toolbar', style='subheader_frame', direction='horizontal'}
     toolbar.style.horizontally_stretchable = true
     toolbar.style.margin = -3
-    toolbar.add{type='label', name='im_content_toolbar_label', style='subheader_caption_label', caption='Tool:'}
-    toolbar.add{type='empty-widget', name='me_content_toolbar_filler'}.style.horizontally_stretchable = true
     for _,n in pairs(tool_buttons) do
         toolbar.add{type='sprite-button', name='me_content_tool_button_'..n, style='tool_button', sprite='me_'..n, tooltip=n}
     end
+    -- content_frame.add{type='label', name='me_content_brush_label', style='caption_label', caption='Brush Settings:'}.style.padding = 2
+    -- local type_flow = content_frame.add{type='flow', name='me_content_brush_flow', direction='horizontal'}
+    -- type_flow.style.vertical_align = 'center'
+    -- type_flow.style.padding = 4
+    -- type_flow.style.top_margin = -8
+    -- type_flow.add{type='label', name='me_content_type_label', caption='Type'}.style.right_margin = 4
+    -- type_flow.add{type='sprite-button', name='me_content_type_square_button', style='tool_button_selected', sprite='me_square', tooltip='square'}
+    -- type_flow.add{type='sprite-button', name='me_content_type_circle_button', style='tool_button', sprite='me_circle', tooltip='circle'}
+    -- content_frame.add{type=''}
     -- buttons
     local lower_flow = window.add{type='flow', name='me_lower_flow', direction='horizontal'}
     lower_flow.style.horizontal_spacing = 8
@@ -110,7 +119,7 @@ gui.on_click('me_show_hide_button', function(e)
         buttons_frame.visible = true
         if player_data.selected_button then
             content_frame.visible = true
-            player_data.window.location = {x=0, y=(player.display_resolution.height - (264*player.display_scale))}
+            player_data.window.location = {x=0, y=(player.display_resolution.height - (314*player.display_scale))}
         end
         element.sprite = 'me_retract'
         element.tooltip = 'Hide editor tools'
@@ -132,7 +141,7 @@ on_event(defines.events.on_gui_click, function(e)
             e.element.style = 'shortcut_bar_button_selected'
             player_data.selected_button = e.element.name
             player_data.content_frame.visible = true
-            player_data.window.location = {x=0, y=(player.display_resolution.height - (264*player.display_scale))}
+            player_data.window.location = {x=0, y=(player.display_resolution.height - (314*player.display_scale))}
         end
     elseif string.match(e.element.name, 'me_content_tool_button_') then
         local player_data = global.players[e.player_index]
