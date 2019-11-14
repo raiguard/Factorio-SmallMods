@@ -166,5 +166,13 @@ data:extend{
         size = 32,
         mipmap_count = 2,
         flags = {'icon'}
+    },
+    {
+        type = 'sprite',
+        name = 'me_tools',
+        filename = '__MapEditorGuiDemo__/graphics/gui/tools.png',
+        size = 32,
+        mipmap_count=2,
+        flags = {'icon'}
     }
 }
