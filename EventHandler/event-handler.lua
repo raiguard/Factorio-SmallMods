@@ -111,7 +111,7 @@ function event.deregister(id, handler, conditional_name)
 end
 
 -- invokes all handlers for an event
--- used both by actual event handlers, and can be called manually
+-- used both by the master event handlers, and can be called manually
 function event.dispatch(e)
     local id = e.name
     if e.nth_tick then
