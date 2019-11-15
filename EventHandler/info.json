@@ -1,0 +1,9 @@
+{
+    "name": "EventHandler",
+    "version": "0.0.1",
+    "title": "Rai's Event Handler",
+    "author": "raiguard",
+    "factorio_version": "0.17",
+    "dependencies": ["base >= 0.17.65"],
+    "description": "Experimenting with a multi-handler and conditional events system."
+}
