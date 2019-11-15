@@ -46,6 +46,11 @@ event.register('demo-input', function(e)
     game.players[e.player_index].print('You shift+scrolled upwards on tick '..e.tick)
 end)
 
+-- nth tick
+event.on_nth_tick(3600, function(e)
+    game.print('It has been one minute since I last spoke!')
+end)
+
 -- --------------------------------------------------
 -- CONDITIONAL EVENTS
 
@@ -64,13 +69,14 @@ event.register(defines.events.on_lua_shortcut, function(e)
     local player = game.players[e.player_index]
     if player.is_shortcut_toggled('toggle-fire-at-feet') then
         player.set_shortcut_toggled('toggle-fire-at-feet', false)
-        -- use event.deregister to deregister the conditional event.
-        -- pass the event's unique conditional event name as the third argument.
+        -- use event.deregister to deregister the conditional event
+        -- pass the event's unique conditional event name as the third argument
         event.deregister(-6, place_fire, 'place_fire_at_feet')
     else
         player.set_shortcut_toggled('toggle-fire-at-feet', true)
-        -- use event.register to register the conditional event.
-        -- pass a unique conditional event name as the third argument.
+        -- use event.register to register the conditional event
+        -- pass a unique conditional event name as the third argument
+        -- negative numbers can be used in place of using event.on_nth_tick()
         event.register(-6, place_fire, 'place_fire_at_feet')
     end
 end)

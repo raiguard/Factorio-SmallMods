@@ -1,6 +1,7 @@
 -- ----------------------------------------------------------------------------------------------------
 -- RAI'S EVENT HANDLER
 -- Allows one to easily register multiple handlers for an event
+-- Makes handling of conditional events far easier
 -- Does not support event filters
 
 -- library
@@ -40,11 +41,11 @@ function event.register(id, handler, conditional_name)
     for _,t in ipairs(registry) do
         if t.handler == handler then
             -- don't register or insert handler
-            log('Duplicate handler registration, skipping!')
+            log('Tried to register event handler that already exists of id: '..id)
             return
         end
     end
-    -- create handler if not already created
+    -- create master handler if not already created
     if #registry == 0 then
         if type(id) == 'number' and id < 0 then
             script.on_nth_tick(math.abs(id), event.dispatch)
@@ -91,9 +92,7 @@ function event.deregister(id, handler, conditional_name)
     if conditional_name then
         local con_registry = global.conditional_event_registry[conditional_name]
         for i,n in pairs(con_registry) do
-            if n == id then
-                table.remove(con_registry, i)
-            end
+            if n == id then table.remove(con_registry, i) end
         end
         if #con_registry == 0 then
             global.conditional_event_registry[conditional_name] = nil
@@ -151,14 +150,16 @@ function event.on_nth_tick(nthTick, handler, conditional_name)
     event.register(-nthTick, handler, conditional_name)
 end
 
+--
 -- CONDITIONAL EVENTS
+--
 
 -- create global table for conditional events
 event.on_init(function()
     global.conditional_event_registry = {}
 end)
 
--- for use in on_load: registers a conditional event if the corresponding flag is set in the conditional events table
+-- for use in on_load: registers a conditional event handler if it is included in the conditional events registry
 function event.load_conditional_events(data)
     for name, handler in pairs(data) do
         if global.conditional_event_registry[name] then
