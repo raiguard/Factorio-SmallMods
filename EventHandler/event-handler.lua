@@ -1,31 +1,33 @@
 -- ----------------------------------------------------------------------------------------------------
--- EVENT HANDLER
+-- RAI'S EVENT HANDLER
 -- Allows one to easily register multiple handlers for an event
+-- Does not support event filters
 
 -- library
-local this = {}
+local event = {}
 -- holds registered events
 local event_registry = {}
 -- pass-through handlers for bootstrap events
 local bootstrap_handlers = {
     on_init = function()
-        this.dispatch{name='on_init'}
+        event.dispatch{name='on_init'}
     end,
     on_load = function()
-        this.dispatch{name='on_load'}
+        event.dispatch{name='on_load'}
     end,
     on_configuration_changed = function(e)
         e.name = 'on_configuration_changed'
-        this.dispatch(e)
+        event.dispatch(e)
     end
 }
 
 -- register a handler for an event
-function this.register(id, handler)
+-- when registering a conditional event, pass a unique conditional name as the third argument
+function event.register(id, handler, conditional_name)
     -- recursive handling of ids
     if type(id) == 'table' then
         for _,n in pairs(id) do
-            this.register(n, handler)
+            event.register(n, handler, conditional_name)
         end
         return
     end
@@ -45,23 +47,32 @@ function this.register(id, handler)
     -- create handler if not already created
     if #registry == 0 then
         if type(id) == 'number' and id < 0 then
-            script.on_nth_tick(math.abs(id), this.dispatch)
+            script.on_nth_tick(math.abs(id), event.dispatch)
         elseif type(id) == 'string' and bootstrap_handlers[id] then
             script[id](bootstrap_handlers[id])
         else
-            script.on_event(id, this.dispatch)
+            script.on_event(id, event.dispatch)
         end
     end
-    -- add the handler to the events table
+    -- add the handler to the events tables
     table.insert(registry, {handler=handler})
+    if conditional_name then
+        local con_registry = global.conditional_event_registry
+        if not con_registry[conditional_name] then
+            con_registry[conditional_name] = {id}
+        else
+            table.insert(con_registry[conditional_name], id)
+        end
+    end
 end
 
 -- deregisters a handler for an event
-function this.deregister(id, handler)
+-- when deregistering a conditional event, pass its unique conditional name as the third argument
+function event.deregister(id, handler, conditional_name)
     -- recursive handling of ids
     if type(id) == 'table' then
         for _,n in pairs(id) do
-            this.deregister(n, handler)
+            event.deregister(n, handler, conditional_name)
         end
         return
     end
@@ -71,25 +82,38 @@ function this.deregister(id, handler)
         log('Tried to deregister an unregistered event of id: '..id)
         return
     end
+    -- remove the handler from the events tables
     for i,t in ipairs(registry) do
         if t.handler == handler then
             table.remove(registry, i)
         end
     end
+    if conditional_name then
+        local con_registry = global.conditional_event_registry[conditional_name]
+        for i,n in pairs(con_registry) do
+            if n == id then
+                table.remove(con_registry, i)
+            end
+        end
+        if #con_registry == 0 then
+            global.conditional_event_registry[conditional_name] = nil
+        end
+    end
+    -- de-register the master handler if it's no longer needed
     if #registry == 0 then
         if type(id) == 'number' and id < 0 then
-            script.on_nth_tick(math.abs(id))
+            script.on_nth_tick(math.abs(id), nil)
         elseif type(id) == 'string' and bootstrap_handlers[id] then
-            script[id]()
+            script[id](nil)
         else
-            script.on_event(id)
+            script.on_event(id, nil)
         end
     end
 end
 
 -- invokes all handlers for an event
 -- used both by actual event handlers, and can be called manually
-function this.dispatch(e)
+function event.dispatch(e)
     local id = e.name
     if e.nth_tick then
         id = -e.nth_tick
@@ -98,7 +122,7 @@ function this.dispatch(e)
         if e.input_name and event_registry[e.input_name] then
             id = e.input_name
         else
-            log('ERROR: event is registered that has no handlers!')
+            error('Event is registered but has no handlers!')
             return
         end
     end
@@ -108,23 +132,39 @@ function this.dispatch(e)
 end
 
 -- shortcut for event.register('on_init', function)
-function this.on_init(handler)
-    this.register('on_init', handler)
+function event.on_init(handler)
+    event.register('on_init', handler)
 end
 
 -- shortcut for event.register('on_load', function)
-function this.on_load(handler)
-    this.register('on_load', handler)
+function event.on_load(handler)
+    event.register('on_load', handler)
 end
 
 -- shortcut for event.register('on_configuration_changed', function)
-function this.on_configuration_changed(handler)
-    this.register('on_configuration_changed', handler)
+function event.on_configuration_changed(handler)
+    event.register('on_configuration_changed', handler)
 end
 
 -- shortcut for event.register(-nthTick, function)
-function this.on_nth_tick(nthTick, handler)
-    this.register(-nthTick, handler)
+function event.on_nth_tick(nthTick, handler, conditional_name)
+    event.register(-nthTick, handler, conditional_name)
 end
 
-return this
+-- CONDITIONAL EVENTS
+
+-- create global table for conditional events
+event.on_init(function()
+    global.conditional_event_registry = {}
+end)
+
+-- for use in on_load: registers a conditional event if the corresponding flag is set in the conditional events table
+function event.load_conditional_events(data)
+    for name, handler in pairs(data) do
+        if global.conditional_event_registry[name] then
+            event.register(global.conditional_event_registry[name], handler)
+        end
+    end
+end
+
+return event
