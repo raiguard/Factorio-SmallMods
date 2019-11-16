@@ -24,7 +24,9 @@ local bootstrap_handlers = {
 
 -- register a handler for an event
 -- when registering a conditional event, pass a unique conditional name as the third argument
-function event.register(id, handler, conditional_name)
+-- additional_data is used internally by the handler, and is otherwise useless
+-- gui_filters is used purely by the handler and MUST NOT be used elsewhere
+function event.register(id, handler, conditional_name, gui_filters)
     -- recursive handling of ids
     if type(id) == 'table' then
         for _,n in pairs(id) do
@@ -60,9 +62,9 @@ function event.register(id, handler, conditional_name)
     if conditional_name then
         local con_registry = global.conditional_event_registry
         if not con_registry[conditional_name] then
-            con_registry[conditional_name] = {id}
+            con_registry[conditional_name] = {id={id}, filters=gui_filters}
         else
-            table.insert(con_registry[conditional_name], id)
+            table.insert(con_registry[conditional_name].id, id)
         end
     end
 end
@@ -151,6 +153,92 @@ function event.on_nth_tick(nthTick, handler, conditional_name)
 end
 
 --
+-- GUI EVENTS
+--
+
+-- library
+event.gui = {}
+-- filter handlers
+local gui_event_filters = {
+    name = function(element, filter)
+        return element.name == filter
+    end,
+    name_match = function(element, filter)
+        return element.name:match(filter)
+    end,
+    index = function(element, filter)
+        return element.index == filter
+    end,
+    element = function(element, filter)
+        return element == filter
+    end
+}
+-- gui event data
+local gui_event_data = {}
+
+-- registers event(s) for specific gui element(s)
+function event.gui.register(filters, id, handler, conditional_name)
+    -- recursive handling of ids
+    if type(id) == 'table' then
+        for _,n in pairs(id) do
+            event.gui.register(filters, n, handler, conditional_name)
+        end
+        return
+    end
+    -- create data table and register master handler if it doesn't exist
+    if not gui_event_data[id] then
+        gui_event_data[id] = {}
+        event.register(id, event.gui.dispatch, conditional_name, filters)
+    end
+    -- store filters in event data table
+    table.insert(gui_event_data[id], {handler=handler, filters=filters})
+end
+
+-- deregisters event(s) from specific gui element(s)
+function event.gui.deregister(id, handler, conditional_name)
+    -- recursive handling of ids
+    if type(id) == 'table' then
+        for _,n in pairs(id) do
+            event.gui.deregister(n, handler, conditional_name)
+        end
+        return
+    end
+    local data = gui_event_data[id]
+    -- remove the data from the data tables
+    for i,t in ipairs(data) do
+        if t.handler == handler then
+            table.remove(data, i)
+        end
+    end
+    -- remove data table and deregister master handler if it is empty
+    if #data == 0 then
+        gui_event_data[id] = nil
+        event.deregister(id, event.gui.dispatch, conditional_name)
+    end
+end
+
+-- handler for registered gui events, 
+function event.gui.dispatch(e)
+    local data = gui_event_data[e.name]
+    -- check filters
+    for _,t in ipairs(data) do
+        local filters = t.filters
+        local dispatched = false
+        for name, param in pairs(filters) do
+            assert(gui_event_filters[name], 'Invalid GUI event filter \''..name..'\'')
+            for _,filter in pairs(param) do
+                if gui_event_filters[name](e.element, filter) then
+                    t.handler(e)
+                    dispatched = true
+                    break
+                end
+            end
+            if dispatched then break end
+        end
+    end
+end
+
+--
 -- CONDITIONAL EVENTS
 --
 
@@ -162,8 +250,13 @@ end)
 -- for use in on_load: registers a conditional event handler if it is included in the conditional events registry
 function event.load_conditional_events(data)
     for name, handler in pairs(data) do
-        if global.conditional_event_registry[name] then
-            event.register(global.conditional_event_registry[name], handler)
+        local registry = global.conditional_event_registry[name]
+        if registry then
+            if registry.filters then
+                event.gui.register(registry.filters, registry.id, handler)
+            else
+                event.register(registry.id, handler)
+            end
         end
     end
 end

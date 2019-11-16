@@ -2,6 +2,7 @@
 -- TEST EVENTS
 
 local event = require('event-handler')
+local mod_gui = require('mod-gui')
 
 -- can also use event.register('on_init', function) if so desired
 event.on_init(function()
@@ -52,6 +53,53 @@ event.on_nth_tick(3600, function(e)
 end)
 
 -- --------------------------------------------------
+-- GUI EVENTS
+
+-- change daytime depending on value of slider
+local function set_daytime(e)
+    local surface = game.players[e.player_index].surface
+    surface.daytime = e.element.slider_value
+end
+
+-- create some demo buttons
+event.register(defines.events.on_player_created, function(e)
+    local player = game.players[e.player_index]
+    local button_flow = mod_gui.get_button_flow(player)
+    button_flow.add{type='button', name='reh_demo_button_1', style=mod_gui.button_style, caption='DEMO1'}
+    button_flow.add{type='button', name='reh_demo_button_2', style=mod_gui.button_style, caption='DEMO2'}
+end)
+-- a clicked event for both buttons
+-- print to chat to show that the event happened
+event.gui.register({name_match={'reh_demo_button'}}, defines.events.on_gui_click, function(e)
+    local player = game.players[e.player_index]
+    player.print('[color=0,255,100]you clicked a demo button![/color]')
+end)
+-- clicked event for demo button 1
+-- print to chat to show that the event happened
+event.gui.register({name={'reh_demo_button_1'}}, defines.events.on_gui_click, function(e)
+    local player = game.players[e.player_index]
+    player.print('[color=255,100,0]you clicked the first demo button![/color]')
+end)
+-- clicked event for demo button 2
+-- show/hide a mod GUI frame when clicked
+event.gui.register({name={'reh_demo_button_2'}}, defines.events.on_gui_click, function(e)
+    local player = game.players[e.player_index]
+    local frame_flow = mod_gui.get_frame_flow(player)
+    if frame_flow.reh_demo_window then
+        -- close demo GUI
+        frame_flow.reh_demo_window.destroy()
+        -- deregister conditional event for the slider
+        event.gui.deregister(defines.events.on_gui_value_changed, set_daytime, 'change_daytime_slider')
+    else
+        -- create a demo GUI
+        local window = frame_flow.add{type='frame', name='reh_demo_window', style=mod_gui.frame_style, direction='vertical', caption='REH Demo'}
+        local slider = window.add{type='slider', name='reh_demo_slider', minimum_value=0, maximum_value=1, value=player.surface.daytime}
+        -- register conditional event for the slider
+        event.gui.register({element={slider}}, defines.events.on_gui_value_changed, set_daytime, 'change_daytime_slider')
+    end
+end)
+
+-- --------------------------------------------------
 -- CONDITIONAL EVENTS
 
 -- places fire at the player's feet
@@ -64,7 +112,7 @@ local function place_fire(e)
     end
 end
 
--- when the fire lua shortcut is pressed
+-- when the fire shortcut is pressed
 event.register(defines.events.on_lua_shortcut, function(e)
     local player = game.players[e.player_index]
     if player.is_shortcut_toggled('toggle-fire-at-feet') then
@@ -84,6 +132,7 @@ end)
 -- pass the handler in on_load to be re-registered if needed
 event.on_load(function()
     event.load_conditional_events{
-        place_fire_at_feet = place_fire
+        place_fire_at_feet = place_fire,
+        change_daytime_slider = set_daytime
     }
 end)
