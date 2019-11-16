@@ -16,6 +16,7 @@ data:extend{
             flags = {'icon'}
         },
         action = 'lua',
-        toggleable = true
+        toggleable = true,
+        localised_name = 'Toggle Fire at Feet'
     }
 }
