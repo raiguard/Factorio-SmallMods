@@ -69,20 +69,20 @@ event.register(defines.events.on_player_created, function(e)
     button_flow.add{type='button', name='reh_demo_button_2', style=mod_gui.button_style, caption='DEMO2'}
 end)
 -- a clicked event for both buttons
--- print to chat to show that the event happened
 event.gui.register({name_match={'reh_demo_button'}}, defines.events.on_gui_click, function(e)
     local player = game.players[e.player_index]
     player.print('[color=0,255,100]you clicked a demo button![/color]')
 end)
 -- clicked event for demo button 1
--- print to chat to show that the event happened
-event.gui.register({name={'reh_demo_button_1'}}, defines.events.on_gui_click, function(e)
+-- shortcutting: using just the element's name as the filter will work!
+-- further shortcutting: for a given GUI event (except on_gui_opened and on_gui_closed), omit the "gui" part of the event name, and you can use it as the function call
+event.gui.on_click('reh_demo_button_1', function(e)
     local player = game.players[e.player_index]
     player.print('[color=255,100,0]you clicked the first demo button![/color]')
 end)
 -- clicked event for demo button 2
 -- show/hide a mod GUI frame when clicked
-event.gui.register({name={'reh_demo_button_2'}}, defines.events.on_gui_click, function(e)
+event.gui.register('reh_demo_button_2', defines.events.on_gui_click, function(e)
     local player = game.players[e.player_index]
     local frame_flow = mod_gui.get_frame_flow(player)
     if frame_flow.reh_demo_window then

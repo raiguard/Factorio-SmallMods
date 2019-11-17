@@ -185,6 +185,12 @@ function event.gui.register(filters, id, handler, conditional_name)
         end
         return
     end
+    -- convert filter format if shortcutting was used
+    if type(filters) == 'string' then
+        filters = {name={filters}}
+    elseif type(filters) == 'number' then
+        filters = {index={filters}}
+    end
     -- create data table and register master handler if it doesn't exist
     if not gui_event_data[id] then
         gui_event_data[id] = {}
@@ -235,6 +241,28 @@ function event.gui.dispatch(e)
             end
             if dispatched then break end
         end
+    end
+end
+
+-- SHORTCUT FUNCTIONS
+
+local gui_event_shortcut_functions = {
+    on_checked_state_changed = 'on_gui_checked_state_changed',
+    on_click = 'on_gui_click',
+    on_confirmed = 'on_gui_confirmed',
+    on_elem_changed = 'on_gui_elem_changed',
+    on_location_changed = 'on_gui_location_changed',
+    on_selected_tab_changed = 'on_gui_selected_tab_changed',
+    on_selection_state_changed = 'on_gui_selection_state_changed',
+    on_switch_state_changed = 'on_gui_switch_state_changed',
+    on_text_changed = 'on_gui_text_changed',
+    on_value_changed = 'on_gui_value_changed'
+}
+
+-- register shortcut functions
+for n,e in pairs(gui_event_shortcut_functions) do
+    event.gui[n] = function(filters, handler, conditional_name)
+        event.gui.register(filters, defines.events[e], handler, conditional_name)
     end
 end
 
