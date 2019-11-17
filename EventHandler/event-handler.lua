@@ -24,8 +24,7 @@ local bootstrap_handlers = {
 
 -- register a handler for an event
 -- when registering a conditional event, pass a unique conditional name as the third argument
--- additional_data is used internally by the handler, and is otherwise useless
--- gui_filters is used purely by the handler and MUST NOT be used elsewhere
+-- gui_filters is used internally by the handler, and must not be passed otherwise
 function event.register(id, handler, conditional_name, gui_filters)
     -- recursive handling of ids
     if type(id) == 'table' then
@@ -62,7 +61,7 @@ function event.register(id, handler, conditional_name, gui_filters)
     if conditional_name then
         local con_registry = global.conditional_event_registry
         if not con_registry[conditional_name] then
-            con_registry[conditional_name] = {id={id}, filters=gui_filters}
+            con_registry[conditional_name] = {id={id}, gui_filters=gui_filters}
         else
             table.insert(con_registry[conditional_name].id, id)
         end
@@ -230,9 +229,13 @@ function event.gui.dispatch(e)
     for _,t in ipairs(data) do
         local filters = t.filters
         local dispatched = false
+        -- for each filter
         for name, param in pairs(filters) do
+            -- make sure it's a valid filter
             assert(gui_event_filters[name], 'Invalid GUI event filter \''..name..'\'')
+            -- for each filter argument
             for _,filter in pairs(param) do
+                -- if the check function passes, invoke handler and break loop
                 if gui_event_filters[name](e.element, filter) then
                     t.handler(e)
                     dispatched = true
@@ -280,8 +283,8 @@ function event.load_conditional_events(data)
     for name, handler in pairs(data) do
         local registry = global.conditional_event_registry[name]
         if registry then
-            if registry.filters then
-                event.gui.register(registry.filters, registry.id, handler)
+            if registry.gui_filters then
+                event.gui.register(registry.gui_filters, registry.id, handler)
             else
                 event.register(registry.id, handler)
             end
