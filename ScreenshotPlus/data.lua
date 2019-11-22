@@ -59,19 +59,25 @@ local function sprite(name, size, mipmaps, filename)
         filename = filename,
         size = size,
         mipmap_count = mipmaps,
-        flags = {'icon'}
+        flags = {'icon'},
+        priority = 'extra-high-no-scale'
+    }
+end
+data:extend{
+    sprite('ssp-camera', 32, 2, '__ScreenshotPlus__/graphics/shortcut-bar/screenshotplus-x32.png'),
+    sprite('ssp-pin', 32, 2, gui_icon_path..'pin.png'),
+    sprite('ssp-pin-white', 32, 2, gui_icon_path..'pin-white.png')
+}
+for _,dir in ipairs{'up', 'left', 'down', 'right'} do
+    data:extend{
+        sprite('ssp-move-'..dir, 32, 2, gui_icon_path..'move-'..dir..'.png'),
+        sprite('ssp-move-'..dir..'-white', 32, 2, gui_icon_path..'move-'..dir..'-white.png'),
+        sprite('ssp-square-sides', 32, 2, gui_icon_path..'square-sides.png'),
+        sprite('ssp-square', 32, 2, gui_icon_path..'square.png')
     }
 end
 
-data:extend{
-    sprite('ssp-camera', 32, 2, '__ScreenshotPlus__/graphics/shortcut-bar/screenshotplus-x32.png'),
-    sprite('ssp-window-maximize', 32, 2, gui_icon_path..'window-maximize.png'),
-    sprite('ssp-window-maximize-white', 32, 2, gui_icon_path..'window-maximize-white.png'),
-    sprite('ssp-window-restore', 32, 2, gui_icon_path..'window-restore.png'),
-    sprite('ssp-window-restore-white', 32, 2, gui_icon_path..'window-restore-white.png')
-}
-
--- GUI STYLE
+-- GUI STYLES
 
 local styles = data.raw['gui-style'].default
 
@@ -92,74 +98,101 @@ styles['invisible_vertical_filler'] = {
     vertically_stretchable = 'on'
 }
 
-styles['camera_frame'] = {
+styles['ssp_bordered_frame'] = {
     type = 'frame_style',
-    parent = 'window_content_frame',
-    padding = 0
+    parent = 'bordered_frame',
+    margin = 5,
+    horizontally_stretchable = 'on'
 }
 
--- styles['green_button'] = {
---     type = 'button_style',
---     parent = 'button',
---     default_graphical_set = {
---         base = {position = {68, 17}, corner_size = 8},
---         shadow = default_dirt
---     },
---     hovered_graphical_set = {
---         base = {position = {102, 17}, corner_size = 8},
---         shadow = default_dirt,
---         glow = default_glow(green_arrow_button_glow_color, 0.5)
---     },
---     clicked_graphical_set = {
---         base = {position = {119, 17}, corner_size = 8},
---         shadow = default_dirt
---     },
---     disabled_graphical_set = {
---         base = {position = {85, 17}, corner_size = 8},
---         shadow = default_dirt
---     }
--- }
+styles['close_button_active'] = {
+    type = 'button_style',
+    parent = 'close_button',
+    default_graphical_set = {
+        base = {position = {272, 169}, corner_size = 8},
+        shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
+    },
+    hovered_graphical_set = {
+        base = {position={369,17}, corner_size=8},
+        shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
+    },
+    clicked_graphical_set = {
+        base = {position={352,17}, corner_size=8},
+        shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
+    }
+}
 
--- styles['green_icon_button'] = {
---     type = 'button_style',
---     parent = 'green_button',
---     padding = 3,
---     size = 28
--- }
+styles['invalid_short_number_textfield'] = {
+    type = 'textbox_style',
+    parent = 'short_number_textfield',
+    default_background = {
+        base = {position = {248,0}, corner_size=8, tint=warning_red_color},
+        shadow = textbox_dirt
+    },
+    active_background = {
+        base = {position={265,0}, corner_size=8, tint=warning_red_color},
+        shadow = textbox_dirt
+    },
+    disabled_background = {
+        base = {position = {282,0}, corner_size=8, tint=warning_red_color},
+        shadow = textbox_dirt
+    }
+}
+
+styles['green_button'] = {
+    type = 'button_style',
+    parent = 'button',
+    default_graphical_set = {
+        base = {position = {68, 17}, corner_size = 8},
+        shadow = default_dirt
+    },
+    hovered_graphical_set = {
+        base = {position = {102, 17}, corner_size = 8},
+        shadow = default_dirt,
+        glow = default_glow(green_arrow_button_glow_color, 0.5)
+    },
+    clicked_graphical_set = {
+        base = {position = {119, 17}, corner_size = 8},
+        shadow = default_dirt
+    },
+    disabled_graphical_set = {
+        base = {position = {85, 17}, corner_size = 8},
+        shadow = default_dirt
+    }
+}
+
+styles['green_icon_button'] = {
+    type = 'button_style',
+    parent = 'green_button',
+    padding = 3,
+    size = 28
+}
+
+styles['frame_button_light'] = {
+    type = 'button_style',
+    parent = 'frame_button',
+    default_graphical_set = {
+        base = {position = {68, 0}, corner_size = 8},
+        shadow = {position = {440, 24}, corner_size = 8, draw_type = "outer"},
+    }
+}
+
+styles['close_button_light'] = {
+    type = 'button_style',
+    parent = 'frame_button_light',
+    size = 16
+}
+
+styles['movement_pad_table'] = {
+    type = 'table_style',
+    parent = 'table',
+    column_alignments = {
+        {column=1, alignment='center'},
+        {column=2, alignment='center'},
+        {column=3, alignment='center'}
+    }
+}
 
 -- styles['dropdown_button'].disabled_font_color = styles['button'].disabled_font_color
 -- styles['dropdown_button'].disabled_graphical_set = styles['button'].disabled_graphical_set
 
--- styles['invalid_short_number_textfield'] = {
---     type = 'textbox_style',
---     parent = 'short_number_textfield',
---     default_background = {
---         base = {position = {248,0}, corner_size=8, tint=warning_red_color},
---         shadow = textbox_dirt
---     },
---     active_background = {
---         base = {position={265,0}, corner_size=8, tint=warning_red_color},
---         shadow = textbox_dirt
---     },
---     disabled_background = {
---         base = {position = {282,0}, corner_size=8, tint=warning_red_color},
---         shadow = textbox_dirt
---     }
--- }
-
--- styles['close_button_active'] = {
---     type = 'button_style',
---     parent = 'close_button',
---     default_graphical_set = {
---         base = {position = {272, 169}, corner_size = 8},
---         shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
---     },
---     hovered_graphical_set = {
---         base = {position={369,17}, corner_size=8},
---         shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
---     },
---     clicked_graphical_set = {
---         base = {position={352,17}, corner_size=8},
---         shadow = {position = {440, 24}, corner_size = 8, draw_type = 'outer'}
---     }
--- }
