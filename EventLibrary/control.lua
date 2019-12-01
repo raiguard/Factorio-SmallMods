@@ -1,7 +1,7 @@
 -- ----------------------------------------------------------------------------------------------------
 -- TEST EVENTS
 
-local event = require('event-handler')
+local event = require('event-lib')
 local mod_gui = require('mod-gui')
 
 -- can also use event.register('on_init', function) if so desired

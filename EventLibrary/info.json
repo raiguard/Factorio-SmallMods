@@ -1,7 +1,7 @@
 {
-    "name": "EventHandler",
+    "name": "EventLibrary",
     "version": "0.0.1",
-    "title": "Rai's Event Handler",
+    "title": "Rai's Event Library",
     "author": "raiguard",
     "factorio_version": "0.17",
     "dependencies": ["base >= 0.17.65"],
