@@ -5,5 +5,5 @@
     "author": "raiguard",
     "factorio_version": "0.17",
     "dependencies": ["base >= 0.17.65"],
-    "description": "Import and export quickbar filter templates. Set a default template for use in new games. Store templates in the blueprint library!"
+    "description": "Import and export quickbars as blueprints. Share, manage, and apply as many different templates as you wish. You can also set a default template so your filters are all ready to go when you start a new game!"
 }
