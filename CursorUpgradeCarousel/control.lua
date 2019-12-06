@@ -1,7 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- CURSOR UPGRADE CAROUSEL CONTROL SCRIPTING
 
-
 -- build upgrade/downgrade registry
 local function build_upgrade_registry()
     local prototypes = game.entity_prototypes
@@ -25,12 +24,12 @@ local function build_upgrade_registry()
         -- get objects and validate them, or error if not
         local prototype = prototypes[name]
         if not prototype then
-            game.print('Invalid prototype name in custom upgrade registry: '..name)
+            game.print{'chat-message.invalid-name', name}
             goto continue
         end
         local upgrade_prototype = prototypes[upgrade]
         if not upgrade_prototype then
-            game.print('Invalid upgrade prototype name in custom upgrade registry: '..upgrade)
+            game.print{'chat-message.invalid-upgrade-name', upgrade}
             goto continue
         end
         for _,item in ipairs(prototype.items_to_place_this) do
