@@ -1,6 +1,7 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- CURSOR UPGRADE CAROUSEL CONTROL SCRIPTING
 
+
 -- build upgrade/downgrade registry
 local function build_upgrade_registry()
     local prototypes = game.entity_prototypes
@@ -20,7 +21,7 @@ local function build_upgrade_registry()
         end
     end
     -- build custom registry
-    for name,upgrade in pairs(loadstring('return '..settings.global['cuc-custom-upgrade-registry'].value)()) do
+    for name,upgrade in pairs(load('return '..settings.global['cuc-custom-upgrade-registry'].value)()) do
         -- get objects and validate them, or error if not
         local prototype = prototypes[name]
         if not prototype then
