@@ -5,5 +5,5 @@
     "author": "raiguard",
     "factorio_version": "0.17",
     "dependencies": ["base >= 0.17.65"],
-    "description": "Shift+scroll to quickly access an item's upgrades or downgrades. If you do not have the item, the ghost cursor will be used instead (100% not cheaty!). Should be compatible with all mods out of the box, assuming they correctly defined their entities' upgrades.\n\nUsers can also define their own custom upgrade paths. The mod includes some preset customizations to let you switch between medium and large power poles, and substations.\n\nFor best results, it is recommended that you unbind zooming in/out from shift+scroll, so you don't zoom while using the carousel."
+    "description": "Shift+scroll to quickly access an item's upgrades or downgrades. If you do not have the item, the ghost cursor will be used instead (100% not cheaty!). Should be compatible with all mods out of the box, assuming they correctly defined their entities' upgrades. Users can also define their own custom upgrade paths in the mod settings."
 }
