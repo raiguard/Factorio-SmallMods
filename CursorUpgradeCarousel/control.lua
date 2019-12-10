@@ -7,7 +7,7 @@ local function build_upgrade_registry()
     local data = {}
     -- build default registry
     for name,prototype in pairs(prototypes) do
-        if prototype.next_upgrade then
+        if prototype.next_upgrade and prototype.items_to_place_this then
             local upgrade = prototype.next_upgrade.name
             for _,item in ipairs(prototype.items_to_place_this) do
                 if not data[item.name] then data[item.name] = {} end
@@ -32,11 +32,11 @@ local function build_upgrade_registry()
             game.print{'chat-message.invalid-upgrade-name', upgrade}
             goto continue
         end
-        for _,item in ipairs(prototype.items_to_place_this) do
+        for _,item in ipairs(prototype.items_to_place_this or {}) do
             if not data[item.name] then data[item.name] = {} end
             data[item.name].upgrade = upgrade
         end
-        for _,item in ipairs(upgrade_prototype.items_to_place_this) do
+        for _,item in ipairs(upgrade_prototype.items_to_place_this or {}) do
             if not data[item.name] then data[item.name] = {} end
             data[item.name].downgrade = name
         end
