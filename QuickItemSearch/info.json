@@ -1,9 +1,9 @@
 {
-    "name": "QuickItemSearch",
-    "version": "1.0.0",
-    "title": "Quick Item Search",
-    "author": "raiguard",
-    "factorio_version": "0.17",
-    "dependencies": ["base >= 0.17.79"],
-    "description": "Quickly and easily search for items in your inventory, logistic network, or crafting recipes."
+  "name": "QuickItemSearch",
+  "version": "1.0.0",
+  "title": "Quick Item Search",
+  "author": "raiguard",
+  "factorio_version": "0.17",
+  "dependencies": ["base >= 0.17.79"],
+  "description": "Quickly and easily search for items in your inventory, logistic network, or crafting recipes."
 }

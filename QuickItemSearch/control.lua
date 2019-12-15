@@ -7,6 +7,8 @@ local util = require('lualib/util')
 local mod_gui = require('mod-gui')
 local dictionary_generated_event = event.generate_id('dictionary_generated')
 
+local gui = {}
+
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
@@ -34,12 +36,46 @@ local function setup_player(player)
       building_dictionary = false
     }
   }
-  local frame = mod_gui.get_frame_flow(player).add{type='frame', name='qis_frame', style=mod_gui.frame_style, direction='vertical'}
-  local textfield = frame.add{type='textfield', name='qis_search_textfield', lose_focus_on_confirm=true}
-  event.gui.on_text_changed(textfield, search_textfield_text_changed, 'search_textfield_text_changed', player.index)
-  local results_flow = frame.add{type='flow', name='qis_search_results_flow', direction='vertical'}
-  data.gui = {textfield=textfield, results_flow=results_flow}
   global.players[player.index] = data
+end
+
+-- -----------------------------------------------------------------------------
+-- GUI
+
+-- ----------------------------------------
+-- GUI HANDLERS
+
+local handlers = {
+
+}
+
+event.on_load(function()
+  event.load_conditional_handlers(handlers)
+end)
+
+-- ----------------------------------------
+-- GUI MANAGEMENT
+
+function gui.create(parent, player)
+  local window = parent.add{type='frame', name='qis_window', style='dialog_frame', direction='vertical'}
+  local search_flow = window.add{type='flow', name='qis_search_flow', direction='horizontal'}
+  local search_textfield = search_flow.add{type='textfield', name='qis_search_textfield'}
+  util.gui.add_pusher(search_flow, 'qis_search_pusher')
+  local close_button = search_flow.add{type='sprite-button', name='qis_close_button', style='qis_close_button', sprite='utility/close_white',
+                                       hovered_sprite='utility/close_black', clicked_sprite='utility/close_black'}
+  local results_scroll = window.add{type='scroll-pane', name='qis_results_scroll_pane', style='results_scroll_pane', vertical_scroll_policy='always'}
+  local results_table = results_scroll.add{type='table', name='qis_results_table', style='results_slot_table', column_count=6}
+  search_textfield.focus()
+  return {search_textfield=search_textfield, close_button=close_button}
+end
+
+function gui.destroy(window, player_index)
+  -- deregister all GUI events if needed
+  local con_registry = global.conditional_event_registry
+  for cn,h in pairs(handlers) do
+    event.gui.deregister(con_registry[cn].id, h, cn, player_index)
+  end
+  window.destroy()
 end
 
 -- -----------------------------------------------------------------------------
@@ -90,4 +126,14 @@ end)
 
 event.register(dictionary_generated_event, function(e)
   
+end)
+
+event.register('qis-search', function(e)
+  local player, player_table = util.get_player(e)
+  if not player_table.gui then
+    local elems = gui.create(mod_gui.get_frame_flow(player))
+    player_table.gui = {elems=elems}
+  else
+    gui.destroy(player_table.gui.elems.window)
+  end
 end)

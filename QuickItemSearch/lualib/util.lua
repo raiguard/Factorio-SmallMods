@@ -139,9 +139,9 @@ util.gui = {}
 
 function util.gui.add_pusher(parent, name, vertical)
   if vertical then
-    return parent.add{type='empty-widget', name=name, style='ee_invisible_vertical_pusher'}
+    return parent.add{type='empty-widget', name=name, style='qis_invisible_vertical_pusher'}
   else
-    return parent.add{type='empty-widget', name=name, style='ee_invisible_horizontal_pusher'}
+    return parent.add{type='empty-widget', name=name, style='qis_invisible_horizontal_pusher'}
   end
 end
 
@@ -173,9 +173,9 @@ function util.textfield.clamp_number_input(element, clamps, last_value)
   if text == ''
   or (clamps[1] and tonumber(text) < clamps[1])
   or (clamps[2] and tonumber(text) > clamps[2]) then
-    element.style = 'ee_invalid_slider_textfield'
+    element.style = 'qis_invalid_slider_textfield'
   else
-    element.style = 'ee_slider_textfield'
+    element.style = 'qis_slider_textfield'
     last_value = text
   end
   return last_value
@@ -185,7 +185,7 @@ end
 function util.textfield.set_last_valid_value(element, last_value)
   if element.text ~= last_value then
     element.text = last_value
-    element.style = 'ee_slider_textfield'
+    element.style = 'qis_slider_textfield'
   end
   return element.text
 end
