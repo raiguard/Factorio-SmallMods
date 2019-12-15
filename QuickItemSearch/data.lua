@@ -109,16 +109,16 @@ styles['qis_active_filter_slot_button'] = {
   type = 'button_style',
   parent = 'filter_slot_button',
   default_graphical_set = {
-    base = {border = 4, position = {80, 736}, size = 80},
+    base = {border=4, position={80,736}, size=80},
     shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
   },
   hovered_graphical_set = {
-    base = {border = 4, position = {80, 736}, size = 80},
+    base = {border=4, position={80,736}, size=80},
     shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
     glow = offset_by_2_rounded_corners_glow(default_glow_color)
   },
   clicked_graphical_set = {
-    base = {border = 4, position = {160, 736}, size = 80},
+    base = {border=4, position={160,736}, size=80},
     shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
   }
 }
@@ -128,3 +128,29 @@ styles['qis_close_button'] = {
   parent = 'close_button',
   top_margin = 4
 }
+
+local desat_file = '__QuickItemSearch__/graphics/gui/filter-slot-button-desaturated.png'
+local function tinted_filter_slot_button(tint)
+  return {
+    type = 'button_style',
+    parent = 'filter_slot_button',
+    default_graphical_set = {
+      base = {border=4, position={0,0}, size=80, filename=desat_file, tint=tint},
+      shadow = offset_by_2_rounded_corners_glow(tint),
+    },
+    hovered_graphical_set = {
+      base = {border=4, position={80,0}, size=80, filename=desat_file, tint=tint},
+      shadow = offset_by_2_rounded_corners_glow(tint),
+      glow = offset_by_2_rounded_corners_glow(tint)
+    },
+    clicked_graphical_set = {
+      base = {border=4, position={160,0}, size=80, filename=desat_file, tint=tint},
+      shadow = offset_by_2_rounded_corners_glow(tint),
+    }
+  }
+end
+
+styles['qis_inventory_result_slot_button'] = {type='button_style', parent='filter_slot_button'}
+styles['qis_logistic_result_slot_button'] = tinted_filter_slot_button{0,255,255}
+styles['qis_crafting_result_slot_button'] = tinted_filter_slot_button{0,255,0}
+styles['qis_unavailable_result_slot_button'] = tinted_filter_slot_button{255,150,150}
