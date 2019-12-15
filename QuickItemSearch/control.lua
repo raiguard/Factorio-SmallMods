@@ -11,7 +11,19 @@ local dictionary_generated_event = event.generate_id('dictionary_generated')
 -- UTILITIES
 
 local function search_textfield_text_changed(e)
-  local player = util.get_player(e)
+  local player, player_table = util.get_player(e)
+  if not player_table.flags.building_dictionary then
+    local results_flow = player_table.gui.results_flow
+    results_flow.clear()
+    local i = 0
+    if e.element.text == '' then return end
+    for internal,localized in pairs(player_table.dictionary) do
+      if localized:match(e.element.text) then
+        i = i + 1
+        results_flow.add{type='label', name='qis_result_'..i, caption=localized}
+      end
+    end
+  end
 end
 
 -- setup player global table and GUI
@@ -22,10 +34,11 @@ local function setup_player(player)
       building_dictionary = false
     }
   }
-  event.gui.on_text_changed(
-    mod_gui.get_frame_flow(player).add{type='textfield', name='qis_search_textfield', lose_focus_on_confirm=true},
-    search_textfield_text_changed, 'search_textfield_text_changed', player.index
-  )
+  local frame = mod_gui.get_frame_flow(player).add{type='frame', name='qis_frame', style=mod_gui.frame_style, direction='vertical'}
+  local textfield = frame.add{type='textfield', name='qis_search_textfield', lose_focus_on_confirm=true}
+  event.gui.on_text_changed(textfield, search_textfield_text_changed, 'search_textfield_text_changed', player.index)
+  local results_flow = frame.add{type='flow', name='qis_search_results_flow', direction='vertical'}
+  data.gui = {textfield=textfield, results_flow=results_flow}
   global.players[player.index] = data
 end
 
@@ -58,10 +71,11 @@ event.register(defines.events.on_player_joined_game, function(e)
   end
 end)
 
+-- when a string gets translated
 event.register(defines.events.on_string_translated, function(e)
   local player_table = util.player_table(e)
-  if e.translated then
-    player_table.dictionary[player_table.prototype_dictionary[e.localised_string[1]]] = e.result
+  if e.translated and player_table.flags.building_dictionary then
+    player_table.dictionary[player_table.prototype_dictionary[e.localised_string[1]]] = string.lower(e.result)
   else
     util.log('Item \''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
     player_table.finished_size_offset = player_table.finished_size_offset + 1
