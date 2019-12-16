@@ -1,34 +1,69 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
--- QUICKBAR TEMPLATES PROTOTYPES
+-- QUICK ITEM SEARCH PROTOTYPES
+
+local styles = data.raw['gui-style'].default
 
 -- -----------------------------------------------------------------------------
--- SPRITES
+-- CUSTOM INPUTS
 
 data:extend{
   {
     type = 'custom-input',
     name = 'qis-search',
     key_sequence = 'CONTROL + F'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-up',
+    key_sequence = '',
+    linked_game_control = 'move-up'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-left',
+    key_sequence = '',
+    linked_game_control = 'move-left'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-down',
+    key_sequence = '',
+    linked_game_control = 'move-down'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-right',
+    key_sequence = '',
+    linked_game_control = 'move-right'
   }
 }
 
-local styles = data.raw['gui-style'].default
+-- ------------------------------------------------------------------------------
+-- FRAME STYLES
+
+styles['qis_toolbar'] = {
+  type = 'frame_style',
+  parent = 'subheader_frame',
+  horizontal_flow_style = {
+    type = 'horizontal_flow_style',
+    horizontally_stretchable = 'on',
+    vertical_align = 'center',
+    horizontal_spacing = 8,
+    left_padding = 6
+  }
+}
 
 -- ------------------------------------------------------------------------------
 -- SCROLLPANE STYLES
 
-local outer_frame_light = outer_frame_light()
-outer_frame_light.base.center = {position = {42,8}, size=1}
-
 styles['results_scroll_pane'] = {
   type = 'scroll_pane_style',
-  -- parent = 'scroll_pane',
+  parent = 'scroll_pane_with_dark_background_under_subheader',
   padding = 0,
   minimal_width = (40 * 6) + 12, -- six columns + scrollbar
   height = 240, -- four rows
   extra_padding_when_activated = 0,
   extra_right_padding_when_activated = -12,
-  graphical_set = outer_frame_light,
   background_graphical_set = {
     base = {
       position = {282, 17},
@@ -49,6 +84,15 @@ styles['results_slot_table'] = {
   parent = 'slot_table',
   horizontal_spacing = 0,
   vertical_spacing = 0
+}
+
+-- ------------------------------------------------------------------------------
+-- TEXTFIELD STYLES
+
+styles['qis_search_textfield'] = {
+  type = 'textbox_style',
+  width = (40 * 6) + 12, -- same as results scroll pane
+  bottom_margin = 6
 }
 
 -- ------------------------------------------------------------------------------
@@ -149,8 +193,66 @@ local function tinted_filter_slot_button(tint)
     }
   }
 end
+local function active_tinted_filter_slot_button(tint, parent)
+  return {
+    type = 'button_style',
+    parent = parent,
+    default_graphical_set = {
+      base = {border=4, position={80,0}, size=80, filename=desat_file, tint=tint},
+      shadow = offset_by_2_rounded_corners_glow(tint),
+    }
+  }
+end
 
 styles['qis_inventory_result_slot_button'] = {type='button_style', parent='filter_slot_button'}
-styles['qis_logistic_result_slot_button'] = tinted_filter_slot_button{0,255,255}
-styles['qis_crafting_result_slot_button'] = tinted_filter_slot_button{0,255,0}
-styles['qis_unavailable_result_slot_button'] = tinted_filter_slot_button{255,150,150}
+styles['qis_active_inventory_result_slot_button'] = {type='button_style', parent='qis_active_filter_slot_button'}
+styles['qis_logistics_result_slot_button'] = tinted_filter_slot_button{170,220,220}
+styles['qis_active_logistics_result_slot_button'] = active_tinted_filter_slot_button({170,220,220}, 'qis_logistics_result_slot_button')
+styles['qis_crafting_result_slot_button'] = tinted_filter_slot_button{170,220,170}
+styles['qis_active_crafting_result_slot_button'] = active_tinted_filter_slot_button({170,220,170}, 'qis_crafting_result_slot_button')
+styles['qis_unavailable_result_slot_button'] = tinted_filter_slot_button{220,170,170}
+styles['qis_active_unavailable_result_slot_button'] = active_tinted_filter_slot_button({220,170,170}, 'qis_unavailable_result_slot_button')
+
+-- ------------------------------------------------------------------------------
+-- CHECKBOX STYLES
+
+local desat_checkbox_file = '__QuickItemSearch__/graphics/gui/checkbox-desaturated.png'
+local function tinted_checkbox(tint)
+  return {
+    type = 'checkbox_style',
+    parent = 'checkbox',
+    default_graphical_set = {
+      base = {position={0,0}, size={28,28}, filename=desat_checkbox_file},
+      shadow = default_dirt
+    },
+    hovered_graphical_set = {
+      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
+      glow = default_glow(tint, 0.5)
+    },
+    clicked_graphical_set = {
+      base = {position = {84,0}, size = {28,28}, filename=desat_checkbox_file, tint=tint},
+      glow = default_glow(tint, 0.5)
+    },
+    disabled_graphical_set = {
+      base = {position={28,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
+      shadow = default_dirt
+    },
+    selected_graphical_set = {
+      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
+    },
+    selected_hovered_graphical_set = {
+      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
+      glow = default_glow(tint, 0.5)
+    },
+    selected_clicked_graphical_set = {
+      base = {position = {84,0}, size = {28,28}, filename=desat_checkbox_file, tint=tint},
+      glow = default_glow(tint, 0.5)
+    },
+    text_padding = 6
+  }
+end
+
+styles['qis_inventory_checkbox'] = {type='checkbox_style', parent='checkbox'}
+styles['qis_logistics_checkbox'] = tinted_checkbox{170,220,220}
+styles['qis_crafting_checkbox'] = tinted_checkbox{170,220,170}
+styles['qis_unavailable_checkbox'] = tinted_checkbox{220,170,170}
