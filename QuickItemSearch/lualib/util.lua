@@ -1,6 +1,10 @@
 local math2d = require('__core__/lualib/math2d')
 local util = require('__core__/lualib/util')
 
+math.clamp = util.clamp
+
+table.compare = util.compare
+
 -- returns true if the table contains the specified value
 function table.contains(table, value)
   for k,v in pairs(table) do

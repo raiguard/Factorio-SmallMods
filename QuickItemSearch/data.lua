@@ -36,6 +36,11 @@ data:extend{
     type = 'custom-input',
     name = 'qis-nav-confirm',
     key_sequence = 'ENTER'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-alt-confirm',
+    key_sequence = 'SHIFT + ENTER'
   }
 }
 
@@ -57,14 +62,17 @@ styles['qis_toolbar'] = {
 -- ------------------------------------------------------------------------------
 -- SCROLLPANE STYLES
 
+local outer_frame_light = outer_frame_light()
+outer_frame_light.base.center = {position = {42,8}, size=1}
 styles['results_scroll_pane'] = {
   type = 'scroll_pane_style',
-  parent = 'scroll_pane_with_dark_background_under_subheader',
+  -- parent = 'scroll_pane',
   padding = 0,
   minimal_width = (40 * 6) + 12, -- six columns + scrollbar
   height = 240, -- four rows
   extra_padding_when_activated = 0,
   extra_right_padding_when_activated = -12,
+  graphical_set = outer_frame_light,
   background_graphical_set = {
     base = {
       position = {282, 17},
@@ -74,8 +82,7 @@ styles['results_scroll_pane'] = {
       overall_tiling_horizontal_spacing = 8,
       overall_tiling_vertical_padding = 4,
       overall_tiling_vertical_size = 32,
-      overall_tiling_vertical_spacing = 8,
-      custom_horizontal_tiling_sizes = {32, 32, 32, 32, 32, 32} -- to avoid little bumps in the scrollbar area
+      overall_tiling_vertical_spacing = 8
     }
   }
 }
