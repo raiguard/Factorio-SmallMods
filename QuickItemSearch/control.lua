@@ -24,6 +24,65 @@ local function setup_player(player)
   global.players[player.index] = data
 end
 
+local function build_search_results(player, dictionary, settings, search)
+  local player_settings = player.mod_settings
+  local results = {}
+  local function add_if_match(name, count, result_type)
+    local dict_entry = dictionary[name]
+    if not results[name] and dict_entry and dict_entry.name:match(search) then
+        results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
+    end
+  end
+  if player.controller_type == defines.controllers.editor then
+    -- show all items
+    -- local inv_contents = player.get_main_inventory().get_contents()
+    for internal,_ in pairs(dictionary) do
+      add_if_match(internal, nil, 'inventory')
+    end
+  else
+    -- player inventory
+    if player_settings['qis-search-inventory'].value then
+      local inv_contents = player.get_main_inventory().get_contents()
+      for name,count in pairs(inv_contents) do
+        add_if_match(name, count, 'inventory')
+      end
+    end
+    if player.character then
+      local character = player.character
+      -- logistic network(s)
+      if player_settings['qis-search-logistics'].value then
+        for _,point in ipairs(character.get_logistic_point()) do
+          local network = point.logistic_network
+          if network.valid then
+            for name,count in pairs(point.logistic_network.get_contents()) do
+              add_if_match(name, count, 'logistics')
+            end
+          end
+        end
+      end
+      -- crafting
+      if player_settings['qis-search-crafting'].value then
+        for name,recipe in pairs(player.force.recipes) do
+          local count = player.get_craftable_count(recipe)
+          if count > 0 then
+            add_if_match(name, count, 'crafting')
+          end
+        end
+      end
+    end
+    -- unavailable
+    if player_settings['qis-search-unavailable'].value then
+      for internal,_ in pairs(dictionary) do
+        add_if_match(internal, nil, 'unavailable')
+      end
+    end
+  end
+  return results
+end
+
+-- -----------------------------------------------------------------------------
+-- LOCALISED DICTIONARY
+
 -- builds the dictionary for one player or all players
 local function build_dictionary(e)
   local function request_translations(player, player_table)
@@ -57,70 +116,40 @@ local function build_dictionary(e)
   end
 end
 
-local function build_search_results(player, dictionary, settings, search)
-  local settings = player.mod_settings
-  local results = {}
-  local function add_if_match(name, count, result_type)
-    local dict_entry = dictionary[name]
-    if not results[name] and dict_entry and dict_entry.name:match(search) then
-        results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
-    end
-  end
-  if player.controller_type == defines.controllers.editor then
-    -- show all items
-    -- local inv_contents = player.get_main_inventory().get_contents()
-    for internal,_ in pairs(dictionary) do
-      add_if_match(internal, nil, 'inventory')
-    end
+-- when a string gets translated
+event.register(defines.events.on_string_translated, function(e)
+  local player_table = util.player_table(e)
+  local dictionary = player_table.dictionary
+  local prototype_dictionary = player_table.prototype_dictionary
+  if e.translated and player_table.flags.building_dictionary then
+    local data = player_table.prototype_dictionary[e.localised_string[1]]
+    dictionary[data.name] = {type=data.type, name=string.lower(e.result), localised_name=e.localised_string}
   else
-    -- player inventory
-    if settings['qis-search-inventory'].value then
-      local inv_contents = player.get_main_inventory().get_contents()
-      for name,count in pairs(inv_contents) do
-        add_if_match(name, count, 'inventory')
-      end
-    end
-    if player.character then
-      local character = player.character
-      -- logistic network(s)
-      if settings['qis-search-logistics'].value then
-        for _,point in ipairs(character.get_logistic_point()) do
-          local network = point.logistic_network
-          if network.valid then
-            for name,count in pairs(point.logistic_network.get_contents()) do
-              add_if_match(name, count, 'logistics')
-            end
-          end
-        end
-      end
-      -- crafting
-      if settings['qis-search-crafting'].value then
-        for name,recipe in pairs(player.force.recipes) do
-          local count = player.get_craftable_count(recipe)
-          if count > 0 then
-            add_if_match(name, count, 'crafting')
-          end
-        end
-      end
-    end
-    -- unavailable
-    if settings['qis-search-unavailable'].value then
-      for internal,_ in pairs(dictionary) do
-        add_if_match(internal, nil, 'unavailable')
-      end
-    end
+    util.log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
+    player_table.finished_size_offset = player_table.finished_size_offset + 1
   end
-  return results
-end
+  if table_size(prototype_dictionary) - table_size(dictionary) - player_table.finished_size_offset == 0 then
+    player_table.prototype_dictionary = nil
+    player_table.finished_size_offset = nil
+    player_table.flags.building_dictionary = false
+  end
+end)
 
-local function update_results_table(player, player_table, gui_data, results_table, search_query)
-end
+-- rebuild all connected player dictionaries on the first tick (for singleplayer)
+event.on_load(function()
+  event.register(defines.events.on_tick, build_dictionary)
+end)
+
+-- when a player joins a game, rebuild their dictionary
+event.register(defines.events.on_player_joined_game, function(e)
+  build_dictionary(e)
+end)
 
 -- -----------------------------------------------------------------------------
 -- GUI
 
 -- ----------------------------------------
--- GUI HANDLERS
+-- GUI CONDITIONAL HANDLERS
 
 local function input_nav(e)
   local player_table = util.player_table(e)
@@ -147,7 +176,7 @@ local function input_confirm(e)
   -- get prototype name of item to take action on
   local prototype_name = elems[gui_data.selected_index].sprite:gsub('(.+)/', '')
   util.log(prototype_name, true)
-  -- close GUI (which resets settings and flag)
+  -- close GUI
   event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
 end
 
@@ -253,7 +282,7 @@ function gui.destroy(window, player_index)
 end
 
 -- -----------------------------------------------------------------------------
--- EVENT HANDLERS
+-- GENERAL
 
 -- on init
 event.on_init(function()
@@ -263,40 +292,10 @@ event.on_init(function()
   end
 end)
 
--- on load
-event.on_load(function()
-  -- rebuild all connected player dictionaries on the first tick (for singleplayer)
-  event.register(defines.events.on_tick, build_dictionary)
-end)
-
 -- when a player is created
 event.register(defines.events.on_player_created, function(e)
   local player = game.players[e.player_index]
   setup_player(player)
-end)
-
--- when a player joins a game
-event.register(defines.events.on_player_joined_game, function(e)
-  build_dictionary(e)
-end)
-
--- when a string gets translated
-event.register(defines.events.on_string_translated, function(e)
-  local player_table = util.player_table(e)
-  local dictionary = player_table.dictionary
-  local prototype_dictionary = player_table.prototype_dictionary
-  if e.translated and player_table.flags.building_dictionary then
-    local data = player_table.prototype_dictionary[e.localised_string[1]]
-    dictionary[data.name] = {type=data.type, name=string.lower(e.result), localised_name=e.localised_string}
-  else
-    util.log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
-    player_table.finished_size_offset = player_table.finished_size_offset + 1
-  end
-  if table_size(prototype_dictionary) - table_size(dictionary) - player_table.finished_size_offset == 0 then
-    player_table.prototype_dictionary = nil
-    player_table.finished_size_offset = nil
-    player_table.flags.building_dictionary = false
-  end
 end)
 
 event.register(translation_started_event, function(e)
