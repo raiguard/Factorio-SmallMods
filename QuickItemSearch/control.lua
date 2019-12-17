@@ -21,6 +21,7 @@ local function setup_player(player)
       building_dictionary = false
     },
     gui = {
+      flags = {selecting_result=false},
       settings = {
         inventory = true,
         logistics = true,
@@ -71,6 +72,10 @@ end
 
 -- ----------------------------------------
 -- GUI HANDLERS
+
+local function input_nav(e)
+  util.log(e)
+end
 
 local function search_textfield_text_changed(e)
   local player, player_table = util.get_player(e)
@@ -161,7 +166,8 @@ local function search_textfield_text_changed(e)
 end
 
 local function search_textfield_confirmed(e)
-  util.log(e)
+  
+  event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=player.index})
 end
 
 local function inventory_checkbox_state_changed(e)
@@ -182,12 +188,9 @@ local function crafting_checkbox_state_changed(e)
   search_textfield_text_changed{tick=game.tick, player_index=e.player_index, element=player_table.gui.elems.search_textfield}
 end
 
-local function input_nav(e)
-  util.log(e)
-end
-
 local handlers = {
   search_textfield_text_changed = search_textfield_text_changed,
+  search_textfield_confirmed = search_textfield_confirmed,
   inventory_checkbox_state_changed = inventory_checkbox_state_changed,
   logistics_checkbox_state_changed = logistics_checkbox_state_changed,
   crafting_checkbox_state_changed = crafting_checkbox_state_changed,
@@ -226,7 +229,6 @@ function gui.create(parent, player, settings)
   util.gui.add_pusher(toolbar, 'qis_toolbar_pusher')
   local results_scroll = content_pane.add{type='scroll-pane', name='qis_results_scroll_pane', style='results_scroll_pane', vertical_scroll_policy='always'}
   local results_table = results_scroll.add{type='table', name='qis_results_table', style='results_slot_table', column_count=6}
-  event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=player.index})
   return {window=window, search_textfield=search_textfield, results_table=results_table}
 end
 

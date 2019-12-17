@@ -15,26 +15,27 @@ data:extend{
   {
     type = 'custom-input',
     name = 'qis-nav-up',
-    key_sequence = '',
-    linked_game_control = 'move-up'
+    key_sequence = 'UP'
   },
   {
     type = 'custom-input',
     name = 'qis-nav-left',
-    key_sequence = '',
-    linked_game_control = 'move-left'
+    key_sequence = 'LEFT'
   },
   {
     type = 'custom-input',
     name = 'qis-nav-down',
-    key_sequence = '',
-    linked_game_control = 'move-down'
+    key_sequence = 'DOWN'
   },
   {
     type = 'custom-input',
     name = 'qis-nav-right',
-    key_sequence = '',
-    linked_game_control = 'move-right'
+    key_sequence = 'RIGHT'
+  },
+  {
+    type = 'custom-input',
+    name = 'qis-nav-confirm',
+    key_sequence = 'ENTER'
   }
 }
 
