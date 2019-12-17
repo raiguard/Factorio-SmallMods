@@ -33,8 +33,6 @@ function event.register(id, handler, options)
     elseif player_index then
       table.insert(con_registry.players, player_index)
       return event -- don't do anything else
-    elseif not options.skip_error then
-      error('Tried to re-register an existing global conditional event')
     end
   end
   -- register handler
