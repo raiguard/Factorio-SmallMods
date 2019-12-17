@@ -68,8 +68,6 @@ styles['results_scroll_pane'] = {
   type = 'scroll_pane_style',
   -- parent = 'scroll_pane',
   padding = 0,
-  minimal_width = (40 * 6) + 12, -- six columns + scrollbar
-  height = 240, -- four rows
   extra_padding_when_activated = 0,
   extra_right_padding_when_activated = -12,
   graphical_set = outer_frame_light,
@@ -92,15 +90,6 @@ styles['results_slot_table'] = {
   parent = 'slot_table',
   horizontal_spacing = 0,
   vertical_spacing = 0
-}
-
--- ------------------------------------------------------------------------------
--- TEXTFIELD STYLES
-
-styles['qis_search_textfield'] = {
-  type = 'textbox_style',
-  width = (40 * 6) + 12, -- same as results scroll pane
-  bottom_margin = 6
 }
 
 -- ------------------------------------------------------------------------------

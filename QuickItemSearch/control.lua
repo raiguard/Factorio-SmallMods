@@ -12,7 +12,7 @@ local gui = {}
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
--- setup player global table and GUI
+-- setup player global table
 local function setup_player(player)
   local data = {
     dictionary = {},
@@ -24,7 +24,8 @@ local function setup_player(player)
   global.players[player.index] = data
 end
 
-local function build_search_results(player, dictionary, settings, search)
+-- builds table of search results by searching the player's dictionary
+local function build_search_results(player, dictionary, search)
   local player_settings = player.mod_settings
   local results = {}
   local function add_if_match(name, count, result_type)
@@ -152,12 +153,12 @@ end)
 -- GUI CONDITIONAL HANDLERS
 
 local function input_nav(e)
-  local player_table = util.player_table(e)
+  local player, player_table = util.get_player(e)
   local gui_data = player_table.gui
   local elems = gui_data.results_table.children
+  local columns = player.mod_settings['qis-column-count'].value
   -- get offset
-  local nav_direction_to_offset = {up=-6, left=-1, down=6, right=1}
-  local offset = nav_direction_to_offset[e.input_name:gsub('qis%-nav%-', '')]
+  local offset = ({up=-columns, left=-1, down=columns, right=1})[e.input_name:gsub('qis%-nav%-', '')]
   if offset then
     -- reset style and apply offset
     local selected_index = gui_data.selected_index
@@ -166,6 +167,8 @@ local function input_nav(e)
     -- set new style and save new offset
     elems[selected_index].style = elems[selected_index].style.name:gsub('qis', 'qis_active')
     gui_data.selected_index = selected_index
+    -- scroll
+    gui_data.results_scroll.scroll_to_element(elems[selected_index])
   end
 end
 
@@ -181,7 +184,13 @@ local function input_confirm(e)
 end
 
 local function result_button_clicked(e)
-  util.log(e)
+  local player_table = util.player_table(e)
+  local gui_data = player_table.gui
+  -- get prototype name of item to take action on
+  local prototype_name = e.element.sprite:gsub('(.+)/', '')
+  util.log(prototype_name, true)
+  -- close GUI
+  event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
 end
 
 local function search_textfield_text_changed(e)
@@ -199,7 +208,7 @@ local function search_textfield_text_changed(e)
   -- update results
   local i = 0
   local children = table.deepcopy(results_table.children)
-  for _,t in pairs(build_search_results(player, player_table.dictionary, gui_data.settings, string.lower(e.element.text))) do
+  for _,t in pairs(build_search_results(player, player_table.dictionary, string.lower(e.element.text))) do
     i = i + 1
     local elem = children[i]
     if not elem then -- create button
@@ -257,17 +266,40 @@ end)
 -- ----------------------------------------
 -- GUI MANAGEMENT
 
-function gui.create(parent, player)
-  local window = parent.add{type='frame', name='qis_window', style='dialog_frame', direction='vertical'}
-  local search_textfield = window.add{type='textfield', name='qis_search_textfield', style='qis_search_textfield', lose_focus_on_confirm=true,
-                                      clear_and_focus_on_right_click=true, text='Search...'}
+function gui.create(parent, player, settings)
+  -- dimensions
+  local pane_width = (40 * settings.columns) + 12
+  local pane_height = settings.rows * 40
+  -- elements
+  local window = parent.add{type='frame', name='qis_window', direction='vertical'}
+  local textfield_def = {type='textfield', name='qis_search_textfield', lose_focus_on_confirm=true, clear_and_focus_on_right_click=true, text='Search...'}
+  local search_textfield
+  if settings.location ~= 'bottom' then
+    search_textfield = window.add(textfield_def)
+    search_textfield.style.bottom_margin = 6
+    search_textfield.style.width = pane_width
+    window.style.bottom_padding = 8
+  end
+  local results_scroll = window.add{type='scroll-pane', name='qis_results_scroll_pane', style='results_scroll_pane', vertical_scroll_policy='always'}
+  results_scroll.style.width = pane_width
+  results_scroll.style.height = pane_height
+  local results_table = results_scroll.add{type='table', name='qis_results_table', style='results_slot_table', column_count=settings.columns}
+  if settings.location == 'bottom' then
+    search_textfield = window.add(textfield_def)
+    search_textfield.style.top_margin = 6
+    search_textfield.style.width = pane_width
+    window.style.top_padding = 8
+    window.style.bottom_padding = 6
+    -- position GUI
+    window.location = {x=0, y=player.display_resolution.height-((pane_height + 60)*player.display_scale)}
+  end
+  -- textfield events
   search_textfield.select_all()
   search_textfield.focus()
   event.on_gui_text_changed(search_textfield_text_changed, {name='search_textfield_text_changed', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_confirmed(search_textfield_confirmed, {name='search_textfield_confirmed', player_index=player.index, gui_filters=search_textfield})
-  local results_scroll = window.add{type='scroll-pane', name='qis_results_scroll_pane', style='results_scroll_pane', vertical_scroll_policy='always'}
-  local results_table = results_scroll.add{type='table', name='qis_results_table', style='results_slot_table', column_count=6}
-  return {window=window, search_textfield=search_textfield, results_table=results_table, selected_index=1}
+
+  return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, selected_index=1}
 end
 
 function gui.destroy(window, player_index)
@@ -316,7 +348,11 @@ event.register('qis-search', function(e)
     -- focus textfield
     gui_data.search_textfield.focus()
   elseif not gui_data then
-    gui_data = gui.create(mod_gui.get_frame_flow(player), player)
+    local mod_settings = player.mod_settings
+    local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
+    local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
+    -- HARDCODED FOR NOW
+    gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
     player.opened = gui_data.window
     player_table.gui = gui_data
   end
