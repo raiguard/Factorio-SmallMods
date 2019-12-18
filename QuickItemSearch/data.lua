@@ -170,86 +170,31 @@ styles['qis_close_button'] = {
   top_margin = 4
 }
 
-local desat_file = '__QuickItemSearch__/graphics/gui/filter-slot-button-desaturated.png'
-local function tinted_filter_slot_button(tint)
+local function tinted_result_slot_button(type, glow_color)
+  local file = '__QuickItemSearch__/graphics/gui/result-slot-button-'..type..'.png'
   return {
     type = 'button_style',
     parent = 'filter_slot_button',
     default_graphical_set = {
-      base = {border=4, position={0,0}, size=80, filename=desat_file, tint=tint},
-      shadow = offset_by_2_rounded_corners_glow(tint),
+      base = {border=4, position={0,0}, size=80, filename=file},
+      shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
     },
     hovered_graphical_set = {
-      base = {border=4, position={80,0}, size=80, filename=desat_file, tint=tint},
-      shadow = offset_by_2_rounded_corners_glow(tint),
-      glow = offset_by_2_rounded_corners_glow(tint)
+      base = {border=4, position={80,0}, size=80, filename=file},
+      shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
+      glow = offset_by_2_rounded_corners_glow(glow_color)
     },
     clicked_graphical_set = {
-      base = {border=4, position={160,0}, size=80, filename=desat_file, tint=tint},
-      shadow = offset_by_2_rounded_corners_glow(tint),
+      base = {border=4, position={160,0}, size=80, filename=file},
+      shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
     }
   }
 end
-local function active_tinted_filter_slot_button(tint, parent)
-  return {
-    type = 'button_style',
-    parent = parent,
-    default_graphical_set = {
-      base = {border=4, position={80,0}, size=80, filename=desat_file, tint=tint},
-      shadow = offset_by_2_rounded_corners_glow(tint),
-    }
-  }
-end
-
 styles['qis_inventory_result_slot_button'] = {type='button_style', parent='filter_slot_button'}
 styles['qis_active_inventory_result_slot_button'] = {type='button_style', parent='qis_active_filter_slot_button'}
-styles['qis_logistics_result_slot_button'] = tinted_filter_slot_button{170,220,220}
-styles['qis_active_logistics_result_slot_button'] = active_tinted_filter_slot_button({170,220,220}, 'qis_logistics_result_slot_button')
-styles['qis_crafting_result_slot_button'] = tinted_filter_slot_button{170,220,170}
-styles['qis_active_crafting_result_slot_button'] = active_tinted_filter_slot_button({170,220,170}, 'qis_crafting_result_slot_button')
-styles['qis_unavailable_result_slot_button'] = tinted_filter_slot_button{220,170,170}
-styles['qis_active_unavailable_result_slot_button'] = active_tinted_filter_slot_button({220,170,170}, 'qis_unavailable_result_slot_button')
-
--- ------------------------------------------------------------------------------
--- CHECKBOX STYLES
-
-local desat_checkbox_file = '__QuickItemSearch__/graphics/gui/checkbox-desaturated.png'
-local function tinted_checkbox(tint)
-  return {
-    type = 'checkbox_style',
-    parent = 'checkbox',
-    default_graphical_set = {
-      base = {position={0,0}, size={28,28}, filename=desat_checkbox_file},
-      shadow = default_dirt
-    },
-    hovered_graphical_set = {
-      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
-      glow = default_glow(tint, 0.5)
-    },
-    clicked_graphical_set = {
-      base = {position = {84,0}, size = {28,28}, filename=desat_checkbox_file, tint=tint},
-      glow = default_glow(tint, 0.5)
-    },
-    disabled_graphical_set = {
-      base = {position={28,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
-      shadow = default_dirt
-    },
-    selected_graphical_set = {
-      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
-    },
-    selected_hovered_graphical_set = {
-      base = {position={56,0}, size={28,28}, filename=desat_checkbox_file, tint=tint},
-      glow = default_glow(tint, 0.5)
-    },
-    selected_clicked_graphical_set = {
-      base = {position = {84,0}, size = {28,28}, filename=desat_checkbox_file, tint=tint},
-      glow = default_glow(tint, 0.5)
-    },
-    text_padding = 6
-  }
+for type,color in pairs{logistics={34,181,255,128}, crafting={34,255,75,128}, unavailable={255,166,123,128}} do
+  local style = tinted_result_slot_button(type, color)
+  styles['qis_'..type..'_result_slot_button'] = table.deepcopy(style)
+  style.default_graphical_set.base.position = {80,0}
+  styles['qis_active_'..type..'_result_slot_button'] = table.deepcopy(style)
 end
-
-styles['qis_inventory_checkbox'] = {type='checkbox_style', parent='checkbox'}
-styles['qis_logistics_checkbox'] = tinted_checkbox{170,220,220}
-styles['qis_crafting_checkbox'] = tinted_checkbox{170,220,170}
-styles['qis_unavailable_checkbox'] = tinted_checkbox{220,170,170}
