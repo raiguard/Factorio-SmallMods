@@ -30,26 +30,28 @@ local function build_search_results(player, dictionary, search)
   local results = {}
   local search_split = string.split(search, ' ')
   local search_count = #search_split
+  local show_hidden = player_settings['qis-search-hidden'].value
   local function add_if_match(name, count, result_type)
     local dict_entry = dictionary[name]
     if not results[name] and dict_entry then
-        local dict_name = dict_entry.name
-        local matches = 0
-        for _,str in ipairs(search_split) do
-          if dict_name:match(str) then
-            matches = matches + 1
-          end
+      if dict_entry.hidden and not show_hidden then return end
+      local dict_name = dict_entry.name
+      local matches = 0
+      for _,str in ipairs(search_split) do
+        if dict_name:match(str) then
+          matches = matches + 1
         end
-        if matches == search_count then
-          results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
-        end
+      end
+      if matches == search_count then
+        results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
+      end
     end
   end
   if player.controller_type == defines.controllers.editor then
     -- show all items
-    -- local inv_contents = player.get_main_inventory().get_contents()
+    local inv_contents = player.get_main_inventory().get_contents()
     for internal,_ in pairs(dictionary) do
-      add_if_match(internal, nil, 'inventory')
+      add_if_match(internal, inv_contents[internal], 'inventory')
     end
   else
     -- player inventory
@@ -92,6 +94,57 @@ local function build_search_results(player, dictionary, search)
   return results
 end
 
+local function take_item_action(player, name, count, type, alt)
+  local prototype = game.item_prototypes[name]
+  local stack_size = prototype.stack_size
+  local function set_ghost_cursor()
+    if prototype.place_result then
+      player.cursor_ghost = name
+    end
+  end
+  util.log(player.name..': '..name..'-'..count..' | '..type..' '..tostring(alt))
+  if type == 'inventory' then
+    if count == 0 and player.controller_type == defines.controllers.editor then -- editor
+      player.cursor_stack.set_stack{name=name, count=stack_size}
+    else
+      player.cursor_stack.set_stack{name=name, count=player.get_main_inventory().remove{name=name, count=stack_size}}
+    end
+    -- 0.18:
+    if player.controller_type == defines.controllers.editor and alt then
+      player.print('set filters when 0.18 comes out!')
+      -- local filters = player.infinity_inventory_filters
+      -- local index = #filters + 1
+      -- filters[index] = {name=name, count=stack_size, mode='exactly', index=index}
+    end
+  elseif type == 'logistics' and player.character and player.character.valid then
+    local character = player.character
+    if alt then
+      set_ghost_cursor()
+    else -- request from logistic network
+      local get_slot = character.get_request_slot
+      for i=1,character.request_slot_count do
+        if get_slot(i) == nil then
+          character.set_request_slot({name=name, count=stack_size}, i)
+          player.print{'chat-message.request-from-logistic-network', stack_size, util.player_table(player).dictionary[name].name}
+          return
+        end
+      end
+    end
+  elseif type == 'crafting' then
+    if alt then -- craft five
+      player.begin_crafting{recipe=name, count=5, silent=true}
+    else -- craft all
+      player.begin_crafting{recipe=name, count=count}
+    end
+  elseif type == 'unavailable' then
+    set_ghost_cursor()
+  end
+end
+
+local function extract_slot_type(elem)
+  return elem.style.name:gsub('qis_(.+)_result_slot_button', '%1'):gsub('active_', '')
+end
+
 -- -----------------------------------------------------------------------------
 -- LOCALISED DICTIONARY
 
@@ -105,10 +158,10 @@ local function build_dictionary(e)
     local prototype_dictionary = {}
     -- to avoid a crash, we just assemble the prototypes table first, then request translations for all of it at once
     for _,prototype in pairs(game.item_prototypes) do
-      prototype_dictionary[prototype.localised_name[1]] = {type='item', name=prototype.name}
+      prototype_dictionary[prototype.localised_name[1]] = {type='item', prototype=prototype}
     end
     for _,prototype in pairs(game.equipment_prototypes) do
-      prototype_dictionary[prototype.localised_name[1]] = {type='equipment', name=prototype.name}
+      prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
     end
     -- request translations
     for name,_ in pairs(prototype_dictionary) do
@@ -138,7 +191,7 @@ event.register(defines.events.on_string_translated, function(e)
   local prototype_dictionary = player_table.prototype_dictionary
   if e.translated and player_table.flags.building_dictionary then
     local data = player_table.prototype_dictionary[e.localised_string[1]]
-    dictionary[data.name] = {type=data.type, name=string.lower(e.result), localised_name=e.localised_string}
+    dictionary[data.prototype.name] = {type=data.type, name=string.lower(e.result), localised_name=e.localised_string, hidden=data.type == 'item' and data.prototype.has_flag('hidden') or false}
   else
     util.log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
     player_table.finished_size_offset = player_table.finished_size_offset + 1
@@ -180,22 +233,18 @@ local function input_nav(e)
 end
 
 local function input_confirm(e)
-  local player_table = util.player_table(e)
+  local player, player_table = util.get_player(e)
   local gui_data = player_table.gui
-  local elems = gui_data.results_table.children
-  -- get prototype name of item to take action on
-  local prototype_name = elems[gui_data.selected_index].sprite:gsub('(.+)/', '')
-  util.log(prototype_name, true)
+  local elem = gui_data.results_table.children[gui_data.selected_index]
+  take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-alt-confirm')
   -- close GUI
   event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
 end
 
 local function result_button_clicked(e)
-  local player_table = util.player_table(e)
+  local player, player_table = util.get_player(e)
   local gui_data = player_table.gui
-  -- get prototype name of item to take action on
-  local prototype_name = e.element.sprite:gsub('(.+)/', '')
-  util.log(prototype_name, true)
+  take_item_action(player, e.element.sprite:gsub('(.+)/', ''), e.element.number or 0, extract_slot_type(e.element), e.shift)
   -- close GUI
   event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
 end
@@ -241,9 +290,8 @@ local function search_textfield_confirmed(e)
   local results_table = gui_data.results_table
   local results_count = #results_table.children
   if results_count == 1 then
-    -- get prototype name of item to take action on
-    local prototype_name = results_table.children[gui_data.selected_index].sprite:gsub('(.+)/', '')
-    util.log(prototype_name, true)
+    local elem = results_table.children[1]
+    take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.shift)
     -- close GUI (which resets settings and flag)
     event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
   elseif results_count > 1 then
