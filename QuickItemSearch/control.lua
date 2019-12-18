@@ -124,6 +124,7 @@ local function build_dictionary(e)
         request_translations(player, util.player_table(player))
       end
     end
+    event.deregister(defines.events.on_tick, build_dictionary)
   end
   if e.name == 'rebuild-localised-dictionary' then
     game.print{'chat-message.rebuilt-localised-dictionary', util.get_player(e).name}
@@ -150,9 +151,7 @@ event.register(defines.events.on_string_translated, function(e)
 end)
 
 -- when a player joins a game, rebuild their dictionary
-event.register(defines.events.on_player_joined_game, function(e)
-  build_dictionary(e)
-end)
+event.register(defines.events.on_player_joined_game, build_dictionary)
 
 -- -----------------------------------------------------------------------------
 -- GUI
@@ -331,6 +330,10 @@ event.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
     setup_player(player)
+  end
+  -- register event if we're coming into an existing game
+  if game.tick > 0 then
+    event.register(defines.events.on_tick, build_dictionary)
   end
 end)
 
