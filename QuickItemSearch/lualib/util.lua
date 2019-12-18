@@ -3,6 +3,8 @@ local util = require('__core__/lualib/util')
 
 math.clamp = util.clamp
 
+string.split = util.split
+
 table.compare = util.compare
 
 -- returns true if the table contains the specified value

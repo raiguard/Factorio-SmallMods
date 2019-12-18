@@ -28,10 +28,21 @@ end
 local function build_search_results(player, dictionary, search)
   local player_settings = player.mod_settings
   local results = {}
+  local search_split = string.split(search, ' ')
+  local search_count = #search_split
   local function add_if_match(name, count, result_type)
     local dict_entry = dictionary[name]
-    if not results[name] and dict_entry and dict_entry.name:match(search) then
-        results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
+    if not results[name] and dict_entry then
+        local dict_name = dict_entry.name
+        local matches = 0
+        for _,str in ipairs(search_split) do
+          if dict_name:match(str) then
+            matches = matches + 1
+          end
+        end
+        if matches == search_count then
+          results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
+        end
     end
   end
   if player.controller_type == defines.controllers.editor then
@@ -113,7 +124,9 @@ local function build_dictionary(e)
         request_translations(player, util.player_table(player))
       end
     end
-    event.deregister(defines.events.on_tick, build_dictionary)
+  end
+  if e.name == 'rebuild-localised-dictionary' then
+    game.print{'chat-message.rebuilt-localised-dictionary', util.get_player(e).name}
   end
 end
 
@@ -134,11 +147,6 @@ event.register(defines.events.on_string_translated, function(e)
     player_table.finished_size_offset = nil
     player_table.flags.building_dictionary = false
   end
-end)
-
--- rebuild all connected player dictionaries on the first tick (for singleplayer)
-event.on_load(function()
-  event.register(defines.events.on_tick, build_dictionary)
 end)
 
 -- when a player joins a game, rebuild their dictionary
@@ -316,6 +324,8 @@ end
 -- -----------------------------------------------------------------------------
 -- GENERAL
 
+commands.add_command('rebuild-localised-dictionary', 'Rebuilds the specified player\'s localised dictionary.', build_dictionary)
+
 -- on init
 event.on_init(function()
   global.players = {}
@@ -351,7 +361,6 @@ event.register('qis-search', function(e)
     local mod_settings = player.mod_settings
     local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
     local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
-    -- HARDCODED FOR NOW
     gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
     player.opened = gui_data.window
     player_table.gui = gui_data
