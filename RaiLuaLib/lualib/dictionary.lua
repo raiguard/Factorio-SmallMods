@@ -1,6 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RAI'S LOCALISED DICTIONARY
--- v1.0.0-dev
+-- v1.0.0
 
 -- DOCUMENTATION: https://github.com/raiguard/SmallFactorioMods/wiki/Localised-Dictionary-Documentation
 

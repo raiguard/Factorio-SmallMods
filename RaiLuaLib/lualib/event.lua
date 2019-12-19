@@ -1,6 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RAI'S EVENT LIBRARY
--- v1.0.0-dev
+-- v1.0.0
 
 -- DOCUMENTATION: https://github.com/raiguard/SmallFactorioMods/wiki/Event-Library-Documentation
 
@@ -24,13 +24,20 @@ local bootstrap_handlers = {
 
 function event.register(id, handler, options)
   options = options or {}
+  -- nest GUI filters into an array if they're not already
+  local filters = options.gui_filters
+  if filters then
+    if type(filters) ~= 'table' or filters.gui then
+      filters = {filters}
+    end
+  end
   -- add to conditional event registry if needed
   local name = options.name
   if name then
     local player_index = options.player_index
     local con_registry = global.conditional_event_registry[name]
     if not con_registry then
-      global.conditional_event_registry[name] = {id=id, players={player_index}, gui_filters=options.gui_filters}
+      global.conditional_event_registry[name] = {id=id, players={player_index}, gui_filters=filters}
     elseif player_index then
       table.insert(con_registry.players, player_index)
       return event -- don't do anything else
@@ -66,7 +73,7 @@ function event.register(id, handler, options)
       end
     end
     -- add the handler to the events table
-    table.insert(registry, {handler=handler, name=name, gui_filters=options.gui_filters})
+    table.insert(registry, {handler=handler, name=name, gui_filters=filters})
   end
   return event -- function call chaining
 end
@@ -159,10 +166,6 @@ function event.dispatch(e)
       -- error checking
       if not e.element then
         error('Event \''..e.name..'\' does not support GUI filters.')
-      end
-      -- nest into an array if it's not in one
-      if type(filters) ~= 'table' or filters.gui then
-        filters = {filters}
       end
       for _,filter in pairs(filters) do
         if gui_filter_handlers[type(filter)](e.element, filter) then
