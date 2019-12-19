@@ -1,9 +1,9 @@
 {
-  "name": "EventLibrary",
-  "version": "0.0.1",
-  "title": "Rai's Event Library",
+  "name": "RaiLuaLib",
+  "version": "1.0.0",
+  "title": "Rai's LUA Library",
   "author": "raiguard",
   "factorio_version": "0.17",
-  "dependencies": ["base >= 0.17.65"],
-  "description": "Experimenting with a multi-handler and conditional events system."
+  "dependencies": ["base >= 0.17.79"],
+  "description": "Raiguard's LUA library. Not intended to be an distributed mod, only for testing purposes!"
 }

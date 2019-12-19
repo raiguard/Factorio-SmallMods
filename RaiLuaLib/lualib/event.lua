@@ -1,5 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RAI'S EVENT LIBRARY
+-- v1.0.0-dev
 
 -- DOCUMENTATION: https://github.com/raiguard/SmallFactorioMods/wiki/Event-Library-Documentation
 
