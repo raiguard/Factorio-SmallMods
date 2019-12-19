@@ -1,5 +1,5 @@
 return
 {
-  dictionary = false,
-  event = true
+  dictionary = true,
+  event = false
 }
