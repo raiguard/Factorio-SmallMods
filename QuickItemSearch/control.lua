@@ -1,13 +1,34 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICK ITEM SEARCH CONTROL SCRIPTING
 
+local dictionary = require('lualib/dictionary')
 local event = require('lualib/event')
 local util = require('lualib/util')
 
 local mod_gui = require('mod-gui')
-local translation_started_event = event.generate_id('translation_started')
+local string_lower = string.lower
 
 local gui = {}
+
+-- SET UP LOCALISED DICTIONARY
+dictionary.player_setup_function = function(player)
+  local prototype_dictionary = {}
+  for _,prototype in pairs(game.item_prototypes) do
+    prototype_dictionary[prototype.localised_name[1]] = {type='item', prototype=prototype}
+  end
+  for _,prototype in pairs(game.equipment_prototypes) do
+    prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
+  end
+  dictionary.build(player, 'item_search', prototype_dictionary, function(e, data)
+    return data.prototype.name, {
+      type = data.type,
+      name = string.lower(e.result),
+      localised_name = e.localised_string,
+      hidden = data.type == 'item' and data.prototype.has_flag('hidden') or false
+    }
+  end)
+end
+dictionary.use_builtin_event_handlers()
 
 -- -----------------------------------------------------------------------------
 -- UTILITIES
@@ -15,49 +36,48 @@ local gui = {}
 -- setup player global table
 local function setup_player(player)
   local data = {
-    dictionary = {},
     flags = {
-      building_dictionary = false,
       selecting_result = false
     }
   }
   global.players[player.index] = data
 end
 
--- builds table of search results by searching the player's dictionary
-local function build_search_results(player, dictionary, search)
+local function search_dictionary(player, search)
+  local dict = dictionary.get(player, 'item_search')
   local player_settings = player.mod_settings
   local results = {}
   local search_split = string.split(search, ' ')
   local search_count = #search_split
-  local show_hidden = player_settings['qis-search-hidden'].value
+  local function match_strings(search_split, name)
+    local matches = 0
+    for _,str in ipairs(search_split) do
+      if name:match(str) then
+        matches = matches + 1
+      end
+    end
+    if matches == search_count then
+      return true
+    end
+    return false
+  end
   local function add_if_match(name, count, result_type)
-    local dict_entry = dictionary[name]
-    if not results[name] and dict_entry then
-      if dict_entry.hidden and not show_hidden then return end
-      local dict_name = dict_entry.name
-      local matches = 0
-      for _,str in ipairs(search_split) do
-        if dict_name:match(str) then
-          matches = matches + 1
-        end
-      end
-      if matches == search_count then
-        results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
-      end
+    local dict_entry = dict[name]
+    if dict_entry and match_strings(search_split, name) and not results[name] then
+      results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
     end
   end
   if player.controller_type == defines.controllers.editor then
-    -- show all items
     local inv_contents = player.get_main_inventory().get_contents()
-    for internal,_ in pairs(dictionary) do
-      add_if_match(internal, inv_contents[internal], 'inventory')
+    for k,v in pairs(dict) do
+      if match_strings(search_split, v.name) then
+        results[k] = {count=inv_contents[k], tooltip=v.localised_name, type='inventory', sprite=v.type..'/'..k}
+      end
     end
   else
     -- player inventory
     if player_settings['qis-search-inventory'].value then
-      local inv_contents = player.get_main_inventory().get_contents()
-      for name,count in pairs(inv_contents) do
+      for name,count in pairs(player.get_main_inventory().get_contents()) do
         add_if_match(name, count, 'inventory')
       end
     end
@@ -86,7 +106,7 @@ local function build_search_results(player, dictionary, search)
     end
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
-      for internal,_ in pairs(dictionary) do
+      for internal,_ in pairs(dict) do
         add_if_match(internal, nil, 'unavailable')
       end
     end
@@ -125,7 +145,7 @@ local function take_item_action(player, name, count, type, alt)
       for i=1,character.request_slot_count do
         if get_slot(i) == nil then
           character.set_request_slot({name=name, count=stack_size}, i)
-          player.print{'chat-message.request-from-logistic-network', stack_size, util.player_table(player).dictionary[name].name}
+          player.print{'chat-message.request-from-logistic-network', stack_size, dictionary.get(player, 'item_search')[name].name}
           return
         end
       end
@@ -144,67 +164,6 @@ end
 local function extract_slot_type(elem)
   return elem.style.name:gsub('qis_(.+)_result_slot_button', '%1'):gsub('active_', '')
 end
-
--- -----------------------------------------------------------------------------
--- LOCALISED DICTIONARY
-
--- builds the dictionary for one player or all players
-local function build_dictionary(e)
-  local function request_translations(player, player_table)
-    event.raise(translation_started_event, {player_index=player.index})
-    player_table.flags.building_dictionary = true
-    player_table.finished_size_offset = 0
-    player_table.dictionary = {}
-    local prototype_dictionary = {}
-    -- to avoid a crash, we just assemble the prototypes table first, then request translations for all of it at once
-    for _,prototype in pairs(game.item_prototypes) do
-      prototype_dictionary[prototype.localised_name[1]] = {type='item', prototype=prototype}
-    end
-    for _,prototype in pairs(game.equipment_prototypes) do
-      prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
-    end
-    -- request translations
-    for name,_ in pairs(prototype_dictionary) do
-      player.request_translation({name})
-    end
-    player_table.prototype_dictionary = prototype_dictionary
-  end
-  if e.player_index then -- when a player joins a game
-    request_translations(util.get_player(e))
-  else -- for all connected players
-    for _,player in pairs(game.players) do
-      if player.connected then
-        request_translations(player, util.player_table(player))
-      end
-    end
-    event.deregister(defines.events.on_tick, build_dictionary)
-  end
-  if e.name == 'rebuild-localised-dictionary' then
-    game.print{'chat-message.rebuilt-localised-dictionary', util.get_player(e).name}
-  end
-end
-
--- when a string gets translated
-event.register(defines.events.on_string_translated, function(e)
-  local player_table = util.player_table(e)
-  local dictionary = player_table.dictionary
-  local prototype_dictionary = player_table.prototype_dictionary
-  if e.translated and player_table.flags.building_dictionary then
-    local data = player_table.prototype_dictionary[e.localised_string[1]]
-    dictionary[data.prototype.name] = {type=data.type, name=string.lower(e.result), localised_name=e.localised_string, hidden=data.type == 'item' and data.prototype.has_flag('hidden') or false}
-  else
-    util.log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
-    player_table.finished_size_offset = player_table.finished_size_offset + 1
-  end
-  if table_size(prototype_dictionary) - table_size(dictionary) - player_table.finished_size_offset == 0 then
-    player_table.prototype_dictionary = nil
-    player_table.finished_size_offset = nil
-    player_table.flags.building_dictionary = false
-  end
-end)
-
--- when a player joins a game, rebuild their dictionary
-event.register(defines.events.on_player_joined_game, build_dictionary)
 
 -- -----------------------------------------------------------------------------
 -- GUI
@@ -264,7 +223,7 @@ local function search_textfield_text_changed(e)
   -- update results
   local i = 0
   local children = table.deepcopy(results_table.children)
-  for _,t in pairs(build_search_results(player, player_table.dictionary, string.lower(e.element.text))) do
+  for _,t in pairs(search_dictionary(player, string_lower(e.element.text))) do
     i = i + 1
     local elem = children[i]
     if not elem then -- create button
@@ -371,28 +330,17 @@ end
 -- -----------------------------------------------------------------------------
 -- GENERAL
 
-commands.add_command('rebuild-localised-dictionary', 'Rebuilds the specified player\'s localised dictionary.', build_dictionary)
-
 -- on init
 event.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
     setup_player(player)
   end
-  -- register event if we're coming into an existing game
-  if game.tick > 0 then
-    event.register(defines.events.on_tick, build_dictionary)
-  end
 end)
 
 -- when a player is created
 event.register(defines.events.on_player_created, function(e)
-  local player = game.players[e.player_index]
-  setup_player(player)
-end)
-
-event.register(translation_started_event, function(e)
-  util.log('translation started!')
+  setup_player(game.get_player(e.player_index))
 end)
 
 event.register('qis-search', function(e)
