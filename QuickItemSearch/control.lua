@@ -122,7 +122,6 @@ local function take_item_action(player, name, count, type, alt)
       player.cursor_ghost = name
     end
   end
-  util.log(player.name..': '..name..'-'..count..' | '..type..' '..tostring(alt))
   if type == 'inventory' then
     if count == 0 and player.controller_type == defines.controllers.editor then -- editor
       player.cursor_stack.set_stack{name=name, count=stack_size}
@@ -172,7 +171,8 @@ end
 -- GUI CONDITIONAL HANDLERS
 
 local function input_nav(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   local elems = gui_data.results_table.children
   local columns = player.mod_settings['qis-column-count'].value
@@ -192,7 +192,8 @@ local function input_nav(e)
 end
 
 local function input_confirm(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   local elem = gui_data.results_table.children[gui_data.selected_index]
   take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-alt-confirm')
@@ -201,7 +202,8 @@ local function input_confirm(e)
 end
 
 local function result_button_clicked(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   take_item_action(player, e.element.sprite:gsub('(.+)/', ''), e.element.number or 0, extract_slot_type(e.element), e.shift)
   -- close GUI
@@ -209,7 +211,8 @@ local function result_button_clicked(e)
 end
 
 local function search_textfield_text_changed(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
   if player_table.flags.selecting_result then
@@ -244,7 +247,8 @@ local function search_textfield_text_changed(e)
 end
 
 local function search_textfield_confirmed(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
   local results_count = #results_table.children
@@ -344,7 +348,8 @@ event.register(defines.events.on_player_created, function(e)
 end)
 
 event.register('qis-search', function(e)
-  local player, player_table = util.get_player(e)
+  local player = game.get_player(e.player_index)
+  local player_table = util.player_table(e.player_index)
   local gui_data = player_table.gui
   if gui_data and player_table.flags.selecting_result == true then
     -- reset to searching
