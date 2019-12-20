@@ -28,7 +28,7 @@ event.register(dictionary.build_start_event, function(e) util.log('BUILDING DICT
 event.register(dictionary.build_finish_event, function(e) game.get_player(e.player_index).print('Dictionary \''..e.dict_name..'\' built') end)
 
 event.on_init(function()
-  for i,p in pairs(game.players) do
+  for _,p in pairs(game.players) do
     mod_gui.get_button_flow(p).add{type='button', name='rll_dict_button', style=mod_gui.button_style, caption='Search dictionaries'}
   end
 end)

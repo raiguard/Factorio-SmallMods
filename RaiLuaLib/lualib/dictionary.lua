@@ -16,16 +16,14 @@ local dictionary = {}
 dictionary.build_start_event = event.generate_id('dictionary_build_start')
 dictionary.build_finish_event = event.generate_id('dictionary_build_finish')
 dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
-dictionary.search = function(dict, search_func)
+dictionary.search = function(dict, search_func, extra_func_args)
   local results = {}
   for k,v in pairs(dict) do
-    local value,key = search_func(k,v)
-    if value then
-      if key then
-        results[key] = value
-      else
-        table.insert(results, value)
-      end
+    local key,value = search_func(k, v, extra_func_args)
+    if key then
+      results[key] = value
+    else
+      table.insert(results, value)
     end
   end
   return results
