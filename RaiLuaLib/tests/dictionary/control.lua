@@ -64,13 +64,12 @@ event.on_gui_text_changed(
     local dict_name = e.element.parent.rll_dict_switch.switch_state == 'left' and 'equipment' or 'items'
     -- super simple search function
     local results = dictionary.search(dictionary.get(player, dict_name), function(k,v)
-      if v:match(string_lower(search)) then
-        return v,k
+      if string.match(string_lower(v), search) then
+        return v
       end
     end)
-    local i = 0
-    for internal,localised in pairs(results) do
-      i = i + 1
+    -- since we only returned a value in the search function, it created an array, so we can use ipairs
+    for i,localised in ipairs(results) do
       results_flow.add{type='label', name='rll_dict_result_'..i, caption=localised}
     end
   end,
