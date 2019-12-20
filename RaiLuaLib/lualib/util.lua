@@ -33,9 +33,9 @@ end
 -- returns the player and his global table
 function util.get_player(obj)
   local player_table = global.players or {}
-  if type(obj) == 'number' then return game.players[obj], player_table[obj] -- gave the player_index itself
-  elseif obj.__self then return game.players[obj.index], player_table[obj.index] -- gave a player object
-  else return game.players[obj.player_index], player_table[obj.player_index] end -- gave the event table
+  if type(obj) == 'number' then return game.get_player(obj), player_table[obj] -- gave the player_index itself
+  elseif obj.__self then return game.get_player(obj.index), player_table[obj.index] -- gave a player object
+  else return game.get_player(obj.player_index), player_table[obj.player_index] end -- gave the event table
 end
 
 -- just returns the player table
