@@ -9,25 +9,15 @@ local event = require('lualib/event')
 
 -- -----------------------------------------------------------------------------
 
+local use_event_handlers = false
+
 -- library
 local dictionary = {}
-dictionary.on_init = function() end -- blank function
 dictionary.build_start_event = event.generate_id('dictionary_build_start')
 dictionary.build_finish_event = event.generate_id('dictionary_build_finish')
-dictionary.setup_function = function(player)
-  error('Must define a setup function to use the localised dictionary! See the documentation for more info.')
-end
-dictionary.get_data_function = function(e, data)
-  error('Must define an insert data function to use the localised dictionary! See the documentation for more info.')
-end
-dictionary.get = function(obj)
-  if type(obj) == 'number' then return global.dictionary[obj] -- gave the player_index itself
-  elseif obj.__self then return global.dictionary[obj.index] -- gave a player object
-  else return global.dictionary[obj.player_index] end -- gave the event table
-end
-dictionary.search = function(player, search_func)
+dictionary.search = function(dict, search_func)
   local results = {}
-  for k,v in pairs(dictionary.get(player)) do
+  for k,v in pairs(dict) do
     local value,key = search_func(k,v)
     if value then
       if key then
@@ -39,20 +29,22 @@ dictionary.search = function(player, search_func)
   end
   return results
 end
+dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
 
-local function setup_player(player)
-  global.dictionary[player.index] = {}
+function dictionary.get(player, dict_name)
+  return global.dictionaries[player.index][dict_name]
 end
 
-local function build_dictionary(player)
-  event.raise(dictionary.build_start_event, {player_index=player.index})
-  local prototype_dictionary = dictionary.setup_function(player)
-  global.dictionary[player.index] = {
-    building = true,
+-- build the dictionary
+function dictionary.build(player, dict_name, prototype_dictionary, translation_function)
+  event.raise(dictionary.build_start_event, {player_index=player.index, dict_name=dict_name})
+  table.insert(global.dictionaries[player.index].__build, {
+    dict_name = dict_name,
     dictionary = {},
     finished_size_offset = 0,
-    prototype_dictionary = prototype_dictionary
-  }
+    prototype_dictionary = prototype_dictionary,
+    translation_function = translation_function
+  })
   -- request translations
   for name,_ in pairs(prototype_dictionary) do
     player.request_translation{name}
@@ -61,42 +53,53 @@ end
 
 -- when a string gets translated
 event.on_string_translated(function(e)
-  local player_table = global.dictionary[e.player_index]
-  local prototype_dictionary = player_table.prototype_dictionary
-  if player_table.building and table_size(player_table) == 4 then
-    local dict = player_table.dictionary
-    if e.translated then
-      local key, value = dictionary.get_data_function(e, player_table.prototype_dictionary[e.localised_string[1]])
-      dict[key] = value
-    else
-      log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be searchable.')
-      player_table.finished_size_offset = player_table.finished_size_offset + 1
-    end
-    if table_size(prototype_dictionary) - table_size(dict) - player_table.finished_size_offset == 0 then
-      global.dictionary[e.player_index] = player_table.dictionary
-      event.raise(dictionary.build_finish_event, {player_index=e.player_index})
+  local player_table = global.dictionaries[e.player_index]
+  for i,t in ipairs(player_table.__build) do
+    local prototype_dictionary = t.prototype_dictionary
+    local dict = t.dictionary
+    local dict_match = prototype_dictionary[e.localised_string[1]]
+    if dict_match then -- if this translation belongs to this table
+      if e.translated then
+        local key, value = t.translation_function(e, dict_match)
+        dict[key] = value
+      else
+        log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be included in the localised dictionary.')
+        t.finished_size_offset = t.finished_size_offset + 1
+      end
+      if table_size(prototype_dictionary) - table_size(dict) - t.finished_size_offset == 0 then
+        player_table[t.dict_name] = table.deepcopy(t.dictionary)
+        table.remove(player_table.__build, i)
+        event.raise(dictionary.build_finish_event, {player_index=e.player_index, dict_name=t.dict_name})
+      end
+      break
     end
   end
 end)
 
+-- set up player's table in global
+local function setup_player(player)
+  global.dictionaries[player.index] = {
+    __build = {}
+  }
+end
+
 event.on_init(function()
-  local function on_tick(e)
+  local function first_tick(e)
     for i,p in pairs(game.players) do
       if p.connected then
-        build_dictionary(p)
+        dictionary.player_setup_function(p)
       end
     end
-    event.deregister(defines.events.on_tick, on_tick)
+    event.deregister(defines.events.on_tick, first_tick)
   end
-  global.dictionary = {}
+  global.dictionaries = {}
   local players = game.players
-  -- set up player globals
+  -- set up player global tables
   for _,p in pairs(players) do
     setup_player(p)
   end
-  if #players > 0 then
-    -- build dictionaries for all players on the first tick
-    event.on_tick(on_tick)
+  if use_event_handlers and #game.players > 0 then
+    event.on_tick(first_tick)
   end
 end)
 
@@ -104,19 +107,19 @@ event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
 
--- when a player joins a game, rebuild their dictionary
-event.on_player_joined_game(function(e)
-  build_dictionary(game.get_player(e.player_index))
-end)
-
-event.on_configuration_changed(function(e)
-  for _,p in pairs(game.players) do
-    if p.connected then
-      build_dictionary(p)
+-- OPTIONAL EVENT HANDLING
+function dictionary.setup_event_handlers()
+  use_event_handlers = true
+  event.on_player_joined_game(function(e)
+    dictionary.player_setup_function(game.get_player(e.player_index))
+  end)
+  event.on_configuration_changed(function()
+    for i,p in pairs(game.players) do
+      if p.connected then
+        dictionary.player_setup_function(p)
+      end
     end
-  end
-end)
-
-commands.add_command('rebuild-localised-dictionary', nil, function(e) build_dictionary(game.get_player(e.player_index)) end)
+  end)
+end
 
 return dictionary
