@@ -60,7 +60,7 @@ local function build_dictionary(player)
 end
 
 -- when a string gets translated
-event.register(defines.events.on_string_translated, function(e)
+event.on_string_translated(function(e)
   local player_table = global.dictionary[e.player_index]
   local prototype_dictionary = player_table.prototype_dictionary
   if player_table.building and table_size(player_table) == 4 then
@@ -82,30 +82,41 @@ end)
 event.on_init(function()
   local function on_tick(e)
     for i,p in pairs(game.players) do
-      build_dictionary(p)
+      if p.connected then
+        build_dictionary(p)
+      end
     end
     event.deregister(defines.events.on_tick, on_tick)
   end
   global.dictionary = {}
+  local players = game.players
   -- set up player globals
-  for i,p in pairs(game.players) do
+  for _,p in pairs(players) do
     setup_player(p)
   end
-  if #game.players > 0 then
+  if #players > 0 then
     -- build dictionaries for all players on the first tick
     event.on_tick(on_tick)
   end
 end)
 
 event.on_player_created(function(e)
-  setup_player(game.players[e.player_index])
+  setup_player(game.get_player(e.player_index))
 end)
 
 -- when a player joins a game, rebuild their dictionary
 event.on_player_joined_game(function(e)
-  build_dictionary(game.players[e.player_index])
+  build_dictionary(game.get_player(e.player_index))
 end)
 
-commands.add_command('rebuild-localised-dictionary', nil, function(e) build_dictionary(game.players[e.player_index]) end)
+event.on_configuration_changed(function(e)
+  for _,p in pairs(game.players) do
+    if p.connected then
+      build_dictionary(p)
+    end
+  end
+end)
+
+commands.add_command('rebuild-localised-dictionary', nil, function(e) build_dictionary(game.get_player(e.player_index)) end)
 
 return dictionary
