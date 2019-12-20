@@ -3,6 +3,8 @@ local event = require('lualib/event')
 local mod_gui = require('mod-gui')
 local util = require('lualib/util')
 
+local string_lower = string.lower
+
 -- set up dictionary
 dictionary.player_setup_function = function(player)
   local item_prototypes = {}
@@ -14,12 +16,12 @@ dictionary.player_setup_function = function(player)
     equipment_prototypes[prototype.localised_name[1]] = prototype
   end
   local function dictionary_translation_function(e, data)
-    return data.name, string.lower(e.result)
+    return data.name, e.result
   end
   dictionary.build(player, 'equipment', equipment_prototypes, dictionary_translation_function)
   dictionary.build(player, 'items', item_prototypes, dictionary_translation_function)
 end
-dictionary.setup_event_handlers()
+dictionary.use_builtin_event_handlers()
 
 -- test custom events
 event.register(dictionary.build_start_event, function(e) util.log('BUILDING DICTIONARY: '..e.dict_name..' for '..game.get_player(e.player_index).name) end)
@@ -55,14 +57,14 @@ event.on_gui_click(
 event.on_gui_text_changed(
   function(e)
     local player = util.get_player(e)
-    local search = string.lower(e.element.text)
+    local search = string_lower(e.element.text)
     local results_flow = mod_gui.get_frame_flow(player).rll_dict_window.rll_dict_results_flow
     results_flow.clear()
     if e.element.text == '' then return end
     local dict_name = e.element.parent.rll_dict_switch.switch_state == 'left' and 'equipment' or 'items'
     -- super simple search function
     local results = dictionary.search(dictionary.get(player, dict_name), function(k,v)
-      if v:match(search) then
+      if v:match(string_lower(search)) then
         return v,k
       end
     end)

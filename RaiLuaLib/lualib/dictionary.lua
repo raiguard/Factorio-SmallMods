@@ -108,7 +108,7 @@ event.on_player_created(function(e)
 end)
 
 -- OPTIONAL EVENT HANDLING
-function dictionary.setup_event_handlers()
+function dictionary.use_builtin_event_handlers()
   use_event_handlers = true
   event.on_player_joined_game(function(e)
     dictionary.player_setup_function(game.get_player(e.player_index))
