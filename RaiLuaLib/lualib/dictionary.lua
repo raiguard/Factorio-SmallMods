@@ -15,6 +15,7 @@ local use_event_handlers = false
 local dictionary = {}
 dictionary.build_start_event = event.generate_id('dictionary_build_start')
 dictionary.build_finish_event = event.generate_id('dictionary_build_finish')
+dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
 dictionary.search = function(dict, search_func)
   local results = {}
   for k,v in pairs(dict) do
@@ -29,7 +30,6 @@ dictionary.search = function(dict, search_func)
   end
   return results
 end
-dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
 
 function dictionary.get(player, dict_name)
   return global.dictionaries[player.index][dict_name]
