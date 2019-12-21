@@ -38,9 +38,45 @@ local function setup_player(player)
   local data = {
     flags = {
       selecting_result = false
+    },
+    logistics_requests = {
+      prev_contents = {},
+      registry = {}
     }
   }
   global.players[player.index] = data
+end
+
+-- updates temporary request counts
+local function update_request_counts(e)
+  local player = game.get_player(e.player_index)
+  if not player.character then return end
+  local character = player.character
+  local player_table = global.players[e.player_index]
+  local requests = player_table.logistics_requests
+  local inv_contents = player.get_main_inventory().get_contents()
+  if player.cursor_stack and player.cursor_stack.valid_for_read then
+    local stack = player.cursor_stack
+    inv_contents[stack.name] = stack.count + (inv_contents[stack.name] or 0)
+  end
+  for name,count in pairs(requests) do -- for each request we're keeping track of
+    if inv_contents[name] == count then
+      -- set logistic request
+      local get_slot = character.get_request_slot
+      for i=1,character.request_slot_count do
+        local slot = get_slot(i)
+        if slot and slot.name == name then
+          character.clear_request_slot(i)
+          break
+        end
+      end
+    end
+  end
+  if table_size(requests) == 0 then
+    -- deregister this event
+    event.deregister({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
+                     {name='update_request_counts', player_index=player.index})
+  end
 end
 
 local function search_dictionary(player, search)
@@ -49,6 +85,7 @@ local function search_dictionary(player, search)
   local results = {}
   local search_split = string.split(search, ' ')
   local search_count = #search_split
+  -- matches the search to the given localised string
   local function match_strings(search_split, name)
     local matches = 0
     for _,str in ipairs(search_split) do
@@ -61,12 +98,14 @@ local function search_dictionary(player, search)
     end
     return false
   end
+  -- adds the element to the results table if it matches
   local function add_if_match(name, count, result_type)
     local dict_entry = dict[name]
     if dict_entry and match_strings(search_split, name) and not results[name] then
       results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
     end
   end
+  -- map editor
   if player.controller_type == defines.controllers.editor then
     local inv_contents = player.get_main_inventory().get_contents()
     for k,v in pairs(dict) do
@@ -145,6 +184,16 @@ local function take_item_action(player, name, count, type, alt)
         if get_slot(i) == nil then
           character.set_request_slot({name=name, count=stack_size}, i)
           player.print{'chat-message.request-from-logistic-network', stack_size, dictionary.get(player, 'item_search')[name].name}
+          -- set up event to adjust request amount as items come in
+          if not event.is_registered('update_request_counts', player.index) then
+            event.register({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
+                           {name='update_request_counts', player_index=player.index})
+          end
+          -- add to player table
+          util.player_table(player).logistics_requests.registry[name] = stack_size
+          return
+        elseif get_slot(i).name == name then
+          player.print{'chat-message.already-requested-item', dictionary.get(player, 'item_search')[name].name}
           return
         end
       end
@@ -172,7 +221,7 @@ end
 
 local function input_nav(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local elems = gui_data.results_table.children
   local columns = player.mod_settings['qis-column-count'].value
@@ -193,7 +242,7 @@ end
 
 local function input_confirm(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local elem = gui_data.results_table.children[gui_data.selected_index]
   take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-alt-confirm')
@@ -203,7 +252,7 @@ end
 
 local function result_button_clicked(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   take_item_action(player, e.element.sprite:gsub('(.+)/', ''), e.element.number or 0, extract_slot_type(e.element), e.shift)
   -- close GUI
@@ -212,7 +261,7 @@ end
 
 local function search_textfield_text_changed(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
   if player_table.flags.selecting_result then
@@ -248,7 +297,7 @@ end
 
 local function search_textfield_confirmed(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
   local results_count = #results_table.children
@@ -349,7 +398,7 @@ end)
 
 event.register('qis-search', function(e)
   local player = game.get_player(e.player_index)
-  local player_table = util.player_table(e.player_index)
+  local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   if gui_data and player_table.flags.selecting_result == true then
     -- reset to searching

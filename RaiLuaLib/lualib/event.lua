@@ -261,8 +261,15 @@ function event.load_conditional_handlers(data)
 end
 
 -- returns true if the conditional event is registered
-function event.is_registered(name)
-  return global.conditional_event_registry[name] and true or false
+function event.is_registered(name, player_index)
+  local registry = global.conditional_event_registry[name]
+  if registry then
+    if player_index then
+      return registry.players[player_index] and true or false
+    end
+    return true
+  end
+  return false
 end
 
 return event
