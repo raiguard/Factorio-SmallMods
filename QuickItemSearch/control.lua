@@ -57,12 +57,12 @@ local function update_request_counts(e)
     inv_contents[stack.name] = stack.count + (inv_contents[stack.name] or 0)
   end
   for name,count in pairs(requests) do -- for each request we're keeping track of
-    if inv_contents[name] == count then
+    if inv_contents[name] >= count then
       -- set logistic request
       local get_slot = character.get_request_slot
       for i=1,character.request_slot_count do
         local slot = get_slot(i)
-        if slot and slot.name >= name then
+        if slot and slot.name == name then
           character.clear_request_slot(i)
           requests[name] = nil
           break
@@ -133,10 +133,13 @@ local function search_dictionary(player, search)
       end
       -- crafting
       if player_settings['qis-search-crafting'].value then
+        local get_count = player.get_craftable_count
         for name,recipe in pairs(player.force.recipes) do
-          local count = player.get_craftable_count(recipe)
-          if count > 0 then
-            add_if_match(name, count, 'crafting')
+          if not results[name] then -- do this here to save performance
+            local count = get_count(recipe)
+            if count > 0 then
+              add_if_match(name, count, 'crafting')
+            end
           end
         end
       end
