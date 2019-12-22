@@ -30,7 +30,6 @@ dictionary.player_setup_function = function(player)
     }
   end)
 end
-dictionary.use_builtin_event_handlers()
 
 -- -----------------------------------------------------------------------------
 -- UTILITIES
