@@ -40,10 +40,7 @@ local function setup_player(player)
     flags = {
       selecting_result = false
     },
-    logistics_requests = {
-      prev_contents = {},
-      registry = {}
-    }
+    logistics_requests = {}
   }
   global.players[player.index] = data
 end
@@ -66,8 +63,9 @@ local function update_request_counts(e)
       local get_slot = character.get_request_slot
       for i=1,character.request_slot_count do
         local slot = get_slot(i)
-        if slot and slot.name == name then
+        if slot and slot.name >= name then
           character.clear_request_slot(i)
+          requests[name] = nil
           break
         end
       end
@@ -191,7 +189,7 @@ local function take_item_action(player, name, count, type, alt)
                            {name='update_request_counts', player_index=player.index})
           end
           -- add to player table
-          util.player_table(player).logistics_requests.registry[name] = stack_size
+          util.player_table(player).logistics_requests[name] = stack_size
           return
         elseif get_slot(i).name == name then
           player.print{'chat-message.already-requested-item', dictionary.get(player, 'item_search')[name].name}
@@ -324,7 +322,8 @@ local handlers = {
   search_textfield_text_changed = search_textfield_text_changed,
   search_textfield_confirmed = search_textfield_confirmed,
   input_nav = input_nav,
-  input_confirm = input_confirm
+  input_confirm = input_confirm,
+  result_button_clicked = result_button_clicked
 }
 
 event.on_load(function()
