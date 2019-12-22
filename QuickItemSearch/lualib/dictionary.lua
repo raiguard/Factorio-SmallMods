@@ -49,6 +49,7 @@ local function setup_remote()
   dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
   dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
   dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
+  event.register(dictionary.rebuild_all_event, rebuild_all)
 end
 
 -- -----------------------------------------------------------------------------
@@ -115,7 +116,6 @@ event.on_init(function()
     event.on_tick(rebuild_all)
   end
   setup_remote()
-  event.register(dictionary.rebuild_all_event, rebuild_all)
 end)
 
 event.on_load(function()

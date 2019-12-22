@@ -36,13 +36,12 @@ end
 
 -- setup player global table
 local function setup_player(player)
-  local data = {
+  global.players[player.index] = {
     flags = {
       selecting_result = false
     },
     logistics_requests = {}
   }
-  global.players[player.index] = data
 end
 
 -- updates temporary request counts
