@@ -30,6 +30,27 @@ local function rebuild_all(e)
   end
 end
 
+local function setup_remote()
+  if not remote.interfaces['localised_dictionary'] then -- create the interface
+    local functions = {
+      build_start_event = function() return event.generate_id('build_start_event') end,
+      build_finish_event = function() return event.generate_id('build_finish_event') end,
+      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end
+    }
+    remote.add_interface('localised_dictionary', functions)
+    commands.add_command(
+      'rebuild-localised-dictionaries',
+      {'command-help.rebuild-localised-dictionaries'},
+      function(e)
+        event.raise(dictionary.rebuild_all_event, {})
+      end
+    )
+  end
+  dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
+  dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
+  dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
+end
+
 -- -----------------------------------------------------------------------------
 -- LIBRARY
 
@@ -93,50 +114,12 @@ event.on_init(function()
   if #game.players > 0 then
     event.on_tick(rebuild_all)
   end
-  -- remote
-  if not remote.interfaces['localised_dictionary'] then -- create the interface
-    local functions = {
-      build_start_event = function() return event.generate_id('build_start_event') end,
-      build_finish_event = function() return event.generate_id('build_finish_event') end,
-      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end
-    }
-    remote.add_interface('localised_dictionary', functions)
-    commands.add_command(
-      'rebuild-localised-dictionaries',
-      {'command-help.rebuild-localised-dictionaries'},
-      function(e)
-        event.raise(dictionary.rebuild_all_event, {})
-      end
-    )
-  end
-  dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
-  dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
-  dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
+  setup_remote()
   event.register(dictionary.rebuild_all_event, rebuild_all)
 end)
 
 event.on_load(function()
-  print('onload')
-  -- remote
-  if not remote.interfaces['localised_dictionary'] then -- create the interface
-    local functions = {
-      build_start_event = function() return event.generate_id('build_start_event') end,
-      build_finish_event = function() return event.generate_id('build_finish_event') end,
-      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end
-    }
-    remote.add_interface('localised_dictionary', functions)
-    commands.add_command(
-      'rebuild-localised-dictionaries',
-      {'command-help.rebuild-localised-dictionaries'},
-      function(e)
-        event.raise(dictionary.rebuild_all_event, {})
-      end
-    )
-  end
-  dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
-  dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
-  dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
-  event.register(dictionary.rebuild_all_event, rebuild_all)
+  setup_remote()
 end)
 
 event.on_player_created(function(e)
@@ -148,7 +131,6 @@ event.on_player_joined_game(function(e)
 end)
 
 event.on_configuration_changed(function()
-  print('configchange')
   for _,p in pairs(game.players) do
     if p.connected then
       dictionary.player_setup_function(p)
