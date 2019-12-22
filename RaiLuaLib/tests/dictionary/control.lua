@@ -20,6 +20,7 @@ dictionary.player_setup_function = function(player)
   end
   dictionary.build(player, 'equipment', equipment_prototypes, dictionary_translation_function)
   dictionary.build(player, 'items', item_prototypes, dictionary_translation_function)
+  game.print('lualib built dictionaries!')
 end
 
 -- test custom events
