@@ -95,12 +95,6 @@ local function search_dictionary(player, search)
       filtered_dictionary[name] = t
     end
   end
-  local function add_if_match(name, count, result_type)
-    local entry = filtered_dictionary[name]
-    if entry then
-      results[name] = {count=count, tooltip=entry.localised_name, type=result_type, sprite=entry.type..'/'..name}
-    end
-  end
   -- map editor
   if player.controller_type == defines.controllers.editor then
     local contents = player.get_main_inventory().get_contents()
