@@ -9,25 +9,11 @@ local event = require('lualib/event')
 
 -- -----------------------------------------------------------------------------
 
-local use_event_handlers = false
-
 -- library
 local dictionary = {}
 dictionary.build_start_event = event.generate_id('dictionary_build_start')
 dictionary.build_finish_event = event.generate_id('dictionary_build_finish')
 dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
-dictionary.search = function(dict, search_func, extra_func_args)
-  local results = {}
-  for k,v in pairs(dict) do
-    local key,value = search_func(k, v, extra_func_args)
-    if key then
-      results[key] = value
-    else
-      table.insert(results, value)
-    end
-  end
-  return results
-end
 
 function dictionary.get(player, dict_name)
   return global.dictionaries[player.index][dict_name]
@@ -83,7 +69,7 @@ end
 
 event.on_init(function()
   local function first_tick(e)
-    for i,p in pairs(game.players) do
+    for _,p in pairs(game.players) do
       if p.connected then
         dictionary.player_setup_function(p)
       end
@@ -96,7 +82,7 @@ event.on_init(function()
   for _,p in pairs(players) do
     setup_player(p)
   end
-  if use_event_handlers and #game.players > 0 then
+  if #game.players > 0 then
     event.on_tick(first_tick)
   end
 end)
@@ -105,19 +91,16 @@ event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
 
--- OPTIONAL EVENT HANDLING
-function dictionary.use_builtin_event_handlers()
-  use_event_handlers = true
-  event.on_player_joined_game(function(e)
-    dictionary.player_setup_function(game.get_player(e.player_index))
-  end)
-  event.on_configuration_changed(function()
-    for i,p in pairs(game.players) do
-      if p.connected then
-        dictionary.player_setup_function(p)
-      end
+event.on_player_joined_game(function(e)
+  dictionary.player_setup_function(game.get_player(e.player_index))
+end)
+
+event.on_configuration_changed(function()
+  for _,p in pairs(game.players) do
+    if p.connected then
+      dictionary.player_setup_function(p)
     end
-  end)
-end
+  end
+end)
 
 return dictionary
