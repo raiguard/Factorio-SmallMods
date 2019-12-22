@@ -78,13 +78,13 @@ local function update_request_counts(e)
 end
 
 local function search_dictionary(player, search)
-  local dict = dictionary.get(player, 'item_search')
   local player_settings = player.mod_settings
   local results = {}
   local search_split = string.split(search, ' ')
   local search_count = #search_split
-  -- matches the search to the given localised string
-  local function match_strings(search_split, name)
+  -- filter dictionary first, then iterate through that to decrease the number of API calls
+  local filtered_dictionary = {}
+  for name,t in pairs(dictionary.get(player, 'item_search')) do
     local matches = 0
     for _,str in ipairs(search_split) do
       if name:match(str) then
@@ -92,30 +92,29 @@ local function search_dictionary(player, search)
       end
     end
     if matches == search_count then
-      return true
+      filtered_dictionary[name] = t
     end
-    return false
   end
-  -- adds the element to the results table if it matches
   local function add_if_match(name, count, result_type)
-    local dict_entry = dict[name]
-    if dict_entry and match_strings(search_split, name) and not results[name] then
-      results[name] = {count=count, tooltip=dict_entry.localised_name, type=result_type, sprite=dict_entry.type..'/'..name}
+    local entry = filtered_dictionary[name]
+    if entry then
+      results[name] = {count=count, tooltip=entry.localised_name, type=result_type, sprite=entry.type..'/'..name}
     end
   end
   -- map editor
   if player.controller_type == defines.controllers.editor then
-    local inv_contents = player.get_main_inventory().get_contents()
-    for k,v in pairs(dict) do
-      if match_strings(search_split, v.name) then
-        results[k] = {count=inv_contents[k], tooltip=v.localised_name, type='inventory', sprite=v.type..'/'..k}
-      end
+    local contents = player.get_main_inventory().get_contents()
+    for name,t in pairs(filtered_dictionary) do
+      results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite=t.type..'/'..name}
     end
   else
     -- player inventory
     if player_settings['qis-search-inventory'].value then
-      for name,count in pairs(player.get_main_inventory().get_contents()) do
-        add_if_match(name, count, 'inventory')
+      local contents = player.get_main_inventory().get_contents()
+      for name,t in pairs(filtered_dictionary) do
+        if not results[name] and contents[name] then
+          results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite=t.type..'/'..name}
+        end
       end
     end
     if player.character then
@@ -125,8 +124,11 @@ local function search_dictionary(player, search)
         for _,point in ipairs(character.get_logistic_point()) do
           local network = point.logistic_network
           if network.valid then
-            for name,count in pairs(point.logistic_network.get_contents()) do
-              add_if_match(name, count, 'logistics')
+            local contents = point.logistic_network.get_contents()
+            for name,t in pairs(filtered_dictionary) do
+              if not results[name] and contents[name] then
+                results[name] = {count=contents[name], tooltip=t.localised_name, type='logistics', sprite=t.type..'/'..name}
+              end
             end
           end
         end
@@ -134,11 +136,12 @@ local function search_dictionary(player, search)
       -- crafting
       if player_settings['qis-search-crafting'].value then
         local get_count = player.get_craftable_count
-        for name,recipe in pairs(player.force.recipes) do
-          if not results[name] then -- do this here to save performance
-            local count = get_count(recipe)
+        local recipes = player.force.recipes
+        for name,t in pairs(filtered_dictionary) do
+          if not results[name] and recipes[name] then
+            local count = get_count(name)
             if count > 0 then
-              add_if_match(name, count, 'crafting')
+              results[name] = {count=count, tooltip=t.localised_name, type='crafting', sprite=t.type..'/'..name}
             end
           end
         end
@@ -146,8 +149,10 @@ local function search_dictionary(player, search)
     end
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
-      for internal,_ in pairs(dict) do
-        add_if_match(internal, nil, 'unavailable')
+      for name,t in pairs(filtered_dictionary) do
+        if not results[name] then
+          results[name] = {tooltip=t.localised_name, type='unavailable', sprite=t.type..'/'..name}
+        end
       end
     end
   end
