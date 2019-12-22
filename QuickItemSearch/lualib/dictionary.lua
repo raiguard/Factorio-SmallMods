@@ -7,12 +7,53 @@
 -- DEPENDENCIES:
 local event = require('lualib/event')
 
--- -----------------------------------------------------------------------------
-
--- library
 local dictionary = {}
-dictionary.build_start_event = event.generate_id('dictionary_build_start')
-dictionary.build_finish_event = event.generate_id('dictionary_build_finish')
+
+-- -----------------------------------------------------------------------------
+-- UTILITIES
+
+-- set up player's table in global
+local function setup_player(player)
+  global.dictionaries[player.index] = {
+    __build = {}
+  }
+end
+
+local function rebuild_all(e)
+  for _,p in pairs(game.players) do
+    if p.connected then
+      dictionary.player_setup_function(p)
+    end
+  end
+  if e.name == defines.events.on_tick then
+    event.deregister(defines.events.on_tick, rebuild_all)
+  end
+end
+
+local function setup_remote()
+  if not remote.interfaces['localised_dictionary'] then -- create the interface
+    local functions = {
+      build_start_event = function() return event.generate_id('build_start_event') end,
+      build_finish_event = function() return event.generate_id('build_finish_event') end,
+      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end
+    }
+    remote.add_interface('localised_dictionary', functions)
+    commands.add_command(
+      'rebuild-localised-dictionaries',
+      {'command-help.rebuild-localised-dictionaries'},
+      function(e)
+        event.raise(dictionary.rebuild_all_event, {})
+      end
+    )
+  end
+  dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
+  dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
+  dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
+end
+
+-- -----------------------------------------------------------------------------
+-- LIBRARY
+
 dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
 
 function dictionary.get(player, dict_name)
@@ -34,6 +75,9 @@ function dictionary.build(player, dict_name, prototype_dictionary, translation_f
     player.request_translation{name}
   end
 end
+
+-- -----------------------------------------------------------------------------
+-- EVENT HANDLERS
 
 -- when a string gets translated
 event.on_string_translated(function(e)
@@ -60,22 +104,7 @@ event.on_string_translated(function(e)
   end
 end)
 
--- set up player's table in global
-local function setup_player(player)
-  global.dictionaries[player.index] = {
-    __build = {}
-  }
-end
-
 event.on_init(function()
-  local function first_tick(e)
-    for _,p in pairs(game.players) do
-      if p.connected then
-        dictionary.player_setup_function(p)
-      end
-    end
-    event.deregister(defines.events.on_tick, first_tick)
-  end
   global.dictionaries = {}
   local players = game.players
   -- set up player global tables
@@ -83,8 +112,14 @@ event.on_init(function()
     setup_player(p)
   end
   if #game.players > 0 then
-    event.on_tick(first_tick)
+    event.on_tick(rebuild_all)
   end
+  setup_remote()
+  event.register(dictionary.rebuild_all_event, rebuild_all)
+end)
+
+event.on_load(function()
+  setup_remote()
 end)
 
 event.on_player_created(function(e)
@@ -102,5 +137,7 @@ event.on_configuration_changed(function()
     end
   end
 end)
+
+-- -----------------------------------------------------------------------------
 
 return dictionary
