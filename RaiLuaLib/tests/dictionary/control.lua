@@ -6,21 +6,23 @@ local util = require('lualib/util')
 local string_lower = string.lower
 
 -- set up dictionary
-dictionary.player_setup_function = function(player)
-  local item_prototypes = {}
-  for _,prototype in pairs(game.item_prototypes) do
-    item_prototypes[prototype.localised_name[1]] = prototype
+dictionary.player_setup_function = function(player, build_data)
+  local function dictionary_translation_function(e, data)
+    return data.name, e.result
   end
+  dictionary.build(player, 'equipment', build_data.equipment, dictionary_translation_function)
+  dictionary.build(player, 'items', build_data.items, dictionary_translation_function)
+end
+dictionary.build_setup_function = function()
   local equipment_prototypes = {}
   for _,prototype in pairs(game.equipment_prototypes) do
     equipment_prototypes[prototype.localised_name[1]] = prototype
   end
-  local function dictionary_translation_function(e, data)
-    return data.name, e.result
+  local item_prototypes = {}
+  for _,prototype in pairs(game.item_prototypes) do
+    item_prototypes[prototype.localised_name[1]] = prototype
   end
-  dictionary.build(player, 'equipment', equipment_prototypes, dictionary_translation_function)
-  dictionary.build(player, 'items', item_prototypes, dictionary_translation_function)
-  game.print('lualib built dictionaries!')
+  return {equipment=equipment_prototypes, items=item_prototypes}
 end
 
 -- test custom events
@@ -40,7 +42,7 @@ end)
 -- TEST GUI
 event.on_gui_click(
   function(e)
-    local player = util.get_player(e)
+    local player = game.get_player(e.player_index)
     local flow = mod_gui.get_frame_flow(player)
     if flow.rll_dict_window then
       flow.rll_dict_window.destroy()
@@ -56,7 +58,7 @@ event.on_gui_click(
 
 event.on_gui_text_changed(
   function(e)
-    local player = util.get_player(e)
+    local player = game.get_player(e.player_index)
     local search = string_lower(e.element.text)
     local results_flow = mod_gui.get_frame_flow(player).rll_dict_window.rll_dict_results_flow
     results_flow.clear()

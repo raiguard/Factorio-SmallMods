@@ -55,7 +55,8 @@ end
 -- -----------------------------------------------------------------------------
 -- LIBRARY
 
-dictionary.player_setup_function = function(player) error('Did not define dictionary.player_setup_function') end
+dictionary.player_setup_function = function(player, build_data) error('Did not define dictionary.player_setup_function') end
+dictionary.build_setup_function = function() log('Did not define a custom dictionary.build_setup_function') end
 
 function dictionary.get(player, dict_name)
   return global.dictionaries[player.index][dict_name]
@@ -74,6 +75,7 @@ function dictionary.build(player, dict_name, prototype_dictionary, translation_f
     conflict_function = conflict_function
   })
   -- request translations
+  -- TODO: SPREAD THIS OUT OVER MULTIPLE TICKS SO PLAYERS DON'T GET A PING OF DEATH WHEN JOINING SERVERS
   for name,_ in pairs(prototype_dictionary) do
     player.request_translation{name}
   end
@@ -126,6 +128,7 @@ event.on_init(function()
     event.on_tick(rebuild_all)
   end
   setup_remote()
+  global.dictionaries.__build = dictionary.build_setup_function()
 end)
 
 event.on_load(function()
@@ -137,13 +140,15 @@ event.on_player_created(function(e)
 end)
 
 event.on_player_joined_game(function(e)
-  dictionary.player_setup_function(game.get_player(e.player_index))
+  dictionary.player_setup_function(game.get_player(e.player_index), global.dictionaries.__build)
 end)
 
 event.on_configuration_changed(function()
+  global.dictionaries.__build = dictionary.build_setup_function()
+  local build_data = global.dictionaries.__build
   for _,p in pairs(game.players) do
     if p.connected then
-      dictionary.player_setup_function(p)
+      dictionary.player_setup_function(p, build_data)
     end
   end
 end)
