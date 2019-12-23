@@ -5,24 +5,44 @@ local util = require('lualib/util')
 
 local string_lower = string.lower
 
+-- DEBUGGING
+event.register('debug-inspect-global', function(e)
+  local foo = 'bar'
+end)
+
 -- set up dictionary
 dictionary.player_setup_function = function(player, build_data)
-  local function dictionary_translation_function(e, data)
-    return data.name, e.result
-  end
-  dictionary.build(player, 'equipment', build_data.equipment, dictionary_translation_function)
-  dictionary.build(player, 'items', build_data.items, dictionary_translation_function)
+  dictionary.build(player, 'items_fluids', build_data.items_fluids,
+    function(e, prototype)
+      return string_lower(e.result), {prototype}
+    end,
+    function(e, prototype, cur_value)
+      table.insert(cur_value, prototype)
+      return cur_value, true
+    end
+  )
 end
-dictionary.build_setup_function = function()
-  local equipment_prototypes = {}
+dictionary.build_setup_function = function(serialise_localised_string)
+  local item_fluid_prototypes = {}
   for _,prototype in pairs(game.equipment_prototypes) do
-    equipment_prototypes[prototype.localised_name[1]] = prototype
+    if not prototype.localised_name == {} then
+      item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+    end
   end
-  local item_prototypes = {}
+  for _,prototype in pairs(game.fluid_prototypes) do
+    if not prototype.localised_name == {} then
+      item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+    end
+  end
   for _,prototype in pairs(game.item_prototypes) do
-    item_prototypes[prototype.localised_name[1]] = prototype
+    if prototype.name:find('lighted') then
+      local foo = 'bar'
+    end
+    if prototype.localised_name ~= {} then
+      item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+    end
   end
-  return {equipment=equipment_prototypes, items=item_prototypes}
+  return {items_fluids=item_fluid_prototypes}
 end
 
 -- test custom events

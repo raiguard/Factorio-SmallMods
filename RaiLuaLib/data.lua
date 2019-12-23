@@ -4,3 +4,11 @@ for test,enabled in pairs(tests) do
     require('tests/'..test..'/data')
   end
 end
+
+data:extend{
+  {
+    type = 'custom-input',
+    name = 'debug-inspect-global',
+    key_sequence = 'CONTROL + SHIFT + ENTER'
+  }
+}

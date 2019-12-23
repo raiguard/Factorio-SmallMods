@@ -76,9 +76,24 @@ function dictionary.build(player, dict_name, prototype_dictionary, translation_f
   })
   -- request translations
   -- TODO: SPREAD THIS OUT OVER MULTIPLE TICKS SO PLAYERS DON'T GET A PING OF DEATH WHEN JOINING SERVERS
-  for name,_ in pairs(prototype_dictionary) do
-    player.request_translation{name}
+  for _,v in pairs(prototype_dictionary) do
+    player.request_translation(v.localised_name)
   end
+end
+
+-- converts a localised string into a format readable by the API
+function dictionary.serialise_localised_string(t)
+  sep = sep or '@@'
+  local output = '{'
+  for _,v in pairs(t) do
+    if type(v) == 'table' then
+      output = output..dictionary.serialise_localised_string(v)
+    else
+      output = output..'\''..v..'\', '
+    end
+  end
+  output = output:gsub(', $', '')..'}'
+  return output
 end
 
 -- -----------------------------------------------------------------------------
@@ -90,7 +105,7 @@ event.on_string_translated(function(e)
   for i,t in ipairs(player_table.__build) do
     local prototype_dictionary = t.prototype_dictionary
     local dict = t.dictionary
-    local dict_match = prototype_dictionary[e.localised_string[1]]
+    local dict_match = prototype_dictionary[dictionary.serialise_localised_string(e.localised_string)]
     if dict_match then -- if this translation belongs to this table
       if e.translated then
         local key, value = t.translation_function(e, dict_match)
@@ -128,7 +143,7 @@ event.on_init(function()
     event.on_tick(rebuild_all)
   end
   setup_remote()
-  global.dictionaries.__build = dictionary.build_setup_function()
+  global.dictionaries.__build = dictionary.build_setup_function(dictionary.serialise_localised_string)
 end)
 
 event.on_load(function()
@@ -144,7 +159,7 @@ event.on_player_joined_game(function(e)
 end)
 
 event.on_configuration_changed(function()
-  global.dictionaries.__build = dictionary.build_setup_function()
+  global.dictionaries.__build = dictionary.build_setup_function(dictionary.serialise_localised_string)
   local build_data = global.dictionaries.__build
   for _,p in pairs(game.players) do
     if p.connected then
