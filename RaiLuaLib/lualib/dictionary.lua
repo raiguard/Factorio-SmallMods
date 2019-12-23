@@ -62,14 +62,16 @@ function dictionary.get(player, dict_name)
 end
 
 -- build the dictionary
-function dictionary.build(player, dict_name, prototype_dictionary, translation_function)
+function dictionary.build(player, dict_name, prototype_dictionary, translation_function, conflict_function)
   event.raise(dictionary.build_start_event, {player_index=player.index, dict_name=dict_name})
+  global.dictionaries[player.index][dict_name] = nil
   table.insert(global.dictionaries[player.index].__build, {
     dict_name = dict_name,
     dictionary = {},
     finished_size_offset = 0,
     prototype_dictionary = prototype_dictionary,
-    translation_function = translation_function
+    translation_function = translation_function,
+    conflict_function = conflict_function
   })
   -- request translations
   for name,_ in pairs(prototype_dictionary) do
@@ -90,7 +92,15 @@ event.on_string_translated(function(e)
     if dict_match then -- if this translation belongs to this table
       if e.translated then
         local key, value = t.translation_function(e, dict_match)
-        dict[key] = value
+        if dict[key] then
+          local new_key, add_offset = t.conflict_function(e, dict_match, dict[key])
+          dict[key] = new_key
+          if add_offset then
+            t.finished_size_offset = t.finished_size_offset + 1
+          end    
+        else
+          dict[key] = value
+        end
       else
         log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be included in the localised dictionary.')
         t.finished_size_offset = t.finished_size_offset + 1
