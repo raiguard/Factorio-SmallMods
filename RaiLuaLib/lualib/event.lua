@@ -272,4 +272,12 @@ function event.is_registered(name, player_index)
   return false
 end
 
+-- gets the event IDs from the conditional registry so you don't have to provide them
+function event.deregister_conditional(handler, options)
+  local con_registry = global.conditional_event_registry[options.name]
+  if con_registry then
+    event.deregister(con_registry.id, handler, options)
+  end
+end
+
 return event
