@@ -278,13 +278,8 @@ local function search_textfield_confirmed(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
-  local results_count = #results_table.children
-  if results_count == 1 then
-    local elem = results_table.children[1]
-    take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.shift)
-    -- close GUI (which resets settings and flag)
-    event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
-  elseif results_count > 1 then
+  local results_count = #results_table.children  
+  if results_count > 0 then
     -- setup
     player_table.flags.selecting_result = true
     gui_data.selected_index = 1
@@ -294,6 +289,9 @@ local function search_textfield_confirmed(e)
     event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=e.player_index, gui_filters='qis_result_button'})
     -- set initial selection
     results_table.children[1].style = results_table.children[1].style.name:gsub('qis', 'qis_active')
+  else
+    -- close GUI
+    event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
   end
 end
 
