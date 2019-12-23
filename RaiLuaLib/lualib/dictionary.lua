@@ -12,6 +12,9 @@ local dictionary = {}
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
+-- count of mods that are using this library
+local registered_mods = 0
+
 -- set up player's table in global
 local function setup_player(player)
   global.dictionaries[player.index] = {
@@ -20,9 +23,10 @@ local function setup_player(player)
 end
 
 local function rebuild_all(e)
+  local build_data = global.dictionaries.__build
   for _,p in pairs(game.players) do
     if p.connected then
-      dictionary.player_setup_function(p)
+      dictionary.player_setup_function(p, build_data)
     end
   end
   if e.name == defines.events.on_tick then
@@ -35,7 +39,8 @@ local function setup_remote()
     local functions = {
       build_start_event = function() return event.generate_id('build_start_event') end,
       build_finish_event = function() return event.generate_id('build_finish_event') end,
-      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end
+      rebuild_all_event = function() return event.generate_id('rebuild_all_event') end,
+      register_mod = function() registered_mods = registered_mods + 1 end
     }
     remote.add_interface('localised_dictionary', functions)
     commands.add_command(
@@ -50,6 +55,23 @@ local function setup_remote()
   dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
   dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
   event.register(dictionary.rebuild_all_event, rebuild_all)
+  remote.call('localised_dictionary', 'register_mod')
+end
+
+local function request_translations_batch()
+  for pi,t in pairs(global.dictionaries) do -- for each player
+    if type(pi) == 'number' then
+      local player = game.get_player(pi)
+      for _,building in ipairs(t.__build) do -- for each dictionary that is being translated
+        -- local profiler = game.create_profiler()
+        local next_index = building.next_index
+        local iteration = building.iteration_dictionary
+        player.request_translation(iteration[next_index])
+        building.next_index = next_index + 1
+        -- game.print(profiler)
+      end
+    end
+  end
 end
 
 -- -----------------------------------------------------------------------------
@@ -63,27 +85,26 @@ function dictionary.get(player, dict_name)
 end
 
 -- build the dictionary
-function dictionary.build(player, dict_name, prototype_dictionary, translation_function, conflict_function)
+function dictionary.build(player, dict_name, prototype_dictionary, iteration_dictionary, translation_function, conflict_function)
   event.raise(dictionary.build_start_event, {player_index=player.index, dict_name=dict_name})
   global.dictionaries[player.index][dict_name] = nil
   table.insert(global.dictionaries[player.index].__build, {
     dict_name = dict_name,
     dictionary = {},
-    finished_size_offset = 0,
     prototype_dictionary = prototype_dictionary,
+    iteration_dictionary = iteration_dictionary,
     translation_function = translation_function,
-    conflict_function = conflict_function
+    conflict_function = conflict_function,
+    next_index = 1
   })
   -- request translations
-  -- TODO: SPREAD THIS OUT OVER MULTIPLE TICKS SO PLAYERS DON'T GET A PING OF DEATH WHEN JOINING SERVERS
-  for _,v in pairs(prototype_dictionary) do
-    player.request_translation(v.localised_name)
+  if not event.is_registered('dictionary_request_translations_batch', player.index) then
+    event.on_nth_tick(5, request_translations_batch, {name='dictionary_request_translations_batch', player_index=player.index})
   end
 end
 
 -- converts a localised string into a format readable by the API
 function dictionary.serialise_localised_string(t)
-  sep = sep or '@@'
   local output = '{'
   for _,v in pairs(t) do
     if type(v) == 'table' then
@@ -105,26 +126,26 @@ event.on_string_translated(function(e)
   for i,t in ipairs(player_table.__build) do
     local prototype_dictionary = t.prototype_dictionary
     local dict = t.dictionary
-    local dict_match = prototype_dictionary[dictionary.serialise_localised_string(e.localised_string)]
+    local serialised_key = dictionary.serialise_localised_string(e.localised_string)
+    local dict_match = prototype_dictionary[serialised_key]
     if dict_match then -- if this translation belongs to this table
       if e.translated then
         local key, value = t.translation_function(e, dict_match)
         if dict[key] then
-          local new_key, add_offset = t.conflict_function(e, dict_match, dict[key])
-          dict[key] = new_key
-          if add_offset then
-            t.finished_size_offset = t.finished_size_offset + 1
-          end    
+          dict[key] = t.conflict_function(e, dict_match, dict[key])
         else
           dict[key] = value
         end
       else
         log('\''..string.gsub(e.localised_string[1], '(.+)%.', '')..'\' was not translated, and will not be included in the localised dictionary.')
-        t.finished_size_offset = t.finished_size_offset + 1
       end
-      if table_size(prototype_dictionary) - table_size(dict) - t.finished_size_offset == 0 then
+      prototype_dictionary[serialised_key] = nil
+      if table_size(prototype_dictionary) == 0 then
         player_table[t.dict_name] = table.deepcopy(t.dictionary)
         table.remove(player_table.__build, i)
+        if #player_table.__build == 0 then
+          event.deregister(-5, request_translations_batch, {name='dictionary_request_translations_batch', player_index=e.player_index})
+        end
         event.raise(dictionary.build_finish_event, {player_index=e.player_index, dict_name=t.dict_name})
       end
       break
@@ -167,6 +188,12 @@ event.on_configuration_changed(function()
     end
   end
 end)
+
+-- event.on_tick(function()
+--   if game.tick == 2 then
+--     game.tick_paused = true
+--   end
+-- end)
 
 -- -----------------------------------------------------------------------------
 

@@ -12,7 +12,7 @@ end)
 
 -- set up dictionary
 dictionary.player_setup_function = function(player, build_data)
-  dictionary.build(player, 'items_fluids', build_data.items_fluids,
+  dictionary.build(player, 'items_fluids', build_data.items_fluids.prototypes, build_data.items_fluids.iteration,
     function(e, prototype)
       return string_lower(e.result), {prototype}
     end,
@@ -24,25 +24,26 @@ dictionary.player_setup_function = function(player, build_data)
 end
 dictionary.build_setup_function = function(serialise_localised_string)
   local item_fluid_prototypes = {}
+  local item_fluid_iteration = {}
   for _,prototype in pairs(game.equipment_prototypes) do
     if not prototype.localised_name == {} then
       item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+      table.insert(item_fluid_iteration, prototype.localised_name)
     end
   end
   for _,prototype in pairs(game.fluid_prototypes) do
     if not prototype.localised_name == {} then
       item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+      table.insert(item_fluid_iteration, prototype.localised_name)
     end
   end
   for _,prototype in pairs(game.item_prototypes) do
-    if prototype.name:find('lighted') then
-      local foo = 'bar'
-    end
     if prototype.localised_name ~= {} then
       item_fluid_prototypes[serialise_localised_string(prototype.localised_name)] = prototype
+      table.insert(item_fluid_iteration, prototype.localised_name)
     end
   end
-  return {items_fluids=item_fluid_prototypes}
+  return {items_fluids={prototypes=item_fluid_prototypes, iteration=item_fluid_iteration}}
 end
 
 -- test custom events
