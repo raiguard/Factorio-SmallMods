@@ -1,4 +1,4 @@
-pcall(require,'__debugadapter__/debugadapter.lua')
+pcall(require,'__debugadapter__/debugadapter.lua') -- debug adapter
 
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICK ITEM SEARCH CONTROL SCRIPTING
@@ -245,9 +245,9 @@ local function search_textfield_text_changed(e)
   if player_table.flags.selecting_result then
     -- deselect button and reset selected index
     player_table.flags.selecting_result = false
-    local style = results_table.children[gui_data.settings.selected_index].style
+    local style = results_table.children[gui_data.selected_index].style
     style = style.name:gsub('qis_active', 'qis')
-    gui_data.settings.selected_index = 1
+    gui_data.selected_index = 1
   end
   if e.element.text == '' then results_table.clear(); return end
   -- update results
@@ -360,7 +360,7 @@ function gui.destroy(window, player_index)
 end
 
 -- -----------------------------------------------------------------------------
--- GENERAL
+-- EVENT HANDLERS
 
 -- on init
 event.on_init(function()

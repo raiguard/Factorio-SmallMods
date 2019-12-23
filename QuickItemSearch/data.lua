@@ -192,7 +192,7 @@ local function tinted_result_slot_button(type, glow_color)
 end
 styles['qis_inventory_result_slot_button'] = {type='button_style', parent='filter_slot_button'}
 styles['qis_active_inventory_result_slot_button'] = {type='button_style', parent='qis_active_filter_slot_button'}
-for type,color in pairs{logistics={34,181,255,128}, crafting={34,255,75,128}, unavailable={255,166,123,128}} do
+for type,color in pairs{logistics={34,181,255,128}, recipe={34,255,75,128}, unavailable={255,166,123,128}} do
   local style = tinted_result_slot_button(type, color)
   styles['qis_'..type..'_result_slot_button'] = table.deepcopy(style)
   style.default_graphical_set.base.position = {80,0}
