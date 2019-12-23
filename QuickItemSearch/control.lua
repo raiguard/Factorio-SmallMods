@@ -8,7 +8,6 @@ local event = require('lualib/event')
 local util = require('lualib/util')
 
 local mod_gui = require('mod-gui')
-local string_lower = string.lower
 
 local gui = {}
 
@@ -21,14 +20,16 @@ dictionary.player_setup_function = function(player)
   for _,prototype in pairs(game.equipment_prototypes) do
     prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
   end
-  dictionary.build(player, 'item_search', prototype_dictionary, function(e, data)
-    return data.prototype.name, {
-      type = data.type,
-      name = string.lower(e.result),
-      localised_name = e.localised_string,
-      hidden = data.type == 'item' and data.prototype.has_flag('hidden') or false
-    }
-  end)
+  dictionary.build(player, 'item_search', prototype_dictionary,
+    function(e, data) -- translation function
+      return data.prototype.name, {
+        type = data.type,
+        name = string.lower(e.result),
+        localised_name = e.localised_string,
+        hidden = data.type == 'item' and data.prototype.has_flag('hidden') or false
+      }
+    end
+  )
 end
 
 -- -----------------------------------------------------------------------------
@@ -79,6 +80,7 @@ end
 
 local function search_dictionary(player, search)
   local player_settings = player.mod_settings
+  local show_hidden = player_settings['qis-search-hidden'].value
   local results = {}
   local search_split = string.split(search, ' ')
   local search_count = #search_split
@@ -87,7 +89,7 @@ local function search_dictionary(player, search)
   for name,t in pairs(dictionary.get(player, 'item_search')) do
     local matches = 0
     for _,str in ipairs(search_split) do
-      if name:match(str) then
+      if t.name:match(str) then
         matches = matches + 1
       end
     end
@@ -106,7 +108,7 @@ local function search_dictionary(player, search)
     if player_settings['qis-search-inventory'].value then
       local contents = player.get_main_inventory().get_contents()
       for name,t in pairs(filtered_dictionary) do
-        if not results[name] and contents[name] then
+        if not results[name] and contents[name] and (show_hidden or not t.hidden) then
           results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite=t.type..'/'..name}
         end
       end
@@ -120,7 +122,7 @@ local function search_dictionary(player, search)
           if network.valid then
             local contents = point.logistic_network.get_contents()
             for name,t in pairs(filtered_dictionary) do
-              if not results[name] and contents[name] then
+              if not results[name] and contents[name] and (show_hidden or not t.hidden) then
                 results[name] = {count=contents[name], tooltip=t.localised_name, type='logistics', sprite=t.type..'/'..name}
               end
             end
@@ -144,7 +146,7 @@ local function search_dictionary(player, search)
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
       for name,t in pairs(filtered_dictionary) do
-        if not results[name] then
+        if not results[name] and (show_hidden or not t.hidden) then
           results[name] = {tooltip=t.localised_name, type='unavailable', sprite=t.type..'/'..name}
         end
       end
@@ -275,7 +277,7 @@ local function search_textfield_text_changed(e)
   -- update results
   local i = 0
   local children = table.deepcopy(results_table.children)
-  for _,t in pairs(search_dictionary(player, string_lower(e.element.text))) do
+  for _,t in pairs(search_dictionary(player, string.lower(e.element.text))) do
     i = i + 1
     local elem = children[i]
     if not elem then -- create button
@@ -422,7 +424,7 @@ event.register('qis-search', function(e)
 end)
 
 event.register(defines.events.on_gui_closed, function(e)
-  if e.gui_type == 16 and e.element.name == 'qis_window' then
+  if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
     gui.destroy(e.element, e.player_index)
     local player_table = util.player_table(e)
     player_table.flags.selecting_result = false
