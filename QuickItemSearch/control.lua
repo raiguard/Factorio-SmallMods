@@ -124,19 +124,6 @@ local function search_dictionary(player, query)
           end
         end
       end
-      -- crafting
-      if player_settings['qis-search-crafting'].value then
-        local get_count = player.get_craftable_count
-        local recipes = player.force.recipes
-        for name,t in pairs(filtered_dictionary) do
-          if not results[name] and recipes[name] then
-            local count = get_count(name)
-            if count > 0 then
-              results[name] = {count=count, tooltip=t.localised_name, type='crafting', sprite=t.type..'/'..name}
-            end
-          end
-        end
-      end
     end
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
@@ -166,7 +153,7 @@ local function take_item_action(player, name, count, type, alt)
     end
     -- 0.18:
     if player.controller_type == defines.controllers.editor and alt then
-      player.print('set filters when 0.18 comes out!')
+      player.print('0.18: set infinity inventory filter for this item')
       -- local filters = player.infinity_inventory_filters
       -- local index = #filters + 1
       -- filters[index] = {name=name, count=stack_size, mode='exactly', index=index}
@@ -194,12 +181,6 @@ local function take_item_action(player, name, count, type, alt)
           return
         end
       end
-    end
-  elseif type == 'crafting' then
-    if alt then -- craft five
-      player.begin_crafting{recipe=name, count=5, silent=true}
-    else -- craft all
-      player.begin_crafting{recipe=name, count=count}
     end
   elseif type == 'unavailable' then
     set_ghost_cursor()

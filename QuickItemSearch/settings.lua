@@ -15,31 +15,24 @@ data:extend{
   },
   {
     type = 'bool-setting',
-    name = 'qis-search-crafting',
+    name = 'qis-search-unavailable',
     setting_type = 'runtime-per-user',
     default_value = false,
     order = 'ac'
   },
   {
     type = 'bool-setting',
-    name = 'qis-search-unavailable',
+    name = 'qis-search-hidden',
     setting_type = 'runtime-per-user',
     default_value = false,
     order = 'ad'
   },
   {
     type = 'bool-setting',
-    name = 'qis-search-hidden',
-    setting_type = 'runtime-per-user',
-    default_value = false,
-    order = 'ae'
-  },
-  {
-    type = 'bool-setting',
     name = 'qis-fuzzy-search',
     setting_type = 'runtime-per-user',
     default_value = false,
-    order = 'af'
+    order = 'ae'
   },
   {
     type = 'string-setting',
