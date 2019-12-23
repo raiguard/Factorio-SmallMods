@@ -62,7 +62,7 @@ data:extend{
     type = 'int-setting',
     name = 'qis-row-count',
     setting_type = 'runtime-per-user',
-    default_value = 4,
+    default_value = 2,
     minimum_value = 1,
     order = 'cb'
   }
