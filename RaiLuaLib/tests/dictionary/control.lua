@@ -68,10 +68,11 @@ event.on_gui_click(
     if flow.rll_dict_window then
       flow.rll_dict_window.destroy()
     else
-      local window = flow.add{type='frame', name='rll_dict_window', style=mod_gui.frame_style, direction='vertical'}
-      window.add{type='textfield', name='rll_dict_textfield'}.focus()
-      window.add{type='switch', name='rll_dict_switch', left_label_caption='equipment', right_label_caption='items'}
-      window.add{type='flow', name='rll_dict_results_flow', direction='vertical'}
+      if dictionary.get(player, 'items_fluids') then
+        local window = flow.add{type='frame', name='rll_dict_window', style=mod_gui.frame_style, direction='vertical'}
+        window.add{type='textfield', name='rll_dict_textfield'}.focus()
+        window.add{type='flow', name='rll_dict_results_flow', direction='vertical'}
+      end
     end
   end,
   {gui_filters='rll_dict_button'}
@@ -84,17 +85,15 @@ event.on_gui_text_changed(
     local results_flow = mod_gui.get_frame_flow(player).rll_dict_window.rll_dict_results_flow
     results_flow.clear()
     if e.element.text == '' then return end
-    local dict_name = e.element.parent.rll_dict_switch.switch_state == 'left' and 'equipment' or 'items'
     -- super simple search function
-    local results = {}
-    for _,v in pairs(dictionary.get(player, dict_name)) do
-      if string.match(string_lower(v), search) then
-        table.insert(results, v)
+    local i = 0
+    for name,t in pairs(dictionary.get(player, 'items_fluids')) do
+      if string.find(name, search) then
+        for _,prototype in ipairs(t) do
+          i = i + 1
+          results_flow.add{type='label', name='rll_dict_result_'..i, caption=prototype.localised_name}
+        end
       end
-    end
-    -- since we only returned a value in the search function, it created an array, so we can use ipairs
-    for i,localised in ipairs(results) do
-      results_flow.add{type='label', name='rll_dict_result_'..i, caption=localised}
     end
   end,
   {gui_filters='rll_dict_textfield'}

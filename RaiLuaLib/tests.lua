@@ -1,5 +1,6 @@
 return
 {
-  dictionary = true,
-  event = false
+  -- 'crash',
+  -- 'event',
+  'dictionary'
 }

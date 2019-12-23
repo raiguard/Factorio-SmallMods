@@ -51,8 +51,6 @@ local function setup_remote()
       end
     )
   end
-  dictionary.build_start_event = remote.call('localised_dictionary', 'build_start_event')
-  dictionary.build_finish_event = remote.call('localised_dictionary', 'build_finish_event')
   dictionary.rebuild_all_event = remote.call('localised_dictionary', 'rebuild_all_event')
   event.register(dictionary.rebuild_all_event, rebuild_all)
   remote.call('localised_dictionary', 'register_mod')
@@ -61,14 +59,15 @@ end
 local function request_translations_batch()
   for pi,t in pairs(global.dictionaries) do -- for each player
     if type(pi) == 'number' then
-      local player = game.get_player(pi)
       for _,building in ipairs(t.__build) do -- for each dictionary that is being translated
-        -- local profiler = game.create_profiler()
         local next_index = building.next_index
-        local iteration = building.iteration_dictionary
-        player.request_translation(iteration[next_index])
-        building.next_index = next_index + 1
-        -- game.print(profiler)
+        local iteration_dictionary = building.iteration_dictionary
+        local request_translation = building.request_translation
+        for i=1,10 do
+          request_translation(iteration_dictionary[next_index])
+          next_index = next_index + 1
+        end
+        building.next_index = next_index
       end
     end
   end
@@ -79,6 +78,9 @@ end
 
 dictionary.player_setup_function = function(player, build_data) error('Did not define dictionary.player_setup_function') end
 dictionary.build_setup_function = function() log('Did not define a custom dictionary.build_setup_function') end
+
+dictionary.build_start_event = event.generate_id('dictionary_build_start_event')
+dictionary.build_finish_event = event.generate_id('dictionary_build_finish_event')
 
 function dictionary.get(player, dict_name)
   return global.dictionaries[player.index][dict_name]
@@ -95,7 +97,9 @@ function dictionary.build(player, dict_name, prototype_dictionary, iteration_dic
     iteration_dictionary = iteration_dictionary,
     translation_function = translation_function,
     conflict_function = conflict_function,
-    next_index = 1
+    next_index = 1,
+    player = player,
+    request_translation = player.request_translation
   })
   -- request translations
   if not event.is_registered('dictionary_request_translations_batch', player.index) then
@@ -188,12 +192,6 @@ event.on_configuration_changed(function()
     end
   end
 end)
-
--- event.on_tick(function()
---   if game.tick == 2 then
---     game.tick_paused = true
---   end
--- end)
 
 -- -----------------------------------------------------------------------------
 
