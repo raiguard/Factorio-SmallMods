@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 2019.12.23
+  Bugfixes:
+    - ACTUALLY fixed a crash when an item has no localised name
+    - Fixed missing controls locale
+
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2019.12.23
   Bugfixes:

@@ -15,12 +15,12 @@ local gui = {}
 dictionary.player_setup_function = function(player)
   local prototype_dictionary = {}
   for _,prototype in pairs(game.item_prototypes) do
-    if prototype.localised_name then
+    if prototype.localised_name[1] then
       prototype_dictionary[prototype.localised_name[1]] = {type='item', prototype=prototype}
     end
   end
   for _,prototype in pairs(game.equipment_prototypes) do
-    if prototype.localised_name then
+    if prototype.localised_name[1] then
       prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
     end
   end
