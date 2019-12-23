@@ -78,22 +78,17 @@ local function update_request_counts(e)
   end
 end
 
-local function search_dictionary(player, search)
+local function search_dictionary(player, query)
   local player_settings = player.mod_settings
   local show_hidden = player_settings['qis-search-hidden'].value
   local results = {}
-  local search_split = string.split(search, ' ')
-  local search_count = #search_split
+  if player_settings['qis-fuzzy-search'].value then -- fuzzy search
+    query = query:gsub('.', '%1.*')
+  end
   -- filter dictionary first, then iterate through that to decrease the number of API calls
   local filtered_dictionary = {}
   for name,t in pairs(dictionary.get(player, 'item_search')) do
-    local matches = 0
-    for _,str in ipairs(search_split) do
-      if t.name:match(str) then
-        matches = matches + 1
-      end
-    end
-    if matches == search_count then
+    if t.name:find(query) then
       filtered_dictionary[name] = t
     end
   end

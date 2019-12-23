@@ -17,7 +17,7 @@ data:extend{
     type = 'bool-setting',
     name = 'qis-search-crafting',
     setting_type = 'runtime-per-user',
-    default_value = true,
+    default_value = false,
     order = 'ac'
   },
   {
@@ -33,6 +33,13 @@ data:extend{
     setting_type = 'runtime-per-user',
     default_value = false,
     order = 'ae'
+  },
+  {
+    type = 'bool-setting',
+    name = 'qis-fuzzy-search',
+    setting_type = 'runtime-per-user',
+    default_value = false,
+    order = 'af'
   },
   {
     type = 'string-setting',
