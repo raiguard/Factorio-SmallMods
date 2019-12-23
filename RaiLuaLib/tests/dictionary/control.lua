@@ -12,6 +12,7 @@ end)
 
 -- set up dictionary
 dictionary.player_setup_function = function(player, build_data)
+  -- STRESS TESTING
   dictionary.build(player, 'items_fluids', build_data.items_fluids.prototypes, build_data.items_fluids.iteration,
     function(e, prototype)
       return string_lower(e.result), {prototype}

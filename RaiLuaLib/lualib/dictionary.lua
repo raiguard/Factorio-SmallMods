@@ -56,19 +56,23 @@ local function setup_remote()
   remote.call('localised_dictionary', 'register_mod')
 end
 
+-- request no more than 100 translations per player per tick
 local function request_translations_batch()
-  for pi,t in pairs(global.dictionaries) do -- for each player
-    if type(pi) == 'number' then
-      for _,building in ipairs(t.__build) do -- for each dictionary that is being translated
-        local next_index = building.next_index
-        local iteration_dictionary = building.iteration_dictionary
-        local request_translation = building.request_translation
-        for i=1,10 do
-          request_translation(iteration_dictionary[next_index])
-          next_index = next_index + 1
-        end
-        building.next_index = next_index
+  local dictionaries = global.dictionaries
+  for i=1,#dictionaries do -- for each player
+    local __build = dictionaries[i].__build
+    local size = #__build
+    local iterations = 100 / size / registered_mods
+    for bi=1,size do -- for each dictionary that is being translated
+      local building = __build[bi]
+      local next_index = building.next_index
+      local iteration_dictionary = building.iteration_dictionary
+      local request_translation = building.request_translation
+      for _=1,iterations do
+        request_translation(iteration_dictionary[next_index])
+        next_index = next_index + 1
       end
+      building.next_index = next_index
     end
   end
 end
