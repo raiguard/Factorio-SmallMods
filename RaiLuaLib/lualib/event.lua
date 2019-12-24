@@ -265,7 +265,12 @@ function event.is_registered(name, player_index)
   local registry = global.conditional_event_registry[name]
   if registry then
     if player_index then
-      return registry.players[player_index] and true or false
+      for _,i in ipairs(registry.players) do
+        if i == player_index then
+          return true
+        end
+      end
+      return false
     end
     return true
   end
