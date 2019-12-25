@@ -14,7 +14,7 @@ local math_floor = math.floor
 
 -- -----------------------------------------------------------------------------
 
-local registered_mod_count = 1
+local registered_mod_count = 0
 
 local translation = {}
 translation.start_event = event.generate_id('translation_start')
@@ -56,6 +56,7 @@ local function translate_batch(e)
   end
 end
 
+-- sorts a translated string into its appropriate dictionary
 local function sort_translated_string(e)
   local __translation = global.__translation
   local player_translation = __translation.players[e.player_index]
@@ -94,6 +95,7 @@ end
 
 translation.serialise_localised_string = serialise_localised_string
 
+-- begin translating strings
 function translation.start(player, dictionary_name, data, strings)
   if not global.__translation then
     global.__translation = {
@@ -125,6 +127,25 @@ function translation.start(player, dictionary_name, data, strings)
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
 end
 
+-- REBUILD ALL COMMAND
 
+event.register({'on_init', 'on_load'}, function()
+  if not remote.interfaces['railualib_translation'] then -- create the interface
+    local functions = {
+      retranslate_all_event = function() return event.generate_id('retranslate_all_event') end,
+      register_mod = function() registered_mod_count = registered_mod_count + 1 end
+    }
+    remote.add_interface('railualib_translation', functions)
+    commands.add_command(
+      'retranslate-all-dictionaries',
+      {'command-help.retranslate-all-dictionaries'},
+      function(e)
+        event.raise(translation.retranslate_all_event, {})
+      end
+    )
+  end
+  translation.retranslate_all_event = remote.call('railualib_translation', 'retranslate_all_event')
+  remote.call('railualib_translation', 'register_mod')
+end)
 
 return translation

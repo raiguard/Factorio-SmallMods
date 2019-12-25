@@ -38,26 +38,24 @@ local function translate_whole(player)
   end
 end
 
-local function first_tick(e)
+local function translate_for_all_players()
+  global.results = {}
   for _,player in ipairs(game.connected_players) do
     translate_whole(player)
   end
-  event.deregister(defines.events.on_tick, first_tick)
 end
 
 event.on_init(function()
   build_data()
   global.results = {}
-  if #game.connected_players > 0 then
-    event.on_tick(first_tick)
-  end
+  translate_for_all_players()
+  event.register(translation.retranslate_all_event, translate_for_all_players)
 end)
 
 event.on_configuration_changed(function()
   build_data()
-  if #game.connected_players > 0 then
-    event.on_tick(first_tick)
-  end
+  translate_for_all_players()
+  event.register(translation.retranslate_all_event, translate_for_all_players)
 end)
 
 event.on_player_joined_game(function(e)
