@@ -97,8 +97,8 @@ function dictionary.build(player, dict_name, prototype_dictionary, iteration_dic
   table.insert(global.dictionaries[player.index].__build, {
     dict_name = dict_name,
     dictionary = {},
-    prototype_dictionary = prototype_dictionary,
-    iteration_dictionary = iteration_dictionary,
+    prototype_dictionary = table.deepcopy(prototype_dictionary),
+    iteration_dictionary = table.deepcopy(iteration_dictionary),
     translation_function = translation_function,
     conflict_function = conflict_function,
     next_index = 1,

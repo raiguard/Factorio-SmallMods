@@ -2,5 +2,6 @@ return
 {
   -- 'crash',
   -- 'event',
-  'dictionary'
+  -- 'dictionary',
+  'translation'
 }

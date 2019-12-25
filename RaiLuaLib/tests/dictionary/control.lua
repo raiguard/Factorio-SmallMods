@@ -19,7 +19,7 @@ dictionary.player_setup_function = function(player, build_data)
     end,
     function(e, prototype, cur_value)
       table.insert(cur_value, prototype)
-      return cur_value, true
+      return cur_value
     end
   )
 end
