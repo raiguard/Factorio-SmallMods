@@ -46,36 +46,42 @@ local function translate_batch(e)
       local strings = t.strings
       local strings_len = t.strings_len
       for i=next_index,next_index+iterations do
-        if i <= strings_len then
-          if strings[i] == nil then
-            local breakpoint
-          end
-          request_translation(strings[i])
+        if i > strings_len then
+          break
         end
+        request_translation(strings[i])
       end
       t.next_index = next_index + iterations
     end
   end
 end
 
-local function parse_translation_result(e)
+local function sort_translated_string(e)
   local __translation = global.__translation
   local player_translation = __translation.players[e.player_index]
   local serialised = serialise_localised_string(e.localised_string)
   for name,t in pairs(player_translation) do
     local value = t.data[serialised]
     if value then
-      t.result[e.result] = value
+      if e.translated then
+        local result = t.result[e.result]
+        if result then
+          result[#result+1] = value
+        else
+          t.result[e.result] = {value}
+        end
+      else
+        print('Key: '..serialised..' for dictionary: '..name..' was not successfully translated, and will not be included in the output table')
+      end
       t.data[serialised] = nil
       if table_size(t.data) == 0 then -- this dictionary has completed translation
-        local result = t.result
         player_translation[name] = nil
         __translation.dictionary_count = __translation.dictionary_count - 1
-        if table_size(player_translation) == 0 then
+        if table_size(player_translation) == 0 then -- remove player from translating table if they're done
           __translation.players[e.player_index] = nil
-          if table_size(__translation.players) == 0 then
+          if table_size(__translation.players) == 0 then -- remove translation table if we're all done
             event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
-            event.deregister(defines.events.on_string_translated, parse_translation_result, {name='translation_parse_result'})
+            event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
             global.__translation = nil
           end
         end
@@ -114,7 +120,7 @@ function translation.start(player, dictionary_name, data, strings)
   __translation.dictionary_count = __translation.dictionary_count + 1
   if not event.is_registered('translation_translate_batch') then
     event.on_tick(translate_batch, {name='translation_translate_batch'})
-    event.on_string_translated(parse_translation_result, {name='translation_parse_result'})
+    event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
   end
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
 end

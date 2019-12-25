@@ -47,6 +47,7 @@ end
 
 event.on_init(function()
   build_data()
+  global.results = {}
   if #game.connected_players > 0 then
     event.on_tick(first_tick)
   end
@@ -65,4 +66,5 @@ end)
 
 event.register(translation.finish_event, function(e)
   game.print('finished translation of dictionary: '..e.dictionary_name)
+  global.results[e.dictionary_name] = e.dictionary
 end)
