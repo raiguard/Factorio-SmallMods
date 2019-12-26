@@ -12,11 +12,6 @@ local serialise_localised_string = translation.serialise_localised_string
 
 local gui = {}
 
--- DEBUGGING ONLY:
-event.register('DEBUG-INSPECT-GLOBAL', function(e)
-  local breakpoint -- put breakpoint here to inspect global at any time
-end)
-
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
@@ -42,10 +37,10 @@ local function build_prototype_data()
 end
 
 -- runs translations for all currently connected players
-local function translate_for_all_players()
+local function translate_for_all_players(e, is_config_changed)
   local build_data = global.__translation.build_data
   for _,player in ipairs(game.connected_players) do
-    translation.start(player, 'items', build_data.data, build_data.strings)
+    translation.start(player, 'items', build_data.data, build_data.strings, is_config_changed)
   end
 end
 
@@ -60,7 +55,6 @@ local function setup_player(player)
   }
 end
 
- --#region 
 -- updates temporary request counts
 local function update_request_counts(e)
   local player = game.get_player(e.player_index)
@@ -74,7 +68,7 @@ local function update_request_counts(e)
     inv_contents[stack.name] = stack.count + (inv_contents[stack.name] or 0)
   end
   for name,count in pairs(requests) do -- for each request we're keeping track of
-    if inv_contents[name] >= count then
+    if (inv_contents[name] or 0) >= count then
       -- set logistic request
       local get_slot = character.get_request_slot
       for i=1,character.request_slot_count do
@@ -95,7 +89,8 @@ local function update_request_counts(e)
 end
 
 local function search_dictionary(player, query)
-  -- local player_table = global.players[player.index]
+  local item_data = global.item_data
+  local player_table = global.players[player.index]
   local player_settings = player.mod_settings
   local show_hidden = player_settings['qis-search-hidden'].value
   local results = {}
@@ -103,25 +98,31 @@ local function search_dictionary(player, query)
     query = query:gsub('.', '%1.*')
   end
   -- filter dictionary first, then iterate through that to decrease the number of API calls
-  local filtered_dictionary = {}
-  for name,t in pairs() do
-    if t.name:find(query) then
-      filtered_dictionary[name] = t
+  local search_results = {}
+  for name,t in pairs(player_table.search) do
+    if name:find(query) then
+      for i=1,#t do
+        local data = item_data[t[i]]
+        if data then
+          search_results[t[i]] = data
+        end
+      end
     end
   end
+  local breakpoint
   -- map editor
   if player.controller_type == defines.controllers.editor then
     local contents = player.get_main_inventory().get_contents()
-    for name,t in pairs(filtered_dictionary) do
-      results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite=t.type..'/'..name}
+    for name,t in pairs(search_results) do
+      results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite='item/'..name}
     end
   else
     -- player inventory
     if player_settings['qis-search-inventory'].value then
       local contents = player.get_main_inventory().get_contents()
-      for name,t in pairs(filtered_dictionary) do
+      for name,t in pairs(search_results) do
         if not results[name] and contents[name] and (show_hidden or not t.hidden) then
-          results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite=t.type..'/'..name}
+          results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite='item/'..name}
         end
       end
     end
@@ -133,9 +134,9 @@ local function search_dictionary(player, query)
           local network = point.logistic_network
           if network.valid then
             local contents = point.logistic_network.get_contents()
-            for name,t in pairs(filtered_dictionary) do
+            for name,t in pairs(search_results) do
               if not results[name] and contents[name] and (show_hidden or not t.hidden) then
-                results[name] = {count=contents[name], tooltip=t.localised_name, type='logistics', sprite=t.type..'/'..name}
+                results[name] = {count=contents[name], tooltip=t.localised_name, type='logistics', sprite='item/'..name}
               end
             end
           end
@@ -144,9 +145,9 @@ local function search_dictionary(player, query)
     end
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
-      for name,t in pairs(filtered_dictionary) do
+      for name,t in pairs(search_results) do
         if not results[name] and (show_hidden or not t.hidden) then
-          results[name] = {tooltip=t.localised_name, type='unavailable', sprite=t.type..'/'..name}
+          results[name] = {tooltip=t.localised_name, type='unavailable', sprite='item/'..name}
         end
       end
     end
@@ -184,7 +185,7 @@ local function take_item_action(player, name, count, type, alt)
       for i=1,character.request_slot_count do
         if get_slot(i) == nil then
           character.set_request_slot({name=name, count=stack_size}, i)
-          player.print{'chat-message.request-from-logistic-network', stack_size, dictionary.get(player, 'item_search')[name].name}
+          player.print{'chat-message.request-from-logistic-network', stack_size, global.item_data[name].localised_name}
           -- set up event to adjust request amount as items come in
           if not event.is_registered('update_request_counts', player.index) then
             event.register({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
@@ -194,7 +195,7 @@ local function take_item_action(player, name, count, type, alt)
           global.players[player.index].logistics_requests[name] = stack_size
           return
         elseif get_slot(i).name == name then
-          player.print{'chat-message.already-requested-item', dictionary.get(player, 'item_search')[name].name}
+          player.print{'chat-message.already-requested-item', global.item_data[name].localised_name}
           return
         end
       end
@@ -226,7 +227,7 @@ local function input_nav(e)
     -- reset style and apply offset
     local selected_index = gui_data.selected_index
     elems[selected_index].style = elems[selected_index].style.name:gsub('qis_active', 'qis')
-    selected_index = math.clamp(selected_index + offset, 1, #elems)
+    selected_index = util.clamp(selected_index + offset, 1, #elems)
     -- set new style and save new offset
     elems[selected_index].style = elems[selected_index].style.name:gsub('qis', 'qis_active')
     gui_data.selected_index = selected_index
@@ -373,7 +374,6 @@ function gui.destroy(window, player_index)
   end
   window.destroy()
 end
---#endregion
 
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
@@ -390,7 +390,7 @@ end)
 
 event.on_configuration_changed(function(e)
   build_prototype_data()
-  translate_for_all_players()
+  translate_for_all_players(nil, true)
 end)
 
 -- when a player is created
@@ -409,39 +409,42 @@ end)
 
 event.register(translation.retranslate_all_event, translate_for_all_players)
 
--- event.on_player_joined_game(function(e)
-  
--- end)
+event.register('qis-search', function(e)
+  local player = game.get_player(e.player_index)
+  local player_table = global.players[e.player_index]
+  local gui_data = player_table.gui
+  if gui_data and player_table.flags.selecting_result == true then
+    -- reset to searching
+    local children = gui_data.results_table.children
+    local selected_index = gui_data.selected_index
+    -- deselect selected button and reset flag
+    children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
+    player_table.flags.selecting_result = false
+    gui_data.selected_index = 1
+    -- focus textfield
+    gui_data.search_textfield.focus()
+  elseif not gui_data then
+    local mod_settings = player.mod_settings
+    local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
+    local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
+    gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
+    player.opened = gui_data.window
+    player_table.gui = gui_data
+  end
+end)
 
--- event.register('qis-search', function(e)
---   local player = game.get_player(e.player_index)
---   local player_table = global.players[e.player_index]
---   local gui_data = player_table.gui
---   if gui_data and player_table.flags.selecting_result == true then
---     -- reset to searching
---     local children = gui_data.results_table.children
---     local selected_index = gui_data.selected_index
---     -- deselect selected button and reset flag
---     children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
---     player_table.flags.selecting_result = false
---     gui_data.selected_index = 1
---     -- focus textfield
---     gui_data.search_textfield.focus()
---   elseif not gui_data then
---     local mod_settings = player.mod_settings
---     local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
---     local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
---     gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
---     player.opened = gui_data.window
---     player_table.gui = gui_data
---   end
--- end)
+event.on_gui_closed(function(e)
+  if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
+    gui.destroy(e.element, e.player_index)
+    local player_table = global.players[e.player_index]
+    player_table.flags.selecting_result = false
+    player_table.gui = nil
+  end
+end)
 
--- event.on_gui_closed(function(e)
---   if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
---     gui.destroy(e.element, e.player_index)
---     local player_table = global.players[e.player_index]
---     player_table.flags.selecting_result = false
---     player_table.gui = nil
---   end
--- end)
+-- DEBUGGING
+if __DebugAdapter then
+  event.register('DEBUG-INSPECT-GLOBAL', function(e)
+    local breakpoint -- put breakpoint here to inspect global at any time
+  end)
+end
