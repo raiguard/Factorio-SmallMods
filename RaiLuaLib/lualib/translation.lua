@@ -111,6 +111,8 @@ function translation.start(player, dictionary_name, data, strings)
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
 end
 
+-- REMOTE INTERFACE: CROSS-MOD SYNCRONISATION
+
 local function setup_remote()
   if not remote.interfaces['railualib_translation'] then -- create the interface
     local functions = {
