@@ -90,11 +90,14 @@ end
 translation.serialise_localised_string = serialise_localised_string
 
 -- begin translating strings
-function translation.start(player, dictionary_name, data, strings)
+function translation.start(player, dictionary_name, data, strings, ignore_error)
   local __translation = global.__translation
   if not __translation.players[player.index] then __translation.players[player.index] = {} end
   local player_translation = __translation.players[player.index]
-  if player_translation[dictionary_name] then error('Already translating dictionary: '..dictionary_name) end
+  if player_translation[dictionary_name] then
+    if ignore_error then return end
+    error('Already translating dictionary: '..dictionary_name)
+  end
   player_translation[dictionary_name] = {
     -- tables
     data = table.deepcopy(data), -- this table gets destroyed as it is translated, so deepcopy it
