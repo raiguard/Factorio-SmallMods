@@ -3,52 +3,64 @@ pcall(require,'__debugadapter__/debugadapter.lua') -- debug adapter
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICK ITEM SEARCH CONTROL SCRIPTING
 
-local dictionary = require('lualib/dictionary')
+-- dependencies
 local event = require('lualib/event')
-local util = require('lualib/util')
-
 local mod_gui = require('mod-gui')
+local translation = require('lualib/translation')
+
+local serialise_localised_string = translation.serialise_localised_string
 
 local gui = {}
 
--- SET UP LOCALISED DICTIONARY
-dictionary.player_setup_function = function(player)
-  local prototype_dictionary = {}
-  for _,prototype in pairs(game.item_prototypes) do
-    if prototype.localised_name[1] then
-      prototype_dictionary[prototype.localised_name[1]] = {type='item', prototype=prototype}
-    end
-  end
-  for _,prototype in pairs(game.equipment_prototypes) do
-    if prototype.localised_name[1] then
-      prototype_dictionary[prototype.localised_name[1]] = {type='equipment', prototype=prototype}
-    end
-  end
-  dictionary.build(player, 'item_search', prototype_dictionary,
-    function(e, data) -- translation function
-      return data.prototype.name, {
-        type = data.type,
-        name = string.lower(e.result),
-        localised_name = e.localised_string,
-        hidden = data.type == 'item' and data.prototype.has_flag('hidden') or false
-      }
-    end
-  )
-end
+-- DEBUGGING ONLY:
+event.register('DEBUG-INSPECT-GLOBAL', function(e)
+  local breakpoint -- put breakpoint here to inspect global at any time
+end)
 
 -- -----------------------------------------------------------------------------
 -- UTILITIES
+
+-- builds data about item prototypes and iteration tables for translating them
+local function build_prototype_data()
+  local item_data = {} -- prototype name -> data: actually used to find sprites and such
+  local translation_data = {} -- serialised localised string -> prototype name
+  local translation_strings = {} -- array of localised strings to translate
+  local translation_strings_len = 0 -- length of translation_strings, to allow for quick iteration
+  for name,prototype in pairs(game.item_prototypes) do
+    item_data[name] = {localised_name=prototype.localised_name, hidden=prototype.has_flag('hidden')}
+    translation_data[serialise_localised_string(prototype.localised_name)] = name
+    translation_strings_len = translation_strings_len + 1
+    translation_strings[translation_strings_len] = prototype.localised_name
+  end
+  -- store build data in translation table
+  global.__translation.build_data = {
+    data = translation_data,
+    strings = translation_strings
+  }
+  -- store item data to be retrieved after searching
+  global.item_data = item_data
+end
+
+-- runs translations for all currently connected players
+local function translate_for_all_players()
+  local build_data = global.__translation.build_data
+  for _,player in ipairs(game.connected_players) do
+    translation.start(player, 'items', build_data.data, build_data.strings)
+  end
+end
 
 -- setup player global table
 local function setup_player(player)
   global.players[player.index] = {
     flags = {
+      can_open_gui = false,
       selecting_result = false
     },
     logistics_requests = {}
   }
 end
 
+ --#region 
 -- updates temporary request counts
 local function update_request_counts(e)
   local player = game.get_player(e.player_index)
@@ -83,6 +95,7 @@ local function update_request_counts(e)
 end
 
 local function search_dictionary(player, query)
+  -- local player_table = global.players[player.index]
   local player_settings = player.mod_settings
   local show_hidden = player_settings['qis-search-hidden'].value
   local results = {}
@@ -91,7 +104,7 @@ local function search_dictionary(player, query)
   end
   -- filter dictionary first, then iterate through that to decrease the number of API calls
   local filtered_dictionary = {}
-  for name,t in pairs(dictionary.get(player, 'item_search')) do
+  for name,t in pairs() do
     if t.name:find(query) then
       filtered_dictionary[name] = t
     end
@@ -178,7 +191,7 @@ local function take_item_action(player, name, count, type, alt)
                            {name='update_request_counts', player_index=player.index})
           end
           -- add to player table
-          util.player_table(player).logistics_requests[name] = stack_size
+          global.players[player.index].logistics_requests[name] = stack_size
           return
         elseif get_slot(i).name == name then
           player.print{'chat-message.already-requested-item', dictionary.get(player, 'item_search')[name].name}
@@ -360,6 +373,7 @@ function gui.destroy(window, player_index)
   end
   window.destroy()
 end
+--#endregion
 
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
@@ -370,42 +384,64 @@ event.on_init(function()
   for _,player in pairs(game.players) do
     setup_player(player)
   end
+  build_prototype_data()
+  translate_for_all_players()
+end)
+
+event.on_configuration_changed(function(e)
+  build_prototype_data()
+  translate_for_all_players()
 end)
 
 -- when a player is created
-event.register(defines.events.on_player_created, function(e)
+event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
 
-event.register('qis-search', function(e)
-  local player = game.get_player(e.player_index)
-  local player_table = global.players[e.player_index]
-  local gui_data = player_table.gui
-  if gui_data and player_table.flags.selecting_result == true then
-    -- reset to searching
-    local children = gui_data.results_table.children
-    local selected_index = gui_data.selected_index
-    -- deselect selected button and reset flag
-    children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
-    player_table.flags.selecting_result = false
-    gui_data.selected_index = 1
-    -- focus textfield
-    gui_data.search_textfield.focus()
-  elseif not gui_data then
-    local mod_settings = player.mod_settings
-    local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
-    local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
-    gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
-    player.opened = gui_data.window
-    player_table.gui = gui_data
-  end
+event.on_player_joined_game(function(e)
+  local build_data = global.__translation.build_data
+  translation.start(game.get_player(e.player_index), 'items', build_data.data, build_data.strings)
 end)
 
-event.register(defines.events.on_gui_closed, function(e)
-  if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
-    gui.destroy(e.element, e.player_index)
-    local player_table = util.player_table(e)
-    player_table.flags.selecting_result = false
-    player_table.gui = nil
-  end
+event.register(translation.finish_event, function(e)
+  global.players[e.player_index].search = e.dictionary
 end)
+
+event.register(translation.retranslate_all_event, translate_for_all_players)
+
+-- event.on_player_joined_game(function(e)
+  
+-- end)
+
+-- event.register('qis-search', function(e)
+--   local player = game.get_player(e.player_index)
+--   local player_table = global.players[e.player_index]
+--   local gui_data = player_table.gui
+--   if gui_data and player_table.flags.selecting_result == true then
+--     -- reset to searching
+--     local children = gui_data.results_table.children
+--     local selected_index = gui_data.selected_index
+--     -- deselect selected button and reset flag
+--     children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
+--     player_table.flags.selecting_result = false
+--     gui_data.selected_index = 1
+--     -- focus textfield
+--     gui_data.search_textfield.focus()
+--   elseif not gui_data then
+--     local mod_settings = player.mod_settings
+--     local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
+--     local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
+--     gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
+--     player.opened = gui_data.window
+--     player_table.gui = gui_data
+--   end
+-- end)
+
+-- event.on_gui_closed(function(e)
+--   if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
+--     gui.destroy(e.element, e.player_index)
+--     local player_table = global.players[e.player_index]
+--     player_table.flags.selecting_result = false
+--     player_table.gui = nil
+--   end
+-- end)
