@@ -6,5 +6,5 @@ for _,test in pairs(tests) do
 end
 
 script.on_event('debug-inspect-global', function(e)
-  local foo = 'bar' -- put breakpoint here to inspect global at any time
+  local breakpoint -- put breakpoint here to inspect global at any time
 end)

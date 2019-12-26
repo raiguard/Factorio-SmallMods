@@ -52,10 +52,13 @@ event.on_init(function()
   event.register(translation.retranslate_all_event, translate_for_all_players)
 end)
 
+event.on_load(function()
+  event.register(translation.retranslate_all_event, translate_for_all_players)
+end)
+
 event.on_configuration_changed(function()
   build_data()
   translate_for_all_players()
-  event.register(translation.retranslate_all_event, translate_for_all_players)
 end)
 
 event.on_player_joined_game(function(e)

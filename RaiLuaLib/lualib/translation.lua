@@ -14,8 +14,6 @@ local math_floor = math.floor
 
 -- -----------------------------------------------------------------------------
 
-local registered_mod_count = 0
-
 local translation = {}
 translation.start_event = event.generate_id('translation_start')
 translation.finish_event = event.generate_id('translation_finish')
@@ -35,10 +33,11 @@ local function serialise_localised_string(t)
   return output
 end
 
--- translate 100 entries per tick
-local function translate_batch(e)
+-- translate 80 entries per tick
+local function translate_batch()
   local __translation = global.__translation
-  local iterations = math_floor(100 / __translation.dictionary_count / registered_mod_count)
+  local iterations = math_floor(80 / __translation.dictionary_count)
+  if iterations < 1 then iterations = 1 end
   for _,pt in pairs(__translation.players) do -- for each player that is doing a translation
     for _,t in pairs(pt) do -- for each dictionary that they're translating
       local next_index = t.next_index
@@ -72,20 +71,15 @@ local function sort_translated_string(e)
           t.result[e.result] = {value}
         end
       else
-        print('Key: '..serialised..' for dictionary: '..name..' was not successfully translated, and will not be included in the output table')
+        log('Key: '..serialised..' for dictionary: '..name..' was not successfully translated, and will not be included in the output table')
       end
       t.data[serialised] = nil
       if table_size(t.data) == 0 then -- this dictionary has completed translation
         player_translation[name] = nil
-        __translation.dictionary_count = __translation.dictionary_count - 1
         if table_size(player_translation) == 0 then -- remove player from translating table if they're done
           __translation.players[e.player_index] = nil
-          if table_size(__translation.players) == 0 then -- remove translation table if we're all done
-            event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
-            event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
-            global.__translation = nil
-          end
         end
+        event.raise(translation.update_dictionary_count_event, {delta=-1})
         event.raise(translation.finish_event, {player_index=e.player_index, dictionary_name=name, dictionary=t.result})
       end
       return
@@ -97,12 +91,6 @@ translation.serialise_localised_string = serialise_localised_string
 
 -- begin translating strings
 function translation.start(player, dictionary_name, data, strings)
-  if not global.__translation then
-    global.__translation = {
-      dictionary_count = 0,
-      players = {}
-    }
-  end
   local __translation = global.__translation
   if not __translation.players[player.index] then __translation.players[player.index] = {} end
   local player_translation = __translation.players[player.index]
@@ -119,21 +107,15 @@ function translation.start(player, dictionary_name, data, strings)
     -- output
     result = {}
   }
-  __translation.dictionary_count = __translation.dictionary_count + 1
-  if not event.is_registered('translation_translate_batch') then
-    event.on_tick(translate_batch, {name='translation_translate_batch'})
-    event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
-  end
+  event.raise(translation.update_dictionary_count_event, {delta=1})
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
 end
 
--- REBUILD ALL COMMAND
-
-event.register({'on_init', 'on_load'}, function()
+local function setup_remote()
   if not remote.interfaces['railualib_translation'] then -- create the interface
     local functions = {
       retranslate_all_event = function() return event.generate_id('retranslate_all_event') end,
-      register_mod = function() registered_mod_count = registered_mod_count + 1 end
+      update_dictionary_count_event = function() return event.generate_id('update_dictionary_count_event') end
     }
     remote.add_interface('railualib_translation', functions)
     commands.add_command(
@@ -145,7 +127,31 @@ event.register({'on_init', 'on_load'}, function()
     )
   end
   translation.retranslate_all_event = remote.call('railualib_translation', 'retranslate_all_event')
-  remote.call('railualib_translation', 'register_mod')
+  translation.update_dictionary_count_event = remote.call('railualib_translation', 'update_dictionary_count_event')
+  event.register(translation.update_dictionary_count_event, function(e)
+    local __translation = global.__translation
+    if __translation.dictionary_count == 0 then -- register events if we're starting
+      event.on_tick(translate_batch, {name='translation_translate_batch'})
+      event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
+    end
+    __translation.dictionary_count = __translation.dictionary_count + e.delta
+    if __translation.dictionary_count == 0 then -- deregister events if we're all done
+      event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
+      event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
+    end
+  end)
+end
+
+event.on_init(function()
+  global.__translation = {
+    dictionary_count = 0,
+    players = {}
+  }
+  setup_remote()
+end)
+
+event.on_load(function()
+  setup_remote()
 end)
 
 return translation
