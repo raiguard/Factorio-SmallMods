@@ -94,8 +94,7 @@ function translation.start(player, dictionary_name, data, strings, ignore_error)
   local __translation = global.__translation
   if not __translation.players[player.index] then __translation.players[player.index] = {} end
   local player_translation = __translation.players[player.index]
-  if player_translation[dictionary_name] then
-    if ignore_error then return end
+  if not ignore_error and player_translation[dictionary_name] then
     error('Already translating dictionary: '..dictionary_name)
   end
   player_translation[dictionary_name] = {
