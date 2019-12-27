@@ -38,7 +38,7 @@ data:extend{
     type = 'string-setting',
     name = 'qis-default-location',
     setting_type = 'runtime-per-user',
-    allowed_values = {'mod gui', 'top', 'bottom'},
+    allowed_values = {'mod gui', 'top', 'bottom', 'center'},
     default_value = 'mod gui',
     order = 'ba'
   },
@@ -46,7 +46,7 @@ data:extend{
     type = 'string-setting',
     name = 'qis-editor-location',
     setting_type = 'runtime-per-user',
-    allowed_values = {'mod gui', 'top', 'bottom'},
+    allowed_values = {'mod gui', 'top', 'bottom', 'center'},
     default_value = 'bottom',
     order = 'bb'
   },

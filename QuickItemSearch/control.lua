@@ -40,7 +40,7 @@ end
 local function translate_for_all_players(e, is_config_changed)
   local build_data = global.__translation.build_data
   for _,player in ipairs(game.connected_players) do
-    translation.start(player, 'items', build_data.data, build_data.strings, is_config_changed)
+    translation.start(player, 'items', build_data.data, build_data.strings, {convert_to_lowercase=true, skip_error=is_config_changed})
   end
 end
 
@@ -100,7 +100,7 @@ local function search_dictionary(player, query)
   -- filter dictionary first, then iterate through that to decrease the number of API calls
   local search_results = {}
   for name,t in pairs(player_table.search) do
-    if name:find(query) then
+    if name:match(query) then
       for i=1,#t do
         local data = item_data[t[i]]
         if data then
@@ -109,7 +109,6 @@ local function search_dictionary(player, query)
       end
     end
   end
-  local breakpoint
   -- map editor
   if player.controller_type == defines.controllers.editor then
     local contents = player.get_main_inventory().get_contents()
@@ -159,14 +158,17 @@ local function take_item_action(player, name, count, type, alt)
   local prototype = game.item_prototypes[name]
   local stack_size = prototype.stack_size
   local function set_ghost_cursor()
+    player.clean_cursor()
     if prototype.place_result then
       player.cursor_ghost = name
     end
   end
   if type == 'inventory' then
     if count == 0 and player.controller_type == defines.controllers.editor then -- editor
+      player.clean_cursor()
       player.cursor_stack.set_stack{name=name, count=stack_size}
     else
+      player.clean_cursor()
       player.cursor_stack.set_stack{name=name, count=player.get_main_inventory().remove{name=name, count=stack_size}}
     end
     -- 0.18:
@@ -292,7 +294,6 @@ local function search_textfield_text_changed(e)
 end
 
 local function search_textfield_confirmed(e)
-  local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
@@ -304,7 +305,6 @@ local function search_textfield_confirmed(e)
     -- register events for selecting an item
     event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
     event.register({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
-    event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=e.player_index, gui_filters='qis_result_button'})
     -- set initial selection
     results_table.children[1].style = results_table.children[1].style.name:gsub('qis', 'qis_active')
   else
@@ -313,9 +313,29 @@ local function search_textfield_confirmed(e)
   end
 end
 
+local function search_textfield_clicked(e)
+  local player_table = global.players[e.player_index]
+  if player_table.flags.selecting_result == true then
+    local gui_data = player_table.gui
+    -- reset to searching
+    local children = gui_data.results_table.children
+    local selected_index = gui_data.selected_index
+    -- deselect selected button and reset flag
+    children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
+    player_table.flags.selecting_result = false
+    gui_data.selected_index = 1
+    -- focus textfield
+    gui_data.search_textfield.focus()
+    -- deregister navigation events
+    event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
+    event.deregister({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
+  end
+end
+
 local handlers = {
   search_textfield_text_changed = search_textfield_text_changed,
   search_textfield_confirmed = search_textfield_confirmed,
+  search_textfield_clicked = search_textfield_clicked,
   input_nav = input_nav,
   input_confirm = input_confirm,
   result_button_clicked = result_button_clicked
@@ -323,6 +343,9 @@ local handlers = {
 
 event.on_load(function()
   event.load_conditional_handlers(handlers)
+  event.load_conditional_handlers{
+    update_request_counts = update_request_counts
+  }
 end)
 
 -- ----------------------------------------
@@ -354,13 +377,16 @@ function gui.create(parent, player, settings)
     window.style.bottom_padding = 6
     -- position GUI
     window.location = {x=0, y=player.display_resolution.height-((pane_height + 60)*player.display_scale)}
+  elseif settings.location == 'center' then
+    window.force_auto_center()
   end
-  -- textfield events
+  -- events
   search_textfield.select_all()
   search_textfield.focus()
   event.on_gui_text_changed(search_textfield_text_changed, {name='search_textfield_text_changed', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_confirmed(search_textfield_confirmed, {name='search_textfield_confirmed', player_index=player.index, gui_filters=search_textfield})
-
+  event.on_gui_click(search_textfield_clicked, {name='search_textfield_clicked', player_index=player.index, gui_filters=search_textfield})
+  event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=player.index, gui_filters='qis_result_button'})
   return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, selected_index=1}
 end
 
@@ -400,11 +426,23 @@ end)
 
 event.on_player_joined_game(function(e)
   local build_data = global.__translation.build_data
-  translation.start(game.get_player(e.player_index), 'items', build_data.data, build_data.strings)
+  translation.start(game.get_player(e.player_index), 'items', build_data.data, build_data.strings, {convert_to_lowercase=true})
+  -- manage GUI
+  local player_table = global.players[e.player_index]
+  player_table.flags.can_open_gui = false
+  if player_table.gui then -- close the open GUI
+    event.raise(defines.events.on_gui_closed, {player_index=e.player_index, element=player_table.gui.window, gui_type=16})
+  end
 end)
 
 event.register(translation.finish_event, function(e)
-  global.players[e.player_index].search = e.dictionary
+  local player_table = global.players[e.player_index]
+  player_table.flags.can_open_gui = true
+  player_table.search = e.dictionary
+  if player_table.flags.tried_to_open_gui then
+    player_table.flags.tried_to_open_gui = false
+    game.get_player(e.player_index).print{'chat-message.translation-finished'}
+  end
 end)
 
 event.register(translation.retranslate_all_event, translate_for_all_players)
@@ -414,22 +452,19 @@ event.register('qis-search', function(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   if gui_data and player_table.flags.selecting_result == true then
-    -- reset to searching
-    local children = gui_data.results_table.children
-    local selected_index = gui_data.selected_index
-    -- deselect selected button and reset flag
-    children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
-    player_table.flags.selecting_result = false
-    gui_data.selected_index = 1
-    -- focus textfield
-    gui_data.search_textfield.focus()
+    search_textfield_clicked(e)
   elseif not gui_data then
-    local mod_settings = player.mod_settings
-    local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
-    local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
-    gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
-    player.opened = gui_data.window
-    player_table.gui = gui_data
+    if player_table.flags.can_open_gui then
+      local mod_settings = player.mod_settings
+      local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
+      local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
+      gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
+      player.opened = gui_data.window
+      player_table.gui = gui_data
+    else
+      player.print{'chat-message.translation-not-finished'}
+      player_table.flags.tried_to_open_gui = true
+    end
   end
 end)
 
