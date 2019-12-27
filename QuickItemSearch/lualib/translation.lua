@@ -83,6 +83,10 @@ local function sort_translated_string(e)
         player_translation[name] = nil
         if table_size(player_translation) == 0 then -- remove player from translating table if they're done
           __translation.players[e.player_index] = nil
+          if table_size(__translation.players) == 0 then -- deregister events if we're all done
+            event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
+            event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
+          end
         end
         event.raise(translation.update_dictionary_count_event, {delta=-1})
         event.raise(translation.finish_event, {player_index=e.player_index, dictionary_name=name, dictionary=t.result})
@@ -119,6 +123,10 @@ function translation.start(player, dictionary_name, data, strings, options)
   }
   event.raise(translation.update_dictionary_count_event, {delta=1})
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
+  if not event.is_registered('translation_translate_batch') then -- register events if needed
+    event.on_tick(translate_batch, {name='translation_translate_batch'})
+    event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
+  end
 end
 
 -- REMOTE INTERFACE: CROSS-MOD SYNCRONISATION
@@ -142,15 +150,7 @@ local function setup_remote()
   translation.update_dictionary_count_event = remote.call('railualib_translation', 'update_dictionary_count_event')
   event.register(translation.update_dictionary_count_event, function(e)
     local __translation = global.__translation
-    if __translation.dictionary_count == 0 then -- register events if we're starting
-      event.on_tick(translate_batch, {name='translation_translate_batch'})
-      event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
-    end
     __translation.dictionary_count = __translation.dictionary_count + e.delta
-    if __translation.dictionary_count == 0 then -- deregister events if we're all done
-      event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
-      event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
-    end
   end)
 end
 
