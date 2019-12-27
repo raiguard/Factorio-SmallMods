@@ -23,6 +23,7 @@ translation.finish_event = event.generate_id('translation_finish')
 -- basically just spits out the table in string form
 local function serialise_localised_string(t)
   local output = '{'
+  if type(t) == 'string' then return t end
   for _,v in pairs(t) do
     if type(v) == 'table' then
       output = output..serialise_localised_string(v)
