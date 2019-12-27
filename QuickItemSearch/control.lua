@@ -1,15 +1,18 @@
-pcall(require,'__debugadapter__/debugadapter.lua') -- debug adapter
-
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICK ITEM SEARCH CONTROL SCRIPTING
+
+ -- debug adapter
+pcall(require,'__debugadapter__/debugadapter.lua')
 
 -- dependencies
 local event = require('lualib/event')
 local mod_gui = require('mod-gui')
 local translation = require('lualib/translation')
 
+-- locals
 local serialise_localised_string = translation.serialise_localised_string
 
+-- libraries
 local gui = {}
 
 -- -----------------------------------------------------------------------------
@@ -88,7 +91,7 @@ local function update_request_counts(e)
   end
 end
 
-local function search_dictionary(player, query)
+local function search_for_items(player, query)
   local item_data = global.item_data
   local player_table = global.players[player.index]
   local player_settings = player.mod_settings
@@ -97,7 +100,7 @@ local function search_dictionary(player, query)
   if player_settings['qis-fuzzy-search'].value then -- fuzzy search
     query = query:gsub('.', '%1.*')
   end
-  -- filter dictionary first, then iterate through that to decrease the number of API calls
+  -- search dictionary first, then iterate through that to decrease the number of API calls
   local search_results = {}
   for name,t in pairs(player_table.search) do
     if name:match(query) then
@@ -154,6 +157,7 @@ local function search_dictionary(player, query)
   return results
 end
 
+-- take action on the selected item
 local function take_item_action(player, name, count, type, alt)
   local prototype = game.item_prototypes[name]
   local stack_size = prototype.stack_size
@@ -207,6 +211,7 @@ local function take_item_action(player, name, count, type, alt)
   end
 end
 
+-- get the slot type (inventory, logistics, unavailable) from the slot's style
 local function extract_slot_type(elem)
   return elem.style.name:gsub('qis_(.+)_result_slot_button', '%1'):gsub('active_', '')
 end
@@ -273,7 +278,7 @@ local function search_textfield_text_changed(e)
   -- update results
   local i = 0
   local children = table.deepcopy(results_table.children)
-  for _,t in pairs(search_dictionary(player, string.lower(e.element.text))) do
+  for _,t in pairs(search_for_items(player, string.lower(e.element.text))) do
     i = i + 1
     local elem = children[i]
     if not elem then -- create button
@@ -404,7 +409,6 @@ end
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
 
--- on init
 event.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
@@ -419,7 +423,6 @@ event.on_configuration_changed(function(e)
   translate_for_all_players(nil, true)
 end)
 
--- when a player is created
 event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
