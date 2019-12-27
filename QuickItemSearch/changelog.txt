@@ -11,6 +11,7 @@ Date: 2019.12.27
     - Fixed a crash on inventory change when requesting more than one item from the logistics network at once
     - Fixed not being able to use the mouse to pick a result until after pressing enter
     - Fixed several incorrectly handled edge cases with the GUI navigation
+    - Fixed missing locale
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
