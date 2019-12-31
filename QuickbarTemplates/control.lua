@@ -9,7 +9,6 @@
 
 -- create the GUI
 local function create_gui(player)
-  local player_index = player.index
   local window = player.gui.screen.add{type='frame', name='qt_window', style='shortcut_bar_window_frame'}
   window.style.right_padding = 4
   local inner_panel = window.add{type='frame', name='qt_inner_panel', style='shortcut_bar_inner_panel'}
@@ -138,7 +137,6 @@ script.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
     local window = setup_player(player)
-    set_gui_location(player, window)
   end
 end)
 
@@ -149,17 +147,16 @@ script.on_event(defines.events.on_player_created, function(e)
   -- apply default template if one is set up
   local template = player.mod_settings['qt-default-template'].value
   if template ~= '' then
-    local inventory = player.get_main_inventory()
-    inventory.insert{name='blueprint'}
-    -- get the blueprint back
-    local blueprint
-    for i=1,#inventory do
-      if inventory[i].name == 'blueprint' and not inventory[i].is_blueprint_setup() then
-        blueprint = inventory[i]
-        break
-      end
+    -- put a blueprint into the cursor stack to retrieve a LuaItemStack object
+    player.clean_cursor()
+    local cursor_stack = player.cursor_stack
+    cursor_stack.set_stack{name='blueprint'}
+    local blueprint = cursor_stack
+    if not blueprint then
+      player.print('QUICKBAR TEMPLATES: Failure to import default template. Please contact the mod author.')
+      player.clean_cursor()
+      return
     end
-    if not blueprint then error('No blueprint found, is inventory full?') end
     -- import the default template
     if blueprint.import_stack(template) == 0 then
       -- apply to quickbar
@@ -180,6 +177,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
   local stack = player.cursor_stack
   if stack and stack.valid_for_read and stack.name == 'blueprint' then
     -- show GUI
+    set_gui_location(player, gui.window)
     if stack.is_blueprint_setup() then
       gui.export_button.visible = false
       gui.import_button.visible = true
