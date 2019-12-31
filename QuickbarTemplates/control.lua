@@ -1,6 +1,9 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICKBAR TEMPLATES CONTROL SCRIPTING
 
+ -- debug adapter
+ pcall(require,'__debugadapter__/debugadapter.lua')
+
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
@@ -91,6 +94,8 @@ local function import_quickbar(player, entities)
     player.print{'chat-message.invalid-blueprint'}
     return
   end
+  -- assemble filters into a table
+  local filters = {}
   for i=1,100 do
     local entity = entities[i]
     -- check if this is a constant combinator
@@ -98,16 +103,30 @@ local function import_quickbar(player, entities)
       player.print{'chat-message.invalid-blueprint'}
       return
     end
+    -- get_blueprint_entities() does not return them in any particular order, so calculate the index by position
+    local pos = entity.position
+    local filter_index = 46 + (pos.x) + (-pos.y*10)
     if entity.control_behavior then
       -- if the combinator behavior has more than one filter, it's invalid
       if #entity.control_behavior.filters > 1 then
         player.print{'chat-message.invalid-blueprint'}
         return
       end
-      -- get_blueprint_entities() does not return them in any particular order for some reason, so calculate the index by position
-      local pos = entity.position
-      player.set_quick_bar_slot(46 + (pos.x) + (-pos.y*10), entities[i].control_behavior.filters[1].signal.name)
+      filters[filter_index] = entities[i].control_behavior.filters[1].signal.name
+    else
+      filters[filter_index] = ''
     end
+  end
+  local length = #filters
+  -- due to floating point imprecision, we must check if all of the indexes are off by one, and compensate if so
+  local offset = length == 101 and -1 or 0
+  local start = length == 101 and 2 or 1
+  -- apply the filters
+  local set_filter = player.set_quick_bar_slot
+  for i=start,length do
+    local filter = filters[i]
+    if filter == '' then filter = nil end
+    set_filter(i+offset, filter)
   end
 end
 
@@ -198,3 +217,10 @@ script.on_event(defines.events.on_gui_click, function(e)
     end
   end
 end)
+
+-- DEBUGGING
+if __DebugAdapter then
+  script.on_event('DEBUG-INSPECT-GLOBAL', function(e)
+    local breakpoint -- put breakpoint here to inspect global at any time
+  end)
+end
