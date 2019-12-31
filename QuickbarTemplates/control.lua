@@ -47,7 +47,7 @@ local function export_quickbar(player)
   local filters = {}
   for i=1,100 do
     local item = get_slot(i)
-    if item then
+    if item and item.name ~= 'blueprint' and item.name ~= 'blueprint-book' then
       filters[i] = item.name
     end
   end
