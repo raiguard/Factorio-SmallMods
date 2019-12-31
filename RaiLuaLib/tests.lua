@@ -1,6 +1,6 @@
 return
 {
-  -- 'crash',
+  -- 'bug-report',
   -- 'event',
   'translation'
 }

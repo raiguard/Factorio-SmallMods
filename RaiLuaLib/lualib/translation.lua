@@ -9,9 +9,11 @@ local event = require('lualib/event')
 local util = require('__core__/lualib/util')
 
 -- locals
+local math_floor = math.floor
 local string_gsub = string.gsub
 local string_lower = string.lower
-local math_floor = math.floor
+local table_sort = table.sort
+local table_remove = table.remove
 
 -- -----------------------------------------------------------------------------
 
@@ -37,19 +39,26 @@ end
 
 -- translate 80 entries per tick
 local function translate_batch()
+  if game.tick == 0 then
+    game.print(game.tick)
+    print('\nBEGIN TICK '..game.tick)
+  end
   local __translation = global.__translation
-  local iterations = math_floor(80 / __translation.dictionary_count)
+  -- local iterations = math_floor(80 / __translation.dictionary_count)
+  local iterations = 1
   if iterations < 1 then iterations = 1 end
-  for _,pt in pairs(__translation.players) do -- for each player that is doing a translation
-    for _,t in pairs(pt) do -- for each dictionary that they're translating
+  for pi,pt in pairs(__translation.players) do -- for each player that is doing a translation
+    local request_translation = game.get_player(pi).request_translation
+    for n,t in pairs(pt) do -- for each dictionary that they're translating
+      if game.tick == 0 then print(n..' ----------------------------------------------') end
       local next_index = t.next_index
-      local request_translation = t.request_translation
       local strings = t.strings
       local strings_len = t.strings_len
-      for i=next_index,next_index+iterations do
+      for i=next_index,next_index+iterations-1 do
         if i > strings_len then
           break
         end
+        if game.tick == 0 then print(serialise_localised_string(strings[i])) end
         request_translation(strings[i])
       end
       t.next_index = next_index + iterations
@@ -59,27 +68,41 @@ end
 
 -- sorts a translated string into its appropriate dictionary
 local function sort_translated_string(e)
+  if e.localised_string[1] == 'achievement-name.getting-on-track' then
+    local breakpoint
+  end
   local __translation = global.__translation
   local player_translation = __translation.players[e.player_index]
   local serialised = serialise_localised_string(e.localised_string)
   for name,t in pairs(player_translation) do
     local value = t.data[serialised]
     if value then
-      if e.translated then
-        local result = t.result[e.result]
+      if e.translated and e.result ~= '' then
+        local result = e.result
         if t.convert_to_lowercase then
-          e.result = string_lower(e.result)
+          result = string_lower(result)
         end
-        if result then
-          result[#result+1] = value
+        -- lookup
+        local lookup = t.lookup[result]
+        if lookup then
+          lookup[#lookup+1] = value
         else
-          t.result[e.result] = {value}
+          t.lookup[result] = {value}
+        end
+        -- searchable
+        t.searchable[#t.searchable+1] = result
+        -- translation
+        local translation = t.translations[value]
+        if translation then
+          error('Duplicate key \''..value..'\' in dictionary: '..t.name)
+        else
+          t.translations[value] = result
         end
       else
-        log('Key: '..serialised..' for dictionary: '..name..' was not successfully translated, and will not be included in the output table')
+        log(name..':  key \''..serialised..'\' was not successfully translated, and will not be included in the output.')
       end
       t.data[serialised] = nil
-      if table_size(t.data) == 0 then -- this dictionary has completed translation
+      if table_size(t.data) == 0 then -- this set has completed translation
         player_translation[name] = nil
         if table_size(player_translation) == 0 then -- remove player from translating table if they're done
           __translation.players[e.player_index] = nil
@@ -88,8 +111,22 @@ local function sort_translated_string(e)
             event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
           end
         end
+        -- sort searchable array and optimise it
+        local searchable = t.searchable
+        local lookup = t.lookup
+        local indexes = {}
+        table_sort(searchable)
+        for i=1,#searchable do
+          local translated = searchable[i]
+          local lookup = lookup[translated]
+          local index = (indexes[translated] or 0) + 1
+          searchable[i] = {internal=lookup[index], translated=translated}
+          indexes[translated] = index
+        end
+        -- raise events to finish up
         event.raise(translation.update_dictionary_count_event, {delta=-1})
-        event.raise(translation.finish_event, {player_index=e.player_index, dictionary_name=name, dictionary=t.result})
+        event.raise(translation.finish_event, {player_index=e.player_index, dictionary_name=name, lookup=lookup, searchable=searchable,
+                    translations=t.translations})
       end
       return
     end
@@ -99,7 +136,7 @@ end
 translation.serialise_localised_string = serialise_localised_string
 
 -- begin translating strings
-function translation.start(player, dictionary_name, data, strings, options)
+function translation.start(player, dictionary_name, data, options)
   options = options or {}
   local __translation = global.__translation
   if not __translation.players[player.index] then __translation.players[player.index] = {} end
@@ -107,25 +144,73 @@ function translation.start(player, dictionary_name, data, strings, options)
   if not options.ignore_error and player_translation[dictionary_name] then
     error('Already translating dictionary: '..dictionary_name)
   end
+  -- parse data table to create iteration tables
+  local translation_data = {}
+  local strings = {}
+  for i=1,#data do
+    local t = data[i]
+    local localised = t.localised
+    translation_data[serialise_localised_string(localised)] = t.internal
+    strings[i] = localised
+  end
   player_translation[dictionary_name] = {
     -- tables
-    data = table.deepcopy(data), -- this table gets destroyed as it is translated, so deepcopy it
+    data = translation_data, -- this table gets destroyed as it is translated, so deepcopy it
     strings = strings,
     -- iteration
     next_index = 1,
     player = player,
-    request_translation = player.request_translation,
+    -- request_translation = player.request_translation,
     strings_len = #strings,
     -- settings
     convert_to_lowercase = options.convert_to_lowercase,
     -- output
-    result = {}
+    lookup = {},
+    searchable = {},
+    translations = {}
   }
   event.raise(translation.update_dictionary_count_event, {delta=1})
   event.raise(translation.start_event, {player_index=player.index, dictionary_name=dictionary_name})
   if not event.is_registered('translation_translate_batch') then -- register events if needed
     event.on_tick(translate_batch, {name='translation_translate_batch'})
     event.on_string_translated(sort_translated_string, {name='translation_sort_result'})
+  end
+end
+
+-- cancel a translation
+function translation.cancel(player, dictionary_name)
+  local __translation = global.__translation
+  local player_translation = __translation.players[player.index]
+  if not player_translation[dictionary_name] then
+    error('Tried to cancel a translation that isn\'t running!')
+  end
+  player_translation[dictionary_name] = nil
+  event.raise(translation.update_dictionary_count_event, {delta=1})
+  if table_size(player_translation) == 0 then -- remove player from translating table if they're done
+    __translation.players[player.index] = nil
+    if table_size(__translation.players) == 0 then -- deregister events if we're all done
+      event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
+      event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
+    end
+  end
+end
+
+-- cancels all translations for a player
+function translation.cancel_all_for_player(player)
+  local __translation = global.__translation
+  local player_translation = __translation.players[player.index]
+  for name,_ in pairs(player_translation) do
+    translation.cancel(player, name)
+  end
+end
+
+-- cancels ALL translations for this mod
+function translation.cancel_all()
+  for i,t in pairs(global.__translation.players) do
+    local player = game.get_player(i)
+    for name,_ in pairs(t) do
+      translation.cancel(player, name)
+    end
   end
 end
 
@@ -164,6 +249,12 @@ end)
 
 event.on_load(function()
   setup_remote()
+  -- re-register events
+  event.load_conditional_handlers{
+    translation_translate_batch = translate_batch,
+    translation_sort_result = sort_translated_string
+  }
+  print('on load')
 end)
 
 return translation
