@@ -13,9 +13,9 @@ local function create_gui(player)
   window.style.right_padding = 4
   local inner_panel = window.add{type='frame', name='qt_inner_panel', style='shortcut_bar_inner_panel'}
   local export_button = inner_panel.add{type='sprite-button', name='qt_export_button', style='shortcut_bar_button_blue', sprite='qt-export-blueprint-white',
-                      tooltip={'gui-quickbar-templates.export-button-tooltip'}}
+                      tooltip={'qt-gui.export'}}
   local import_button = inner_panel.add{type='sprite-button', name='qt_import_button', style='shortcut_bar_button_blue', sprite='qt-import-blueprint-white',
-                      tooltip={'gui-quickbar-templates.import-button-tooltip'}}
+                      tooltip={'qt-gui.import'}}
   window.visible = false
   return {window=window, export_button=export_button, import_button=import_button}
 end
@@ -90,7 +90,7 @@ end
 local function import_quickbar(player, entities)
   -- get filters, while at the same time checking for the blueprint's validity
   if #entities ~= 100 then
-    player.print{'chat-message.invalid-blueprint'}
+    player.print{'qt-chat-message.invalid-blueprint'}
     return
   end
   -- assemble filters into a table
@@ -99,7 +99,7 @@ local function import_quickbar(player, entities)
     local entity = entities[i]
     -- check if this is a constant combinator
     if entity == nil or entity.name ~= 'constant-combinator' then
-      player.print{'chat-message.invalid-blueprint'}
+      player.print{'qt-chat-message.invalid-blueprint'}
       return
     end
     -- get_blueprint_entities() does not return them in any particular order, so calculate the index by position
@@ -108,7 +108,7 @@ local function import_quickbar(player, entities)
     if entity.control_behavior then
       -- if the combinator behavior has more than one filter, it's invalid
       if #entity.control_behavior.filters > 1 then
-        player.print{'chat-message.invalid-blueprint'}
+        player.print{'qt-chat-message.invalid-blueprint'}
         return
       end
       filters[filter_index] = entities[i].control_behavior.filters[1].signal.name
@@ -163,7 +163,7 @@ script.on_event(defines.events.on_player_created, function(e)
       import_quickbar(player, blueprint.get_blueprint_entities())
     else
       -- error
-      game.print{'chat-message.invalid-blueprint'}
+      game.print{'qt-chat-message.invalid-blueprint'}
     end
     -- remove blueprint
     blueprint.clear()
@@ -171,7 +171,8 @@ script.on_event(defines.events.on_player_created, function(e)
 end)
 
 -- when a player's cursor stack changes
-script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
+-- separated so we can call it internally
+local function on_cursor_stack_changed(e)
   local player = game.players[e.player_index]
   local gui = global.players[e.player_index]
   local stack = player.cursor_stack
@@ -190,7 +191,8 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(e)
     -- hide GUI
     gui.window.visible = false
   end
-end)
+end
+script.on_event(defines.events.on_player_cursor_stack_changed, on_cursor_stack_changed)
 
 -- when a player's display resolution or scale changes
 script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
@@ -205,6 +207,8 @@ script.on_event(defines.events.on_gui_click, function(e)
     if stack and stack.valid_for_read and stack.name == 'blueprint' then
       -- export to held blueprint
       stack.set_blueprint_entities(export_quickbar(player))
+      -- update visible button
+      on_cursor_stack_changed(e)
     end
   elseif e.element.name == 'qt_import_button' then
     local player = game.players[e.player_index]
