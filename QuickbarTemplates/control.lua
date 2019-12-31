@@ -13,9 +13,9 @@ local function create_gui(player)
   window.style.right_padding = 4
   local inner_panel = window.add{type='frame', name='qt_inner_panel', style='shortcut_bar_inner_panel'}
   local export_button = inner_panel.add{type='sprite-button', name='qt_export_button', style='shortcut_bar_button_blue', sprite='qt-export-blueprint-white',
-                      tooltip={'qt-gui.export'}}
+                                        tooltip={'qt-gui.export'}}
   local import_button = inner_panel.add{type='sprite-button', name='qt_import_button', style='shortcut_bar_button_blue', sprite='qt-import-blueprint-white',
-                      tooltip={'qt-gui.import'}}
+                                        tooltip={'qt-gui.import'}}
   window.visible = false
   return {window=window, export_button=export_button, import_button=import_button}
 end
@@ -88,7 +88,7 @@ end
 
 -- apply the filters from the given blueprint to our quickbar
 local function import_quickbar(player, entities)
-  -- get filters, while at the same time checking for the blueprint's validity
+  -- error checking: should have exactly 100 entities
   if #entities ~= 100 then
     player.print{'qt-chat-message.invalid-blueprint'}
     return
@@ -97,7 +97,7 @@ local function import_quickbar(player, entities)
   local filters = {}
   for i=1,100 do
     local entity = entities[i]
-    -- check if this is a constant combinator
+    -- error checking: should be a constant combinator
     if entity == nil or entity.name ~= 'constant-combinator' then
       player.print{'qt-chat-message.invalid-blueprint'}
       return
@@ -106,7 +106,7 @@ local function import_quickbar(player, entities)
     local pos = entity.position
     local filter_index = 46 + (pos.x) + (-pos.y*10)
     if entity.control_behavior then
-      -- if the combinator behavior has more than one filter, it's invalid
+      -- error checking: should only have one filter
       if #entity.control_behavior.filters > 1 then
         player.print{'qt-chat-message.invalid-blueprint'}
         return
@@ -152,8 +152,9 @@ script.on_event(defines.events.on_player_created, function(e)
     local cursor_stack = player.cursor_stack
     cursor_stack.set_stack{name='blueprint'}
     local blueprint = cursor_stack
-    if not blueprint then
-      player.print('QUICKBAR TEMPLATES: Failure to import default template. Please contact the mod author.')
+    -- error checking
+    if not blueprint or blueprint.valid == false then
+      player.print{'qt-chat-message.default-template-import-failed'}
       player.clean_cursor()
       return
     end
@@ -163,7 +164,7 @@ script.on_event(defines.events.on_player_created, function(e)
       import_quickbar(player, blueprint.get_blueprint_entities())
     else
       -- error
-      game.print{'qt-chat-message.invalid-blueprint'}
+      player.print{'qt-chat-message.invalid-default-blueprint'}
     end
     -- remove blueprint
     blueprint.clear()
