@@ -1,0 +1,9 @@
+{
+  "name": "RaiTweaks",
+  "version": "0.0.0",
+  "title": "RaiTweaks",
+  "author": "raiguard",
+  "factorio_version": "0.17",
+  "dependencies": ["base >= 0.17.79"],
+  "description": "Rai's Tweaks. Might be a real mod in the future... maybe."
+}
