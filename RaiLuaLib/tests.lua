@@ -2,6 +2,6 @@ return
 {
   -- 'bug-report',
   -- 'event',
-  'sandbox',
-  -- 'translation'
+  -- 'sandbox',
+  'translation'
 }
