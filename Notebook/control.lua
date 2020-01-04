@@ -21,14 +21,22 @@ local gui = require('gui')
 -- UTILITIES
 
 local function setup_player(player)
-  local mod_gui_button = gui.create_mod_gui_button(player)
   global.players[player.index] = {
     gui = {
-      mod_gui_button = mod_gui_button,
-      notebook = gui.create(player, mod_gui.get_frame_flow(player))
+      mod_gui_button = gui.create_mod_gui_button(player)
     },
-    notebook = {}
+    notebook = {
+      ['Sample Page'] = {
+        {name='Train Colors', type='table', table={
+          {'[fluid=lubricant] Lubricant', '0,170,0'},
+          {'[fluid=sulfuric-acid] Acid', '255,255,0'},
+          {'[item=satellite] Rocket Supply', '255,0,100'},
+          {'[item=power-armor-mk2] PAX Shuttle', '255,0,255'}
+        }}
+      }
+    }
   }
+  gui.create(player, global.players[player.index], mod_gui.get_frame_flow(player))
 end
 
 -- -----------------------------------------------------------------------------
@@ -50,8 +58,12 @@ event.on_player_removed(function(e)
 end)
 
 event.on_gui_click(function(e)
-  gui.set_visible(game.get_player(e.player_index), global.players[e.player_index])
+  gui.set_visible(game.get_player(e.player_index), global.players[e.player_index], false)
 end, {gui_filters='toggle_notebook_button'})
+
+event.register('nb-toggle-notebook', function(e)
+  gui.set_visible(game.get_player(e.player_index), global.players[e.player_index])
+end)
 
 -- DEBUGGING
 if __DebugAdapter then
