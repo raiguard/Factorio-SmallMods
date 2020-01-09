@@ -20,6 +20,7 @@ local table_remove = table.remove
 local translation = {}
 translation.start_event = event.generate_id('translation_start')
 translation.finish_event = event.generate_id('translation_finish')
+translation.canceled_event = event.generate_id('translation_canceled')
 
 -- converts a localised string into a format readable by the API
 -- basically just spits out the table in string form
@@ -39,26 +40,24 @@ end
 
 -- translate 80 entries per tick
 local function translate_batch()
-  if game.tick == 0 then
-    game.print(game.tick)
-    print('\nBEGIN TICK '..game.tick)
-  end
-  local __translation = global.__translation
-  -- local iterations = math_floor(80 / __translation.dictionary_count)
-  local iterations = 1
+  local __translation = global.__lualib.translation
+  local iterations = math_floor(80 / __translation.dictionary_count)
   if iterations < 1 then iterations = 1 end
   for pi,pt in pairs(__translation.players) do -- for each player that is doing a translation
-    local request_translation = game.get_player(pi).request_translation
-    for n,t in pairs(pt) do -- for each dictionary that they're translating
-      if game.tick == 0 then print(n..' ----------------------------------------------') end
+    local player = game.get_player(pi)
+    if not player or not player.connected then -- the player was destroyed or disconnected
+      translation.cancel_all_for_player(player)
+      return
+    end
+    local request_translation = player.request_translation
+    for _,t in pairs(pt) do -- for each dictionary that they're translating
       local next_index = t.next_index
       local strings = t.strings
       local strings_len = t.strings_len
-      for i=next_index,next_index+iterations-1 do
+      for i=next_index,next_index+iterations do
         if i > strings_len then
           break
         end
-        if game.tick == 0 then print(serialise_localised_string(strings[i])) end
         request_translation(strings[i])
       end
       t.next_index = next_index + iterations
@@ -68,10 +67,7 @@ end
 
 -- sorts a translated string into its appropriate dictionary
 local function sort_translated_string(e)
-  if e.localised_string[1] == 'achievement-name.getting-on-track' then
-    local breakpoint
-  end
-  local __translation = global.__translation
+  local __translation = global.__lualib.translation
   local player_translation = __translation.players[e.player_index]
   local serialised = serialise_localised_string(e.localised_string)
   for name,t in pairs(player_translation) do
@@ -138,11 +134,12 @@ translation.serialise_localised_string = serialise_localised_string
 -- begin translating strings
 function translation.start(player, dictionary_name, data, options)
   options = options or {}
-  local __translation = global.__translation
+  local __translation = global.__lualib.translation
   if not __translation.players[player.index] then __translation.players[player.index] = {} end
   local player_translation = __translation.players[player.index]
-  if not options.ignore_error and player_translation[dictionary_name] then
-    error('Already translating dictionary: '..dictionary_name)
+  if player_translation[dictionary_name] then
+    log('Cancelling and restarting translation of '..dictionary_name..' for '..player.name)
+    translation.cancel(player, dictionary_name)
   end
   -- parse data table to create iteration tables
   local translation_data = {}
@@ -179,7 +176,7 @@ end
 
 -- cancel a translation
 function translation.cancel(player, dictionary_name)
-  local __translation = global.__translation
+  local __translation = global.__lualib.translation
   local player_translation = __translation.players[player.index]
   if not player_translation[dictionary_name] then
     error('Tried to cancel a translation that isn\'t running!')
@@ -197,7 +194,7 @@ end
 
 -- cancels all translations for a player
 function translation.cancel_all_for_player(player)
-  local __translation = global.__translation
+  local __translation = global.__lualib.translation
   local player_translation = __translation.players[player.index]
   for name,_ in pairs(player_translation) do
     translation.cancel(player, name)
@@ -206,7 +203,7 @@ end
 
 -- cancels ALL translations for this mod
 function translation.cancel_all()
-  for i,t in pairs(global.__translation.players) do
+  for i,t in pairs(global.__lualib.translation.players) do
     local player = game.get_player(i)
     for name,_ in pairs(t) do
       translation.cancel(player, name)
@@ -234,13 +231,14 @@ local function setup_remote()
   translation.retranslate_all_event = remote.call('railualib_translation', 'retranslate_all_event')
   translation.update_dictionary_count_event = remote.call('railualib_translation', 'update_dictionary_count_event')
   event.register(translation.update_dictionary_count_event, function(e)
-    local __translation = global.__translation
+    local __translation = global.__lualib.translation
     __translation.dictionary_count = __translation.dictionary_count + e.delta
   end)
 end
 
 event.on_init(function()
-  global.__translation = {
+  if not global.__lualib then global.__lualib = {} end
+  global.__lualib.translation = {
     dictionary_count = 0,
     players = {}
   }
@@ -254,7 +252,6 @@ event.on_load(function()
     translation_translate_batch = translate_batch,
     translation_sort_result = sort_translated_string
   }
-  print('on load')
 end)
 
 return translation

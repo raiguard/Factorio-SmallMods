@@ -29,7 +29,7 @@ local function dispatch_event(e)
   if not event_registry[id] then
     error('Event is registered but has no handlers!')
   end
-  local con_registry = global.conditional_event_registry
+  local con_registry = global.__lualib.event
   for _,t in ipairs(event_registry[id]) do -- for every handler registered to this event
     -- check if any userdata has gone invalid since last iteration
     for _,v in pairs(e) do
@@ -84,6 +84,8 @@ local bootstrap_handlers = {
 
 -- registers a handler to run when the event is called
 function event.register(id, handler, options)
+  -- we must do this here since this gets called before on_init
+  if not global.__lualib then global.__lualib = {} end
   options = options or {}
   -- nest GUI filters into an array if they're not already
   local filters = options.gui_filters
@@ -96,9 +98,9 @@ function event.register(id, handler, options)
   local name = options.name
   if name then
     local player_index = options.player_index
-    local con_registry = global.conditional_event_registry[name]
+    local con_registry = global.__lualib.event[name]
     if not con_registry then
-      global.conditional_event_registry[name] = {id=id, players={player_index}, gui_filters=filters}
+      global.__lualib.event[name] = {id=id, players={player_index}, gui_filters=filters}
     elseif player_index then
       -- check to be sure this player isn't already registered
       local players = con_registry.players
@@ -152,7 +154,7 @@ function event.deregister(id, handler, options)
   local player_index = options.player_index
   -- remove from conditional event registry if needed
   if name then
-    local con_registry = global.conditional_event_registry[name]
+    local con_registry = global.__lualib.event[name]
     if con_registry then
       if player_index then
         for i,pi in ipairs(con_registry.players) do
@@ -162,7 +164,7 @@ function event.deregister(id, handler, options)
         end
       end
       if #con_registry.players == 0 then
-        global.conditional_event_registry[name] = nil
+        global.__lualib.event[name] = nil
       end
     else
       error('Tried to deregister a conditional event whose data does not exist')
@@ -254,13 +256,13 @@ end
 
 -- create global table for conditional events on init
 event.on_init(function()
-  global.conditional_event_registry = {}
+  global.__lualib.event = {}
 end)
 
 -- re-registers conditional handlers if they're in the registry
 function event.load_conditional_handlers(data)
   for name, handler in pairs(data) do
-    local registry = global.conditional_event_registry[name]
+    local registry = global.__lualib.event[name]
     if registry then
         event.register(registry.id, handler, {name=name, gui_filters=registry.gui_filters})
     end
@@ -270,7 +272,7 @@ end
 
 -- returns true if the conditional event is registered
 function event.is_registered(name, player_index)
-  local registry = global.conditional_event_registry[name]
+  local registry = global.__lualib.event[name]
   if registry then
     if player_index then
       for _,i in ipairs(registry.players) do
@@ -287,7 +289,7 @@ end
 
 -- gets the event IDs from the conditional registry so you don't have to provide them
 function event.deregister_conditional(handler, options)
-  local con_registry = global.conditional_event_registry[options.name]
+  local con_registry = global.__lualib.event[options.name]
   if con_registry then
     event.deregister(con_registry.id, handler, options)
   end
