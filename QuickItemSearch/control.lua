@@ -10,7 +10,8 @@ local mod_gui = require('mod-gui')
 local translation = require('lualib/translation')
 
 -- locals
-local serialise_localised_string = translation.serialise_localised_string
+local string_lower = string.lower
+local string_match = string.match
 
 -- libraries
 local gui = {}
@@ -22,28 +23,21 @@ local gui = {}
 local function build_prototype_data()
   local item_data = {} -- prototype name -> data: actually used to find sprites and such
   local translation_data = {} -- serialised localised string -> prototype name
-  local translation_strings = {} -- array of localised strings to translate
-  local translation_strings_len = 0 -- length of translation_strings, to allow for quick iteration
   for name,prototype in pairs(game.item_prototypes) do
     item_data[name] = {localised_name=prototype.localised_name, hidden=prototype.has_flag('hidden')}
-    translation_data[serialise_localised_string(prototype.localised_name)] = name
-    translation_strings_len = translation_strings_len + 1
-    translation_strings[translation_strings_len] = prototype.localised_name
+    translation_data[#translation_data+1] = {localised=prototype.localised_name, internal=prototype.name}
   end
   -- store build data in translation table
-  global.__translation.build_data = {
-    data = translation_data,
-    strings = translation_strings
-  }
+  global.__lualib.translation.translation_data = translation_data
   -- store item data to be retrieved after searching
   global.item_data = item_data
 end
 
 -- runs translations for all currently connected players
-local function translate_for_all_players(e, is_config_changed)
-  local build_data = global.__translation.build_data
+local function translate_for_all_players()
+  local translation_data = global.__lualib.translation.translation_data
   for _,player in ipairs(game.connected_players) do
-    translation.start(player, 'items', build_data.data, build_data.strings, {convert_to_lowercase=true, skip_error=is_config_changed})
+    translation.start(player, 'items', translation_data, {convert_to_lowercase=true})
   end
 end
 
@@ -92,7 +86,6 @@ local function update_request_counts(e)
 end
 
 local function search_for_items(player, query)
-  local item_data = global.item_data
   local player_table = global.players[player.index]
   local player_settings = player.mod_settings
   local show_hidden = player_settings['qis-search-hidden'].value
@@ -102,14 +95,13 @@ local function search_for_items(player, query)
   end
   -- search dictionary first, then iterate through that to decrease the number of API calls
   local search_results = {}
-  for name,t in pairs(player_table.search) do
-    if name:match(query) then
-      for i=1,#t do
-        local data = item_data[t[i]]
-        if data then
-          search_results[t[i]] = data
-        end
-      end
+  local search_table = player_table.dictionary.searchable
+  local item_data = global.item_data
+  for i=1,#search_table do
+    local t = search_table[i]
+    local internal = t.internal
+    if string_match(t.translated, query) then
+      search_results[internal] = item_data[internal]
     end
   end
   -- map editor
@@ -302,7 +294,7 @@ local function search_textfield_confirmed(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
-  local results_count = #results_table.children  
+  local results_count = #results_table.children
   if results_count > 0 then
     -- setup
     player_table.flags.selecting_result = true
@@ -397,11 +389,8 @@ end
 
 function gui.destroy(window, player_index)
   -- deregister all GUI events if needed
-  local con_registry = global.conditional_event_registry
   for cn,h in pairs(handlers) do
-    if con_registry[cn] then
-      event.deregister(con_registry[cn].id, h, {name=cn, player_index=player_index})
-    end
+    event.deregister_conditional(h, {name=cn, player_index=player_index})
   end
   window.destroy()
 end
@@ -419,29 +408,46 @@ event.on_init(function()
 end)
 
 event.on_configuration_changed(function(e)
+  translation.cancel_all()
   build_prototype_data()
-  translate_for_all_players(nil, true)
+  translate_for_all_players()
+  -- close open GUIs
+  for i,_ in pairs(game.players) do
+    local player_table = global.players[i]
+    player_table.flags.can_open_gui = false
+    if player_table.gui then -- close the open GUI
+      gui.close(player_table.gui.window, i)
+    end
+  end
 end)
 
 event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
 
+event.on_player_removed(function(e)
+  global.players[e.player_index] = nil
+end)
+
 event.on_player_joined_game(function(e)
-  local build_data = global.__translation.build_data
-  translation.start(game.get_player(e.player_index), 'items', build_data.data, build_data.strings, {convert_to_lowercase=true})
-  -- manage GUI
+  translation.start(game.get_player(e.player_index), 'items', global.__lualib.translation.translation_data, {convert_to_lowercase=true})
+  -- close open GUIs
   local player_table = global.players[e.player_index]
   player_table.flags.can_open_gui = false
   if player_table.gui then -- close the open GUI
-    event.raise(defines.events.on_gui_closed, {player_index=e.player_index, element=player_table.gui.window, gui_type=16})
+    gui.close(player_table.gui.window, e.player_index)
   end
 end)
 
 event.register(translation.finish_event, function(e)
+  game.print('translation finished!')
   local player_table = global.players[e.player_index]
   player_table.flags.can_open_gui = true
-  player_table.search = e.dictionary
+  player_table.dictionary = {
+    lookup = e.lookup,
+    searchable = e.searchable,
+    translations = e.translations
+  }
   if player_table.flags.tried_to_open_gui then
     player_table.flags.tried_to_open_gui = false
     game.get_player(e.player_index).print{'chat-message.translation-finished'}
@@ -461,7 +467,8 @@ event.register('qis-search', function(e)
       local mod_settings = player.mod_settings
       local location_setting = mod_settings['qis-'..(player.controller_type == defines.controllers.editor and 'editor' or 'default')..'-location'].value
       local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
-      gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value, columns=mod_settings['qis-column-count'].value})
+      gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value,
+        columns=mod_settings['qis-column-count'].value})
       player.opened = gui_data.window
       player_table.gui = gui_data
     else
