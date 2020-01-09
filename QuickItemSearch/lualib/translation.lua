@@ -56,11 +56,12 @@ local function translate_batch()
       local strings_len = t.strings_len
       for i=next_index,next_index+iterations do
         if i > strings_len then
-          break
+          goto continue
         end
         request_translation(strings[i])
       end
       t.next_index = next_index + iterations
+      ::continue::
     end
   end
 end
