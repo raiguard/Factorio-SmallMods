@@ -8,30 +8,49 @@ local util = require('__core__/lualib/util')
 
 -- locals
 local table_deepcopy = table.deepcopy
+local templates = {}
+local handlers = {}
 
--- PROTOTYPE TEMPLATE
-local template = {
-  {type='frame', name='window', style='dialog_frame', direction='vertical', children={
-    {type='flow', name='titlebar', style='rll_titlebar_flow', direction='horizontal', children={
-      {type='label', name='label', style='frame_title', caption='Fufucuddlypoops'},
-      {type='empty-widget', name='pusher', style='rll_horizontal_pusher'},
-      {type='sprite-button', name='close_button', style='frame_action_button', sprite='utility/close_white', hovered_sprite='utility/close_black',
-        clicked_sprite='utility/close_black', mouse_button_filter={'left'}}
-    }}
-  }}
-}
-
-local function remove_key(t, key)
-  local new_t = table_deepcopy(t)
-  new_t[key] = nil
-  return new_t
+local function get_template(s, initial_t)
+  local template = initial_t or templates
+  for _,key in pairs(util.split(s, '%.')) do
+    template = template[key]
+  end
+  return template
 end
 
-local gui = {}
-
--- no bueno...
-local function recursive_load(parent, t)
-  local elem = parent.add(remove_key(t, 'children'))
+local function recursive_load(parent, t, options)
+  -- load template(s)
+  if t.template then
+    local template = t.template
+    if type(template) == 'string' then
+      template = {template}
+    end
+    for i=1,#template do
+      t = util.merge{get_template(template[i]), t}
+    end
+  end
+  -- format element
+  local elem_t = table_deepcopy(t)
+  -- style parsing
+  local style = elem_t.style
+  local iterate_style = false
+  if style and type(style) == 'table' then
+    elem_t.style = style.name
+    iterate_style = true
+  end
+  elem_t.children = nil
+  -- add element
+  local elem = parent.add(elem_t)
+  -- set runtime styles
+  if iterate_style then
+    for k,v in pairs(t.style) do
+      if k ~= 'name' then
+        elem.style[k] = v
+      end
+    end
+  end
+  -- add children
   local children = t.children
   if children then
     for i=1,#children do
@@ -40,9 +59,25 @@ local function recursive_load(parent, t)
   end
 end
 
--- loads a GUI template and returns the elements
--- eventually this will register handlers as well
-function gui.load_template(parent, name, template)
-  local elems = {}
+local self = {}
 
+function self.load_templates(t)
+  templates = t
+  return self
 end
+
+function self.load_handlers(t)
+  handlers = t
+  return self
+end
+
+-- creates a GUI from the given template
+function self.create(parent, template, options)
+  if type(template) == 'string' then
+    template = get_template(template)
+  end
+  recursive_load(parent, template, options)
+  return parent.children
+end
+
+return self
