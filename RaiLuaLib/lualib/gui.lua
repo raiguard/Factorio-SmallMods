@@ -11,10 +11,11 @@ local table_deepcopy = table.deepcopy
 local templates = {}
 local handlers = {}
 local table_insert = table.insert
+local string_split = util.split
 local global_data
 
 local function get_subtable(s, t)
-  for _,key in pairs(util.split(s, '%.')) do
+  for _,key in pairs(string_split(s, '%.')) do
     t = t[key]
   end
   return t
@@ -36,7 +37,7 @@ event.on_load(function()
   end
 end)
 
-local function recursive_load(parent, t, options)
+local function recursive_load(parent, t, output, options)
   -- load template(s)
   if t.template then
     local template = t.template
@@ -57,6 +58,7 @@ local function recursive_load(parent, t, options)
   end
   elem_t.children = nil
   elem_t.handlers = nil
+  elem_t.save_as = nil
   -- add element
   local elem = parent.add(elem_t)
   -- set runtime styles
@@ -88,13 +90,18 @@ local function recursive_load(parent, t, options)
       table_insert(global_data, {element=elem, event=n, path=append_path and (path..'.'..n) or path})
     end
   end
+  -- add to output if desired
+  if t.save_as then
+    output[t.save_as] = elem
+  end
   -- add children
   local children = t.children
   if children then
     for i=1,#children do
-      recursive_load(elem, children[i], options)
+      output = recursive_load(elem, children[i], output, options)
     end
   end
+  return output
 end
 
 local self = {}
@@ -114,7 +121,7 @@ function self.create(parent, template, options)
   if type(template) == 'string' then
     template = get_subtable(template, templates)
   end
-  return recursive_load(parent, template, options)
+  return recursive_load(parent, template, {}, options)
 end
 
 return self

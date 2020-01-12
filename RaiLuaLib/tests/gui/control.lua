@@ -27,9 +27,9 @@ event.on_player_created(function(e)
   local data = gui.create(player.gui.screen,
     {type='frame', name='window', style='dialog_frame', direction='vertical', children={
       {type='flow', name='checkboxes_flow', direction='horizontal', children={
-        {template='checkbox', name='autoclear', caption='Auto-clear', state=true, handlers='auto_clear_checkbox'},
+        {template='checkbox', name='autoclear', caption='Auto-clear', state=true, handlers='auto_clear_checkbox', save_as='auto_clear_checkbox'},
         {template='pushers.horizontal'},
-        {template='checkbox', name='cardinals', caption='Cardinals only', state=true}
+        {template='checkbox', name='cardinals', caption='Cardinals only', state=true, save_as='cardinals_checkbox'}
       }},
       {type='flow', name='switch_flow', style={vertical_align='center'}, direction='horizontal', children={
         {type='label', name='label', caption='Grid type:'},
@@ -47,4 +47,5 @@ event.on_player_created(function(e)
     }},
     {player_index=e.player_index}
   )
+  local breakpoint
 end)
