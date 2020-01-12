@@ -28,16 +28,16 @@ end)
 
 event.on_load(function()
   global_data = global.__lualib.gui
-  for i=1,#global_data do
-    local t = global_data[i]
-    -- do some checks to be certain
-    if t.element and t.element.valid then
-      event[t.event:gsub('on_', 'on_gui_')](get_subtable(t.path, handlers), {name=t.element.index..'_'..t.event, gui_filters=t.element.index})
+  for pi,t in pairs(global_data) do
+    for i=1,#t do
+      local data = t[i]
+      event[data.event:gsub('on_', 'on_gui_')](get_subtable(data.path, handlers), {name=data.element.index..'_'..data.event, gui_filters=data.element.index})
     end
   end
 end)
 
-local function recursive_load(parent, t, output, options)
+-- recursively load a GUI template
+local function recursive_load(parent, t, output, options, parent_index)
   -- load template(s)
   if t.template then
     local template = t.template
@@ -61,6 +61,7 @@ local function recursive_load(parent, t, output, options)
   elem_t.save_as = nil
   -- add element
   local elem = parent.add(elem_t)
+  if not parent_index then parent_index = elem.index end
   -- set runtime styles
   if iterate_style then
     for k,v in pairs(t.style) do
@@ -68,6 +69,13 @@ local function recursive_load(parent, t, output, options)
         elem.style[k] = v
       end
     end
+  end
+  -- add to output table
+  if t.save_as then
+    if type(t.save_as) == 'boolean' then
+      t.save_as = t.handlers
+    end
+    output[t.save_as] = elem
   end
   -- register handler(s)
   if t.handlers then
@@ -87,18 +95,15 @@ local function recursive_load(parent, t, output, options)
         func = get_subtable(func, handlers)
       end
       event[nn](func, {name=index..'_'..n, player_index=pi, gui_filters=index})
-      table_insert(global_data, {element=elem, event=n, path=append_path and (path..'.'..n) or path})
+      if not global_data[parent_index] then global_data[parent_index] = {} end
+      table_insert(global_data[parent_index], {element=elem, event=n, path=append_path and (path..'.'..n) or path})
     end
-  end
-  -- add to output if desired
-  if t.save_as then
-    output[t.save_as] = elem
   end
   -- add children
   local children = t.children
   if children then
     for i=1,#children do
-      output = recursive_load(elem, children[i], output, options)
+      output = recursive_load(elem, children[i], output, options, parent_index)
     end
   end
   return output
@@ -106,11 +111,13 @@ end
 
 local self = {}
 
+-- load templates object
 function self.load_templates(t)
   templates = t
   return self
 end
 
+-- load handlers object
 function self.load_handlers(t)
   handlers = t
   return self
@@ -122,6 +129,19 @@ function self.create(parent, template, options)
     template = get_subtable(template, templates)
   end
   return recursive_load(parent, template, {}, options)
+end
+
+-- deregisters all events belonging to children of this GUI element, then destroys it
+function self.destroy(parent, player_index)
+  local events = global_data[parent.index]
+  if events then
+    for i=1,#events do
+      local t = events[i]
+      event.deregister(defines.events[t.event], get_subtable(t.path, handlers), {name=t.element.index..'_'..t.event, player_index=player_index})
+    end
+    global_data[parent.index] = nil
+  end
+  parent.destroy()
 end
 
 return self
