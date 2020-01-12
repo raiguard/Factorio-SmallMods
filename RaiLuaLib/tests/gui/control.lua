@@ -7,15 +7,6 @@ gui.load_templates{
     horizontal = {type='empty-widget', name='pusher', style={horizontally_stretchable=true}},
     vertical = {type='empty-widget', name='pusher', style={vertically_stretchable=true}}
   },
-  toolbar = {
-    frame = {type='frame', name='toolbar', style={name='subheader_frame', vertical_align='center'}},
-    label = {type='label', name='label', style='subheader_caption_label'}
-  },
-  buttons = {
-    close = {type='sprite-button', name='close_button', style='close_button', sprite='utility/close_white', hovered_sprite='utility/close_black',
-      clicked_sprite='utility/close_black', mouse_button_filter={'left'}},
-    tool_grey = {type='sprite-button', style='tool_button'}
-  },
   checkbox = {type='checkbox', name='checkkbox', caption='Checkbox'}
 }
 gui.load_handlers{
@@ -72,5 +63,6 @@ event.on_gui_click(function(e)
       }},
       {player_index=e.player_index}
     )
+    game.print(serpent.block(data))
   end
 end, {gui_filters='gui_module_mod_gui_button'})

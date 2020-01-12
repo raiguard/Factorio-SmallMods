@@ -70,6 +70,12 @@ local function recursive_load(parent, t, output, options, parent_index)
       end
     end
   end
+  -- apply modifications
+  if t.mods then
+    for k,v in pairs(t.mods) do
+      elem[k] = v
+    end
+  end
   -- add to output table
   if t.save_as then
     if type(t.save_as) == 'boolean' then
