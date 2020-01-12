@@ -17,16 +17,17 @@ gui.load_templates{
   checkbox = {type='checkbox', name='checkkbox', caption='Checkbox'}
 }
 gui.load_handlers{
-  close_button = {
-    on_click = function(e) game.print(serpent.block(e)) end
+  auto_clear_checkbox = {
+    on_checked_state_changed = function(e) game.print(serpent.block(e)) end
   }
 }
 
 event.on_player_created(function(e)
-  local elems = gui.create(game.get_player(e.player_index).gui.screen,
+  local player = game.get_player(e.player_index).gui.screen
+  local data = gui.create(player.gui.screen,
     {type='frame', name='window', style='dialog_frame', direction='vertical', children={
       {type='flow', name='checkboxes_flow', direction='horizontal', children={
-        {template='checkbox', name='autoclear', caption='Auto-clear', state=true},
+        {template='checkbox', name='autoclear', caption='Auto-clear', state=true, handlers='auto_clear_checkbox'},
         {template='pushers.horizontal'},
         {template='checkbox', name='cardinals', caption='Cardinals only', state=true}
       }},
@@ -43,6 +44,7 @@ event.on_player_created(function(e)
           discrete_slider=true, discrete_values=true},
         {type='textfield', name='textfield', style={width=50, horizontal_align='center'}, numeric=true, lose_focus_on_confirm=true, text=5}
       }}
-    }}
+    }},
+    {player_index=e.player_index}
   )
 end)
