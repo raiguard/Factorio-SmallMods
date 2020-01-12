@@ -10,6 +10,8 @@ local util = require('__core__/lualib/util')
 local table_deepcopy = table.deepcopy
 local templates = {}
 local handlers = {}
+local table_insert = table.insert
+local global_data
 
 local function get_subtable(s, t)
   for _,key in pairs(util.split(s, '%.')) do
@@ -18,7 +20,23 @@ local function get_subtable(s, t)
   return t
 end
 
-local function recursive_load(parent, t, output_table, options)
+event.on_init(function()
+  global.__lualib.gui = {}
+  global_data = global.__lualib.gui
+end)
+
+event.on_load(function()
+  global_data = global.__lualib.gui
+  for i=1,#global_data do
+    local t = global_data[i]
+    -- do some checks to be certain
+    if t.element and t.element.valid then
+      event[t.event:gsub('on_', 'on_gui_')](get_subtable(t.path, handlers), {name=t.element.index..'_'..t.event, gui_filters=t.element.index})
+    end
+  end
+end)
+
+local function recursive_load(parent, t, options)
   -- load template(s)
   if t.template then
     local template = t.template
@@ -53,25 +71,30 @@ local function recursive_load(parent, t, output_table, options)
   if t.handlers then
     local index = elem.index
     local pi = options.player_index or error('Must specify a player index for GUI handlers in the options table!')
+    local path
+    local append_path = false
     if type(t.handlers) == 'string' then
+      path = t.handlers
+      append_path = true
       t.handlers = get_subtable(t.handlers, handlers)
     end
     for n,func in pairs(t.handlers) do
       local nn = n:gsub('on_', 'on_gui_')
       if type(func) == 'string' then
+        path = func
         func = get_subtable(func, handlers)
       end
       event[nn](func, {name=index..'_'..n, player_index=pi, gui_filters=index})
+      table_insert(global_data, {element=elem, event=n, path=append_path and (path..'.'..n) or path})
     end
   end
   -- add children
   local children = t.children
   if children then
     for i=1,#children do
-      output_table = recursive_load(elem, children[i], output_table, options)
+      recursive_load(elem, children[i], options)
     end
   end
-  return output_table
 end
 
 local self = {}
@@ -91,7 +114,7 @@ function self.create(parent, template, options)
   if type(template) == 'string' then
     template = get_subtable(template, templates)
   end
-  return recursive_load(parent, template, {}, options)
+  return recursive_load(parent, template, options)
 end
 
 return self
