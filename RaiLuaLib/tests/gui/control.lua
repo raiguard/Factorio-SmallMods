@@ -8,24 +8,24 @@ gui.add_templates{
     vertical = {type='empty-widget', name='pusher', style={vertically_stretchable=true}}
   }
 }
--- gui.add_handlers('demo_gui', {
---   auto_clear_checkbox = {
---     on_checked_state_changed = function(e) game.print(serpent.block(e)) end
---   },
---   cardinals_checkbox = {
---     on_checked_state_changed = function(e) game.print(serpent.block(e)) end
---   },
---   grid_type_switch = {
---     on_switch_state_changed = function(e) game.print(serpent.block(e)) end
---   },
---   divisor_slider = {
---     on_value_changed = function(e) game.print(serpent.block(e)) end
---   },
---   divisor_textfield = {
---     on_confirmed = function(e) game.print(serpent.block(e)) end,
---     on_text_changed = function(e) game.print(serpent.block(e)) end
---   }
--- })
+gui.add_handlers('demo_gui', {
+  auto_clear_checkbox = {
+    on_checked_state_changed = function(e) game.print(serpent.block(e)) end
+  },
+  cardinals_checkbox = {
+    on_checked_state_changed = function(e) game.print(serpent.block(e)) end
+  },
+  grid_type_switch = {
+    on_switch_state_changed = function(e) game.print(serpent.block(e)) end
+  },
+  divisor_slider = {
+    on_value_changed = function(e) game.print(serpent.block(e)) end
+  },
+  divisor_textfield = {
+    on_confirmed = function(e) game.print(serpent.block(e)) end,
+    on_text_changed = function(e) game.print(serpent.block(e)) end
+  }
+})
 
 event.on_player_created(function(e)
   mod_gui.get_button_flow(game.get_player(e.player_index)).add{type='button', name='gui_module_mod_gui_button', style=mod_gui.button_style, caption='Template'}

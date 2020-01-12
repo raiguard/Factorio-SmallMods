@@ -77,6 +77,11 @@ local function recursive_load(parent, t, output, options, parent_index)
     end
     output[t.save_as] = elem
   end
+  -- register handlers
+  if t.handlers then
+    local elem_index = elem.index
+    local player_index = options.player_index or error('Must provide a player index for GUI events!')
+  end
   -- add children
   local children = t.children
   if children then
@@ -118,6 +123,18 @@ function self.add_templates(...)
     end
   else
     templates[arg[1]] = arg[2]
+  end
+  return self
+end
+
+function self.add_handlers(...)
+  local arg = {...}
+  if #arg == 1 then
+    for k,v in pairs(arg[1]) do
+      handlers[k] = v
+    end
+  else
+    handlers[arg[1]] = arg[2]
   end
   return self
 end
