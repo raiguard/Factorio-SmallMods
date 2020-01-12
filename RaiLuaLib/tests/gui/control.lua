@@ -36,9 +36,9 @@ event.on_gui_click(function(e)
   local frame_flow = mod_gui.get_frame_flow(player)
   local window = frame_flow.demo_window
   if window then
-    gui.destroy(window, e.player_index)
+    gui.destroy(window, 'demo_gui', e.player_index)
   else
-    local data = gui.create(frame_flow,
+    local data = gui.create(frame_flow, 'demo_gui', e.player_index,
       {type='frame', name='demo_window', style='dialog_frame', direction='vertical', children={
         -- checkboxes
         {type='flow', name='checkboxes_flow', direction='horizontal', children={
@@ -63,8 +63,7 @@ event.on_gui_click(function(e)
           {type='textfield', name='textfield', style={width=50, horizontal_align='center'}, numeric=true, lose_focus_on_confirm=true, text=5,
             handlers='divisor_textfield', save_as=true}
         }}
-      }},
-      {name='demo_gui', player_index=e.player_index}
+      }}
     )
     game.print(serpent.block(data))
   end
