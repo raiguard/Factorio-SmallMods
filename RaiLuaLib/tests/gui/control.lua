@@ -8,22 +8,22 @@ gui.add_templates{
     vertical = {type='empty-widget', name='pusher', style={vertically_stretchable=true}}
   }
 }
-gui.add_handlers('demo_gui', {
+gui.add_handlers('demo', {
   auto_clear_checkbox = {
-    on_checked_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_checked_state_changed = function(e) game.print(serpent.block(e)) end
   },
   cardinals_checkbox = {
-    on_checked_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_checked_state_changed = function(e) game.print(serpent.block(e)) end
   },
   grid_type_switch = {
-    on_switch_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_switch_state_changed = function(e) game.print(serpent.block(e)) end
   },
   divisor_slider = {
-    on_value_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_value_changed = function(e) game.print(serpent.block(e)) end
   },
   divisor_textfield = {
-    on_confirmed = function(e) game.print(serpent.block(e)) end,
-    on_text_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_confirmed = function(e) game.print(serpent.block(e)) end,
+    on_gui_text_changed = function(e) game.print(serpent.block(e)) end
   }
 })
 
@@ -36,9 +36,9 @@ event.on_gui_click(function(e)
   local frame_flow = mod_gui.get_frame_flow(player)
   local window = frame_flow.demo_window
   if window then
-    gui.destroy(window, 'demo_gui', e.player_index)
+    gui.destroy(window, 'demo', e.player_index)
   else
-    local data = gui.create(frame_flow, 'demo_gui', e.player_index,
+    local data = gui.create(frame_flow, 'demo', e.player_index,
       {type='frame', name='demo_window', style='dialog_frame', direction='vertical', children={
         -- checkboxes
         {type='flow', name='checkboxes_flow', direction='horizontal', children={

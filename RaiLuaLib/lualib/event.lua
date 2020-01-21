@@ -106,7 +106,6 @@ function event.register(id, handler, options)
   if name then
     local player_index = options.player_index
     local con_registry = global.__lualib.event[name]
-    options.player_index = nil
     if not con_registry then
       global.__lualib.event[name] = {id=id, players={player_index}, options=options}
     elseif player_index then
