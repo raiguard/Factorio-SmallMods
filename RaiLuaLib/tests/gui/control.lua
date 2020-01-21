@@ -10,20 +10,20 @@ gui.add_templates{
 }
 gui.add_handlers('demo', {
   auto_clear_checkbox = {
-    on_gui_checked_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_checked_state_changed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
   },
   cardinals_checkbox = {
-    on_gui_checked_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_checked_state_changed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
   },
   grid_type_switch = {
-    on_gui_switch_state_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_switch_state_changed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
   },
   divisor_slider = {
-    on_gui_value_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_value_changed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
   },
   divisor_textfield = {
-    on_gui_confirmed = function(e) game.print(serpent.block(e)) end,
-    on_gui_text_changed = function(e) game.print(serpent.block(e)) end
+    on_gui_confirmed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end,
+    on_gui_text_changed = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
   }
 })
 
