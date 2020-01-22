@@ -1,5 +1,5 @@
-local event = require('lualib.event')
-local gui = require('lualib.gui')
+local event = require('lualib/event')
+local gui = require('lualib/gui')
 local mod_gui = require('mod-gui')
 
 gui.add_templates{

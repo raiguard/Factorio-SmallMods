@@ -3,8 +3,8 @@
 -- GUI templating and event handling
 
 -- dependencies
-local event = require('lualib.event')
-local util = require('__core__.lualib.util')
+local event = require('lualib/event')
+local util = require('__core__/lualib/util')
 
 -- locals
 local global_data
@@ -52,11 +52,11 @@ local function deregister_handlers(gui_name, handlers_path, player_index, gui_ev
   gui_events = gui_events or global_data[gui_name][player_index]
   if type(handlers_t) == 'function' then
     local name = 'gui.'..gui_name..'.'..handlers_path
-    event.deregister_conditional(handlers_t, {name=name, player_index=player_index})
+    event.deregister_conditional(handlers_t, name, player_index)
     gui_events[name] = nil
   else
     for n,func in pairs(handlers_t) do
-      event.deregister_conditional(func, {name=n, player_index=player_index})
+      event.deregister_conditional(func, n, player_index)
       gui_events[n] = nil
     end
   end
@@ -142,7 +142,7 @@ event.on_load(function()
   local con_registry = global.__lualib.event
   for n,t in pairs(con_registry) do
     if string_find(n, '^gui%.') then
-      event.register(t.id, get_subtable(string_gsub(n, '^gui%.', ''), handlers), {name=n, gui_filters=t.gui_filters})
+      event.register(t.id, get_subtable(string_gsub(n, '^gui%.', ''), handlers), {name=n})
     end
   end
 end)

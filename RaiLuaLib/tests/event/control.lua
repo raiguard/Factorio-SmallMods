@@ -73,16 +73,19 @@ event.register(defines.events.on_player_created, function(e)
   button_flow.add{type='button', name='reh_demo_button_1', style=mod_gui.button_style, caption='DEMO1'}
   button_flow.add{type='button', name='reh_demo_button_2', style=mod_gui.button_style, caption='DEMO2'}
 end)
+
 -- a clicked event for both buttons
 event.on_gui_click(function(e)
   local player = game.players[e.player_index]
   player.print('[color=0,255,100]you clicked a demo button![/color]')
 end, {gui_filters='reh_demo_button'})
+
 -- clicked event for demo button 1
 event.on_gui_click(function(e)
   local player = game.players[e.player_index]
   player.print('[color=255,100,0]you clicked the first demo button![/color]')
 end, {gui_filters='reh_demo_button_1'})
+
 -- clicked event for demo button 2
 -- show/hide a mod GUI frame when clicked
 event.on_gui_click(function(e)
@@ -92,7 +95,7 @@ event.on_gui_click(function(e)
     -- close demo GUI
     frame_flow.reh_demo_window.destroy()
     -- deregister conditional event for the slider
-    event.deregister(defines.events.on_gui_value_changed, set_daytime, {name='change_daytime_slider', player_index=e.player_index})
+    event.deregister(defines.events.on_gui_value_changed, set_daytime, 'change_daytime_slider', e.player_index)
     -- remove slider from global
     global.players[e.player_index].slider = nil
   else
@@ -145,7 +148,7 @@ event.register(
       global.chests[entity.unit_number] = nil
       if table_size(global.chests) == 0 then
       -- deregister global conditional event
-      event.deregister(defines.events.on_tick, void_chests_tick, {name='void_chests_tick'})
+      event.deregister(defines.events.on_tick, void_chests_tick, 'void_chests_tick')
       end
     end
   end
@@ -173,7 +176,7 @@ event.register(defines.events.on_lua_shortcut, function(e)
   if player.is_shortcut_toggled('toggle-fire-at-feet') then
     player.set_shortcut_toggled('toggle-fire-at-feet', false)
     -- use event.deregister to deregister the conditional event
-    event.deregister(-6, place_fire, {name='place_fire_at_feet', player_index=e.player_index})
+    event.deregister(-6, place_fire, 'place_fire_at_feet', e.player_index)
   else
     player.set_shortcut_toggled('toggle-fire-at-feet', true)
     -- use event.register to register the conditional event

@@ -1,21 +1,16 @@
--- to simplify things, we'll just assume that there's one player and that you're in singleplayer.
+-- debug adapter
+pcall(require,'__debugadapter__/debugadapter.lua')
 
-local function translate(e)
-  game.get_player(1).request_translation{'item-name.iron-ore'}
-  script.on_event(defines.events.on_tick, nil)
+local mod_gui = require('mod-gui')
+
+script.on_event(defines.events.on_player_created, function(e)
+  mod_gui.get_button_flow(game.get_player(e.player_index)).add{type='button', name='test_button', caption='Exception'}
+end)
+
+local function dummy_handler(e)
+  game.print(serpent.block(e))
 end
 
-local function print_translation(e)
-  game.print(e.result)
-end
-
-local function register_handlers(e)
-  -- translate on the first tick
-  script.on_event(defines.events.on_tick, translate)
-  -- show translated strings
-  script.on_event(defines.events.on_string_translated, print_translation)
-end
-
-script.on_init(register_handlers)
-
-script.on_load(register_handlers)
+script.on_event(defines.events.on_gui_click, function(e)
+  script.on_event('nonexistent-event', dummy_handler)
+end)
