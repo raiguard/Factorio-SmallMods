@@ -201,12 +201,16 @@ function event.deregister(id, handler, name, player_index)
         for i,pi in ipairs(con_registry.players) do
           if pi == player_index then
             table.remove(con_registry.players, i)
+            break
           end
         end
         con_registry.gui_filters[player_index] = nil
       end
       if #con_registry.players == 0 then
         global_data[name] = nil
+      else
+        -- don't do anything else
+        return event
       end
     else
       error('Tried to deregister a conditional event whose data does not exist')
