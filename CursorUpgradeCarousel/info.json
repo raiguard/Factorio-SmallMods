@@ -1,9 +1,9 @@
 {
     "name": "CursorUpgradeCarousel",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "title": "Cursor Upgrade Carousel",
     "author": "raiguard",
-    "factorio_version": "0.17",
-    "dependencies": ["base >= 0.17.65"],
+    "factorio_version": "0.18",
+    "dependencies": ["base >= 0.18.0"],
     "description": "Shift+scroll to quickly access an item's upgrades or downgrades. If you do not have the item, the ghost cursor will be used instead (100% not cheaty!). Should be compatible with all mods out of the box, assuming they correctly defined their entities' upgrades. Users can also define their own custom upgrade paths in the mod settings."
 }

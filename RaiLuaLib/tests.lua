@@ -1,8 +1,8 @@
 return
 {
-  -- 'bug-report',
+  'bug-report',
   -- 'event',
-  'gui',
+  -- 'gui',
   -- 'sandbox',
   -- 'translation'
 }
