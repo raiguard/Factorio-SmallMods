@@ -223,7 +223,7 @@ local function setup_remote()
     remote.add_interface('railualib_translation', functions)
     commands.add_command(
       'retranslate-all-dictionaries',
-      {'command-help.retranslate-all-dictionaries'},
+      {'qis-command-help.retranslate-all-dictionaries'},
       function(e)
         event.raise(translation.retranslate_all_event, {})
       end

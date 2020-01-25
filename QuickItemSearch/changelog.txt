@@ -3,6 +3,8 @@ Version: 1.2.0
 Date: 2020.1.25
   Features:
     - Updated to Factorio 0.18
+    - When using keyboard navigation, the selected item's name will be shown in the text box
+    - Shift + selecting an item while in the editor will create an infinity inventory filter for that item
   Optimizations:
     - Significant optimizations to translation library (again!)
     - Optimized text search loop

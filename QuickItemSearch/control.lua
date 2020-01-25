@@ -183,7 +183,7 @@ local function take_item_action(player, name, count, type, alt)
       for i=1,character.request_slot_count do
         if get_slot(i) == nil then
           character.set_request_slot({name=name, count=stack_size}, i)
-          player.print{'chat-message.request-from-logistic-network', stack_size, global.item_data[name].localised_name}
+          player.print{'qis-message.request-from-logistic-network', stack_size, global.item_data[name].localised_name}
           -- set up event to adjust request amount as items come in
           if not event.is_registered('update_request_counts', player.index) then
             event.register({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
@@ -193,7 +193,7 @@ local function take_item_action(player, name, count, type, alt)
           global.players[player.index].logistics_requests[name] = stack_size
           return
         elseif get_slot(i).name == name then
-          player.print{'chat-message.already-requested-item', global.item_data[name].localised_name}
+          player.print{'qis-message.already-requested-item', global.item_data[name].localised_name}
           return
         end
       end
@@ -457,7 +457,7 @@ event.register(translation.finish_event, function(e)
   }
   if player_table.flags.tried_to_open_gui then
     player_table.flags.tried_to_open_gui = false
-    game.get_player(e.player_index).print{'chat-message.translation-finished'}
+    game.get_player(e.player_index).print{'qis-message.translation-finished'}
   end
 end)
 
@@ -479,7 +479,7 @@ event.register('qis-search', function(e)
       player.opened = gui_data.window
       player_table.gui = gui_data
     else
-      player.print{'chat-message.translation-not-finished'}
+      player.print{'qis-message.translation-not-finished'}
       player_table.flags.tried_to_open_gui = true
     end
   end
