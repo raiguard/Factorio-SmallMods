@@ -305,7 +305,7 @@ function event.load_conditional_handlers(data)
   for name, handler in pairs(data) do
     local registry = global_data[name]
     if registry then
-        event.register(registry.id, handler, {name=name, gui_filters=registry.gui_filters})
+        event.register(registry.id, handler, {name=name})
     end
   end
   return event
