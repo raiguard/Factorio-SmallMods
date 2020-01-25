@@ -406,7 +406,6 @@ end
 
 event.on_init(function()
   global.players = {}
-  global.version = script.active_mods.QuickItemSearch
   for _,player in pairs(game.players) do
     setup_player(player)
   end
