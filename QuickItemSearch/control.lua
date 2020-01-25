@@ -10,6 +10,7 @@ local mod_gui = require('mod-gui')
 local translation = require('lualib/translation')
 
 -- locals
+local string_find = string.find
 local string_lower = string.lower
 local string_match = string.match
 
@@ -81,7 +82,7 @@ local function update_request_counts(e)
   if table_size(requests) == 0 then
     -- deregister this event
     event.deregister({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
-                     {name='update_request_counts', player_index=player.index})
+      'update_request_counts', player.index)
   end
 end
 
@@ -167,12 +168,9 @@ local function take_item_action(player, name, count, type, alt)
       player.clean_cursor()
       player.cursor_stack.set_stack{name=name, count=player.get_main_inventory().remove{name=name, count=stack_size}}
     end
-    -- 0.18:
     if player.controller_type == defines.controllers.editor and alt then
-      player.print('0.18: set infinity inventory filter for this item')
-      -- local filters = player.infinity_inventory_filters
-      -- local index = #filters + 1
-      -- filters[index] = {name=name, count=stack_size, mode='exactly', index=index}
+      local index = #player.infinity_inventory_filters + 1
+      player.set_infinity_inventory_filter(index, {name=name, count=stack_size, mode='exactly', index=index})
     end
   elseif type == 'logistics' and player.character and player.character.valid then
     local character = player.character
@@ -324,8 +322,8 @@ local function search_textfield_clicked(e)
     -- focus textfield
     gui_data.search_textfield.focus()
     -- deregister navigation events
-    event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
-    event.deregister({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
+    event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, 'input_nav', e.player_index)
+    event.deregister({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, 'input_confirm', e.player_index)
   end
 end
 
@@ -390,7 +388,7 @@ end
 function gui.destroy(window, player_index)
   -- deregister all GUI events if needed
   for cn,h in pairs(handlers) do
-    event.deregister_conditional(h, {name=cn, player_index=player_index})
+    event.deregister_conditional(h, cn, player_index)
   end
   window.destroy()
 end
@@ -400,6 +398,7 @@ end
 
 event.on_init(function()
   global.players = {}
+  global.version = script.active_mods.QuickItemSearch
   for _,player in pairs(game.players) do
     setup_player(player)
   end
@@ -408,6 +407,32 @@ event.on_init(function()
 end)
 
 event.on_configuration_changed(function(e)
+  -- version migrations
+  local our_changes = e.mod_changes.QuickItemSearch
+  if our_changes then
+    local old = our_changes.old_version
+    -- hardcode this for now, we'll write a module for it later
+    if string_find(old, '1%.0') then
+      global.dictionaries = nil
+      global.__translation = {
+        dictionary_count = 0,
+        players = {}
+      }
+      for i,_ in pairs(game.players) do
+        global.players[i].flags.can_open_gui = false
+      end
+      old = '1.1.0'
+    end
+    if old == '1.1.0' then
+      global.__translation.build_data = nil
+      global.__lualib.translation = table.deepcopy(global.__translation)
+      global.__translation = nil
+      for i,t in pairs(global.players) do
+        t.search = nil
+      end
+    end
+  end
+  -- general migrations
   translation.cancel_all()
   build_prototype_data()
   translate_for_all_players()
