@@ -39,7 +39,7 @@ end
 local function translate_for_all_players()
   local translation_data = global.__lualib.translation.translation_data
   for _,player in ipairs(game.connected_players) do
-    translation.start(player, 'items', translation_data, {convert_to_lowercase=true})
+    translation.start(player, 'items', translation_data)
   end
 end
 
