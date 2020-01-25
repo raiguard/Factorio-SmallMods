@@ -1,9 +1,11 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
-Date: 2020.1.8
-  Optimisations:
-    - Significant optimisations to translation library
-    - Optimised text search loop
+Date: 2020.1.25
+  Features:
+    - Updated to Factorio 0.18
+  Optimizations:
+    - Significant optimizations to translation library (again!)
+    - Optimized text search loop
   Bugfixes:
     - Fixed error when joining a game in the middle of a translation
 
@@ -13,7 +15,7 @@ Date: 2019.12.27
   Features:
     - Added option to make the GUI appear in the center of the screen
   Changes:
-    - Significant optimisations to translation library
+    - Significant optimizations to translation library
     - The cursor is now cleaned before items or ghosts are placed in it
     - The GUI will not open until dictionary translation is finished
   Bugfixes:
