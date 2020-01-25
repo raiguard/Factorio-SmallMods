@@ -11,6 +11,7 @@ local translation = require('lualib/translation')
 
 -- locals
 local string_find = string.find
+local string_gsub = string.gsub
 local string_lower = string.lower
 local string_match = string.match
 
@@ -94,6 +95,7 @@ local function search_for_items(player, query)
   if player_settings['qis-fuzzy-search'].value then -- fuzzy search
     query = query:gsub('.', '%1.*')
   end
+  query = string_lower(query)
   -- search dictionary first, then iterate through that to decrease the number of API calls
   local search_results = {}
   local search_table = player_table.dictionary.searchable
@@ -101,7 +103,7 @@ local function search_for_items(player, query)
   for i=1,#search_table do
     local t = search_table[i]
     local internal = t.internal
-    if string_match(t.translated, query) then
+    if string_match(string_lower(t.translated), query) then
       search_results[internal] = item_data[internal]
     end
   end
@@ -228,6 +230,8 @@ local function input_nav(e)
     -- set new style and save new offset
     elems[selected_index].style = elems[selected_index].style.name:gsub('qis', 'qis_active')
     gui_data.selected_index = selected_index
+    -- update item name in textfield
+    gui_data.search_textfield.text = player_table.dictionary.translations[string_gsub(elems[selected_index].sprite, 'item/', '')]
     -- scroll
     gui_data.results_scroll.scroll_to_element(elems[selected_index])
   end
@@ -301,7 +305,9 @@ local function search_textfield_confirmed(e)
     event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
     event.register({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
     -- set initial selection
-    results_table.children[1].style = results_table.children[1].style.name:gsub('qis', 'qis_active')
+    results_table.children[1].style = string_gsub(results_table.children[1].style.name, 'qis', 'qis_active')
+    gui_data.query = gui_data.search_textfield.text
+    gui_data.search_textfield.text = player_table.dictionary.translations[string_gsub(results_table.children[1].sprite, 'item/', '')]
   else
     -- close GUI
     event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
@@ -319,7 +325,9 @@ local function search_textfield_clicked(e)
     children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
     player_table.flags.selecting_result = false
     gui_data.selected_index = 1
-    -- focus textfield
+    -- set textfield text and focus it
+    gui_data.search_textfield.text = gui_data.query
+    gui_data.query = nil
     gui_data.search_textfield.focus()
     -- deregister navigation events
     event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, 'input_nav', e.player_index)
@@ -407,31 +415,6 @@ event.on_init(function()
 end)
 
 event.on_configuration_changed(function(e)
-  -- version migrations
-  local our_changes = e.mod_changes.QuickItemSearch
-  if our_changes then
-    local old = our_changes.old_version
-    -- hardcode this for now, we'll write a module for it later
-    if string_find(old, '1%.0') then
-      global.dictionaries = nil
-      global.__translation = {
-        dictionary_count = 0,
-        players = {}
-      }
-      for i,_ in pairs(game.players) do
-        global.players[i].flags.can_open_gui = false
-      end
-      old = '1.1.0'
-    end
-    if old == '1.1.0' then
-      global.__translation.build_data = nil
-      global.__lualib.translation = table.deepcopy(global.__translation)
-      global.__translation = nil
-      for i,t in pairs(global.players) do
-        t.search = nil
-      end
-    end
-  end
   -- general migrations
   translation.cancel_all()
   build_prototype_data()
@@ -455,7 +438,7 @@ event.on_player_removed(function(e)
 end)
 
 event.on_player_joined_game(function(e)
-  translation.start(game.get_player(e.player_index), 'items', global.__lualib.translation.translation_data, {convert_to_lowercase=true})
+  translation.start(game.get_player(e.player_index), 'items', global.__lualib.translation.translation_data)
   -- close open GUIs
   local player_table = global.players[e.player_index]
   player_table.flags.can_open_gui = false
@@ -465,7 +448,6 @@ event.on_player_joined_game(function(e)
 end)
 
 event.register(translation.finish_event, function(e)
-  game.print('translation finished!')
   local player_table = global.players[e.player_index]
   player_table.flags.can_open_gui = true
   player_table.dictionary = {
