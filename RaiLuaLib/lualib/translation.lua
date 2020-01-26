@@ -104,8 +104,8 @@ local function sort_translated_string(e)
         if table_size(player_translation) == 0 then -- remove player from translating table if they're done
           __translation.players[e.player_index] = nil
           if table_size(__translation.players) == 0 then -- deregister events if we're all done
-            event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
-            event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
+            event.deregister(defines.events.on_tick, translate_batch, 'translation_translate_batch')
+            event.deregister(defines.events.on_string_translated, sort_translated_string, 'translation_sort_result')
           end
         end
         -- sort searchable array and optimise it
@@ -187,8 +187,8 @@ function translation.cancel(player, dictionary_name)
   if table_size(player_translation) == 0 then -- remove player from translating table if they're done
     __translation.players[player.index] = nil
     if table_size(__translation.players) == 0 then -- deregister events if we're all done
-      event.deregister(defines.events.on_tick, translate_batch, {name='translation_translate_batch'})
-      event.deregister(defines.events.on_string_translated, sort_translated_string, {name='translation_sort_result'})
+      event.deregister(defines.events.on_tick, translate_batch, 'translation_translate_batch')
+      event.deregister(defines.events.on_string_translated, sort_translated_string, 'translation_sort_result')
     end
   end
 end
@@ -223,7 +223,7 @@ local function setup_remote()
     remote.add_interface('railualib_translation', functions)
     commands.add_command(
       'retranslate-all-dictionaries',
-      {'command-help.retranslate-all-dictionaries'},
+      {'qis-command-help.retranslate-all-dictionaries'},
       function(e)
         event.raise(translation.retranslate_all_event, {})
       end

@@ -1,0 +1,9 @@
+{
+  "name": "PaveOver",
+  "version": "1.0.0",
+  "title": "Pave Over",
+  "author": "raiguard",
+  "factorio_version": "0.18",
+  "dependencies": ["base >= 0.18.0"],
+  "description": "Paving over things... actually paves over things. Decoratives and resources will be paved over when placing tiles. Resources that you pave over will be restored when the tile is removed."
+}
