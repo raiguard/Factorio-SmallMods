@@ -3,6 +3,11 @@
 
  -- debug adapter
 pcall(require,'__debugadapter__/debugadapter.lua')
+if __DebugAdapter then
+  script.on_event('DEBUG-INSPECT-GLOBAL', function(e)
+    local breakpoint -- put breakpoint here to inspect global at any time
+  end)
+end
 
 -- dependencies
 local event = require('lualib/event')
@@ -493,9 +498,78 @@ event.on_gui_closed(function(e)
   end
 end)
 
--- DEBUGGING
-if __DebugAdapter then
-  event.register('DEBUG-INSPECT-GLOBAL', function(e)
-    local breakpoint -- put breakpoint here to inspect global at any time
-  end)
+-- -----------------------------------------------------------------------------
+-- MIGRATIONS
+
+-- table of migration functions
+local migrations = {
+  ['1.1.0'] = function(e)
+    global.dictionaries = nil
+    global.__translation = {
+      dictionary_count = 0,
+      players = {}
+    }
+    for i,_ in pairs(game.players) do
+      global.players[i].flags.can_open_gui = false
+    end
+  end,
+  ['1.2.0'] = function(e)
+    local to_deregister = {
+      search_textfield_text_changed = search_textfield_text_changed,
+      search_textfield_confirmed = search_textfield_confirmed,
+      input_nav = input_nav,
+      input_confirm = input_confirm,
+      result_button_clicked = result_button_clicked
+    }
+    global.__translation.build_data = nil
+    global.__lualib.translation = table.deepcopy(global.__translation)
+    global.__translation = nil
+    -- deregister GUI events so they can be created with the new format
+    for n,t in pairs(global.__lualib.event) do
+      -- so the next code doesn't crash
+      t.gui_filters = {}
+      if to_deregister[n] then
+        event.deregister_conditional(to_deregister[n], {name=n})
+      end
+    end
+    -- destroy any open GUIs
+    for i,t in pairs(global.players) do
+      t.search = nil
+      if t.gui then
+        t.gui.window.destroy()
+        t.gui = nil
+      end
+    end
+  end
+}
+
+-- returns true if v2 is newer than v1, false if otherwise
+local function compare_versions(v1, v2)
+  local v1_split = util.split(v1, '.')
+  local v2_split = util.split(v2, '.')
+  for i=1,#v1_split do
+    if v1_split[i] < v2_split[i] then
+      return true
+    end
+  end
+  return false
 end
+
+-- handle migrations
+event.on_configuration_changed(function(e)
+  local changes = e.mod_changes[script.mod_name]
+  if changes then
+    local old = changes.old_version
+    if old then
+      -- version migrations
+      local migrate = false
+      for v,f in pairs(migrations) do
+        if migrate or compare_versions(old, v) then
+          migrate = true
+          log('Applying migration: '..v)
+          f(e)
+        end
+      end
+    end
+  end
+end, {insert_at_front=true})
