@@ -418,21 +418,6 @@ event.on_init(function()
   translate_for_all_players()
 end)
 
-event.on_configuration_changed(function(e)
-  -- general migrations
-  translation.cancel_all()
-  build_prototype_data()
-  translate_for_all_players()
-  -- close open GUIs
-  for i,_ in pairs(game.players) do
-    local player_table = global.players[i]
-    player_table.flags.can_open_gui = false
-    if player_table.gui then -- close the open GUI
-      gui.close(player_table.gui.window, i)
-    end
-  end
-end)
-
 event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
 end)
@@ -521,9 +506,7 @@ local migrations = {
       input_confirm = input_confirm,
       result_button_clicked = result_button_clicked
     }
-    global.__translation.build_data = nil
-    global.__lualib.translation = table.deepcopy(global.__translation)
-    global.__translation = nil
+    global.__lualib.translation.build_data = nil
     -- deregister GUI events so they can be created with the new format
     for n,t in pairs(global.__lualib.event) do
       -- so the next code doesn't crash
@@ -572,4 +555,16 @@ event.on_configuration_changed(function(e)
       end
     end
   end
-end, {insert_at_front=true})
+  -- general migrations
+  translation.cancel_all()
+  build_prototype_data()
+  translate_for_all_players()
+  -- close open GUIs
+  for i,_ in pairs(game.players) do
+    local player_table = global.players[i]
+    player_table.flags.can_open_gui = false
+    if player_table.gui then -- close the open GUI
+      gui.close(player_table.gui.window, i)
+    end
+  end
+end)
