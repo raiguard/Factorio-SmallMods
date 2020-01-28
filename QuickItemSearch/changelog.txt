@@ -2,7 +2,7 @@
 Version: 1.2.1
 Date: 2020.1.28
   Bugfixes:
-    - Fixed the "unfixable migration" that prevented a direct upgrade to 1.2.0
+    - Fixed the "unfixable migration" that prevented a direct upgrade to 1.2
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
