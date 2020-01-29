@@ -512,7 +512,7 @@ local migrations = {
       -- so the next code doesn't crash
       t.gui_filters = {}
       if to_deregister[n] then
-        event.deregister_conditional(to_deregister[n], {name=n})
+        event.deregister_conditional(to_deregister[n], n)
       end
     end
     -- destroy any open GUIs
