@@ -52,8 +52,7 @@ end
 local function setup_player(player)
   global.players[player.index] = {
     flags = {
-      can_open_gui = false,
-      selecting_result = false
+      can_open_gui = false
     },
     logistics_requests = {}
   }
@@ -158,7 +157,7 @@ local function search_for_items(player, query)
 end
 
 -- take action on the selected item
-local function take_item_action(player, name, count, type, alt)
+local function take_item_action(player, name, count, type, shift)
   local prototype = game.item_prototypes[name]
   local stack_size = prototype.stack_size
   local function set_ghost_cursor()
@@ -175,13 +174,13 @@ local function take_item_action(player, name, count, type, alt)
       player.clean_cursor()
       player.cursor_stack.set_stack{name=name, count=player.get_main_inventory().remove{name=name, count=stack_size}}
     end
-    if player.controller_type == defines.controllers.editor and alt then
+    if player.controller_type == defines.controllers.editor and shift then
       local index = #player.infinity_inventory_filters + 1
       player.set_infinity_inventory_filter(index, {name=name, count=stack_size, mode='exactly', index=index})
     end
   elseif type == 'logistics' and player.character and player.character.valid then
     local character = player.character
-    if alt then
+    if shift then
       set_ghost_cursor()
     else -- request from logistic network
       local get_slot = character.get_request_slot
@@ -192,7 +191,7 @@ local function take_item_action(player, name, count, type, alt)
           -- set up event to adjust request amount as items come in
           if not event.is_registered('update_request_counts', player.index) then
             event.register({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
-                           {name='update_request_counts', player_index=player.index})
+              {name='update_request_counts', player_index=player.index})
           end
           -- add to player table
           global.players[player.index].logistics_requests[name] = stack_size
@@ -247,7 +246,8 @@ local function input_confirm(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local elem = gui_data.results_table.children[gui_data.selected_index]
-  take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-alt-confirm')
+  take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-shift-confirm',
+    e.input_name == 'qis-nav-control-confirm')
   -- close GUI
   event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
 end
@@ -266,9 +266,9 @@ local function search_textfield_text_changed(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
   local results_table = gui_data.results_table
-  if player_table.flags.selecting_result then
+  if gui_data.state == 'select_result' then
     -- deselect button and reset selected index
-    player_table.flags.selecting_result = false
+    gui_data.state = 'search'
     local style = results_table.children[gui_data.selected_index].style
     style = style.name:gsub('qis_active', 'qis')
     gui_data.selected_index = 1
@@ -304,39 +304,49 @@ local function search_textfield_confirmed(e)
   local results_count = #results_table.children
   if results_count > 0 then
     -- setup
-    player_table.flags.selecting_result = true
+    gui_data.state = 'select_result'
     gui_data.selected_index = 1
+    gui_data.results_table.focus()
     -- register events for selecting an item
     event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
-    event.register({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
+    event.register({'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
     -- set initial selection
     results_table.children[1].style = string_gsub(results_table.children[1].style.name, 'qis', 'qis_active')
     gui_data.query = gui_data.search_textfield.text
     gui_data.search_textfield.text = player_table.dictionary.translations[string_gsub(results_table.children[1].sprite, 'item/', '')]
-  else
-    -- close GUI
-    event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
   end
 end
 
 local function search_textfield_clicked(e)
   local player_table = global.players[e.player_index]
-  if player_table.flags.selecting_result == true then
-    local gui_data = player_table.gui
+  local gui_data = player_table.gui
+  if gui_data.state == 'select_result' then
     -- reset to searching
     local children = gui_data.results_table.children
     local selected_index = gui_data.selected_index
     -- deselect selected button and reset flag
     children[selected_index].style = children[selected_index].style.name:gsub('qis_active', 'qis')
-    player_table.flags.selecting_result = false
+    gui_data.state = 'search'
     gui_data.selected_index = 1
     -- set textfield text and focus it
     gui_data.search_textfield.text = gui_data.query
     gui_data.query = nil
     gui_data.search_textfield.focus()
+    game.get_player(e.player_index).opened = gui_data.search_textfield
     -- deregister navigation events
     event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, 'input_nav', e.player_index)
     event.deregister({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, 'input_confirm', e.player_index)
+  end
+end
+
+local function gui_closed(e)
+  local player_table = global.players[e.player_index]
+  local gui_data = player_table.gui
+  if gui_data.state == 'search' then
+    gui.destroy(gui_data.window, e.player_index)
+    player_table.gui = nil
+  elseif gui_data.state == 'select_result' then
+    search_textfield_clicked(e)
   end
 end
 
@@ -346,7 +356,8 @@ local handlers = {
   search_textfield_clicked = search_textfield_clicked,
   input_nav = input_nav,
   input_confirm = input_confirm,
-  result_button_clicked = result_button_clicked
+  result_button_clicked = result_button_clicked,
+  gui_closed = gui_closed
 }
 
 event.on_load(function()
@@ -365,7 +376,7 @@ function gui.create(parent, player, settings)
   local pane_height = settings.rows * 40
   -- elements
   local window = parent.add{type='frame', name='qis_window', direction='vertical'}
-  local textfield_def = {type='textfield', name='qis_search_textfield', lose_focus_on_confirm=true, clear_and_focus_on_right_click=true, text='Search...'}
+  local textfield_def = {type='textfield', name='qis_search_textfield', clear_and_focus_on_right_click=true, text='Search...'}
   local search_textfield
   if settings.location ~= 'bottom' then
     search_textfield = window.add(textfield_def)
@@ -395,6 +406,7 @@ function gui.create(parent, player, settings)
   event.on_gui_confirmed(search_textfield_confirmed, {name='search_textfield_confirmed', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_click(search_textfield_clicked, {name='search_textfield_clicked', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=player.index, gui_filters='qis_result_button'})
+  event.on_gui_closed(gui_closed, {name='gui_closed', player_index=player.index, gui_filters={search_textfield, results_scroll}})
   return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, selected_index=1}
 end
 
@@ -456,7 +468,7 @@ event.register('qis-search', function(e)
   local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
-  if gui_data and player_table.flags.selecting_result == true then
+  if gui_data and gui_data.state == 'select_result' then
     search_textfield_clicked(e)
   elseif not gui_data then
     if player_table.flags.can_open_gui then
@@ -465,21 +477,12 @@ event.register('qis-search', function(e)
       local parent = location_setting == 'mod gui' and mod_gui.get_frame_flow(player) or player.gui.screen
       gui_data = gui.create(parent, player, {location=location_setting, rows=mod_settings['qis-row-count'].value,
         columns=mod_settings['qis-column-count'].value})
-      player.opened = gui_data.window
+      player.opened = gui_data.search_textfield
       player_table.gui = gui_data
     else
       player.print{'qis-message.translation-not-finished'}
       player_table.flags.tried_to_open_gui = true
     end
-  end
-end)
-
-event.on_gui_closed(function(e)
-  if e.gui_type == 16 and e.element and e.element.name == 'qis_window' then
-    gui.destroy(e.element, e.player_index)
-    local player_table = global.players[e.player_index]
-    player_table.flags.selecting_result = false
-    player_table.gui = nil
   end
 end)
 
@@ -511,6 +514,7 @@ local migrations = {
     for n,t in pairs(global.__lualib.event) do
       -- so the next code doesn't crash
       t.gui_filters = {}
+      -- completely nuke all gui-related conditional events
       if to_deregister[n] then
         event.deregister_conditional(to_deregister[n], n)
       end
@@ -522,6 +526,12 @@ local migrations = {
         t.gui.window.destroy()
         t.gui = nil
       end
+    end
+  end,
+  ['1.3.0'] = function(e)
+    for _,t in pairs(global.players) do
+      -- remove flag as it as been moved to gui_data
+      t.flags.selecting_result = nil
     end
   end
 }
@@ -555,7 +565,7 @@ event.on_configuration_changed(function(e)
       end
     end
   end
-  -- general migrations
+  -- retranslate for all players
   translation.cancel_all()
   build_prototype_data()
   translate_for_all_players()
