@@ -157,7 +157,7 @@ local function search_for_items(player, query)
 end
 
 -- take action on the selected item
-local function take_item_action(player, name, count, type, shift)
+local function take_item_action(player, name, count, type, shift, control)
   local prototype = game.item_prototypes[name]
   local stack_size = prototype.stack_size
   local function set_ghost_cursor()
@@ -182,6 +182,8 @@ local function take_item_action(player, name, count, type, shift)
     local character = player.character
     if shift then
       set_ghost_cursor()
+    elseif control then -- request a custom amount
+      -- set GUI state
     else -- request from logistic network
       local get_slot = character.get_request_slot
       for i=1,character.request_slot_count do
@@ -249,16 +251,18 @@ local function input_confirm(e)
   take_item_action(player, elem.sprite:gsub('(.+)/', ''), elem.number or 0, extract_slot_type(elem), e.input_name == 'qis-nav-shift-confirm',
     e.input_name == 'qis-nav-control-confirm')
   -- close GUI
-  event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
+  gui.destroy(gui_data.window, e.player_index)
+  player_table.gui = nil
 end
 
 local function result_button_clicked(e)
   local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
-  take_item_action(player, e.element.sprite:gsub('(.+)/', ''), e.element.number or 0, extract_slot_type(e.element), e.shift)
+  take_item_action(player, e.element.sprite:gsub('(.+)/', ''), e.element.number or 0, extract_slot_type(e.element), e.shift, e.control)
   -- close GUI
-  event.raise(defines.events.on_gui_closed, {element=gui_data.window, gui_type=16, player_index=e.player_index, tick=game.tick})
+  gui.destroy(gui_data.window, e.player_index)
+  player_table.gui = nil
 end
 
 local function search_textfield_text_changed(e)
@@ -306,7 +310,8 @@ local function search_textfield_confirmed(e)
     -- setup
     gui_data.state = 'select_result'
     gui_data.selected_index = 1
-    gui_data.results_table.focus()
+    results_table.focus()
+    game.get_player(e.player_index).opened = gui_data.results_table
     -- register events for selecting an item
     event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
     event.register({'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
@@ -342,10 +347,10 @@ end
 local function gui_closed(e)
   local player_table = global.players[e.player_index]
   local gui_data = player_table.gui
-  if gui_data.state == 'search' then
+  if e.element == gui_data.search_textfield and gui_data.state == 'search' then
     gui.destroy(gui_data.window, e.player_index)
     player_table.gui = nil
-  elseif gui_data.state == 'select_result' then
+  elseif e.element == gui_data.results_table and gui_data.state == 'select_result' then
     search_textfield_clicked(e)
   end
 end
@@ -406,8 +411,8 @@ function gui.create(parent, player, settings)
   event.on_gui_confirmed(search_textfield_confirmed, {name='search_textfield_confirmed', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_click(search_textfield_clicked, {name='search_textfield_clicked', player_index=player.index, gui_filters=search_textfield})
   event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=player.index, gui_filters='qis_result_button'})
-  event.on_gui_closed(gui_closed, {name='gui_closed', player_index=player.index, gui_filters={search_textfield, results_scroll}})
-  return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, selected_index=1}
+  event.on_gui_closed(gui_closed, {name='gui_closed', player_index=player.index, gui_filters={search_textfield, results_table}})
+  return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, selected_index=1, state='search'}
 end
 
 function gui.destroy(window, player_index)
