@@ -16,19 +16,19 @@ local function build_data()
     end
     return data
   end
-  translation_data.achievement = generic_setup('achievement')
+  -- translation_data.achievement = generic_setup('achievement')
   translation_data.entity = generic_setup('entity')
-  translation_data.equipment = generic_setup('equipment')
-  translation_data.fluid = generic_setup('fluid')
+  -- translation_data.equipment = generic_setup('equipment')
+  -- translation_data.fluid = generic_setup('fluid')
   translation_data.item = generic_setup('item')
   translation_data.recipe = generic_setup('recipe')
-  translation_data.technology = generic_setup('technology')
-  translation_data.tile = generic_setup('tile')
-  global.__translation.translation_data = translation_data
+  -- translation_data.technology = generic_setup('technology')
+  -- translation_data.tile = generic_setup('tile')
+  global.__lualib.translation.build_data = translation_data
 end
 
 local function translate_whole(player)
-  for name,t in pairs(global.__translation.translation_data) do
+  for name,t in pairs(global.__lualib.translation.build_data) do
     translation.start(player, name, t)
   end
 end
@@ -68,16 +68,9 @@ end)
 
 event.register(translation.finish_event, function(e)
   game.print('finished translation of dictionary: '..e.dictionary_name)
-  local dictionary = {
+  global.players[e.player_index].dictionary[e.dictionary_name] = {
     lookup = e.lookup,
     searchable = e.searchable,
     translations = e.translations
   }
-  global.players[e.player_index].dictionary[e.dictionary_name] = dictionary
 end)
-
--- event.on_tick(function(e)
---   if game.tick == 2 then
---     game.tick_paused = true
---   end
--- end)

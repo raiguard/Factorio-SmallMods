@@ -39,7 +39,7 @@ local function serialise_localised_string(t)
 end
 
 -- translate 80 entries per tick
-local function translate_batch()
+local function translate_batch(e)
   local __translation = global.__lualib.translation
   local iterations = math_floor(80 / __translation.dictionary_count)
   if iterations < 1 then iterations = 1 end
@@ -56,6 +56,19 @@ local function translate_batch()
       local strings_len = t.strings_len
       for i=next_index,next_index+iterations do
         if i > strings_len then
+          t.next_index = i
+          if not t.iterated_twice then
+            if t.reiterate_tick then
+              if e.tick >= t.reiterate_tick then
+                -- reset iteration to go over it again...
+                t.iterated_twice = true
+                t.next_index = 1
+              end
+            else
+              -- set to reiterate after one second if not all of the translations have finished by then
+              t.reiterate_tick = e.tick + 60
+            end
+          end
           goto continue
         end
         request_translation(strings[i])
@@ -123,7 +136,7 @@ local function sort_translated_string(e)
         -- raise events to finish up
         event.raise(translation.update_dictionary_count_event, {delta=-1})
         event.raise(translation.finish_event, {player_index=e.player_index, dictionary_name=name, lookup=lookup, searchable=searchable,
-                    translations=t.translations})
+          translations=t.translations})
       end
       return
     end
