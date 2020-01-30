@@ -13,7 +13,6 @@ local math_floor = math.floor
 local string_gsub = string.gsub
 local string_lower = string.lower
 local table_sort = table.sort
-local table_remove = table.remove
 
 -- -----------------------------------------------------------------------------
 
