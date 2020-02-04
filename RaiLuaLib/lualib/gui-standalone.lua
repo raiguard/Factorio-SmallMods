@@ -2,6 +2,15 @@
 -- RAILUALIB GUI MODULE - STANDALONE VERSION
 -- GUI templating. Does not deal with event registration at all
 
+-- Copyright (c) 2020 raiguard - https://github.com/raiguard
+-- Permission is hereby granted, free of charge, to those obtaining this software or a portion thereof, to copy the contents of this software into their own
+-- Factorio mod, and modify it to suit their needs. This is permissed under the condition that this notice and copyright information, as well as the link to
+-- the documentation, are not omitted, and that any changes from the original are documented.
+
+-- DOCUMENTATION: https://github.com/raiguard/Factorio-SmallMods/wiki/GUI-Module-Documentation
+
+-- -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 -- dependencies
 local util = require('__core__/lualib/util')
 
@@ -107,6 +116,16 @@ function self.add_templates(...)
     templates[arg[1]] = arg[2]
   end
   return self
+end
+
+-- calls a GUI template as a function
+function self.call_template(path, ...)
+  return get_subtable(path, templates)(...)
+end
+
+-- retrieves and returns a GUI template
+function self.get_template(path)
+  return get_subtable(path, templates)
 end
 
 return self
