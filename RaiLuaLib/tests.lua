@@ -2,7 +2,7 @@ return
 {
   -- 'event',
   -- 'gui',
-  'gui-standalone',
+  -- 'gui-standalone',
   -- 'sandbox',
-  -- 'translation',
+  'translation',
 }
