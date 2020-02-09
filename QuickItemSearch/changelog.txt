@@ -2,7 +2,8 @@
 Version: 1.3.0
 Date: 2020-01-30
   Changes:
-    - Improved GUI navigation. Pressing escape while selecting a result with keyboard shortcuts will return to the search bar. Pressing escape again will close the GUI.
+    - Significantly optimised search logic
+    - Improved GUI navigation. Pressing escape while selecting a result with keyboard shortcuts will return to the search bar. Pressing escape again will close the GUI
   Bugfixes:
     - Fixed more issues with the translation module duplicating keys
     - Fixed a crash if a multiplayer save were to be upgraded from 1.1.0 while other players had the GUI open

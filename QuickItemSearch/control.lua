@@ -91,54 +91,73 @@ local function update_request_counts(e)
   end
 end
 
-local function search_for_items(player, query)
-  local player_table = global.players[player.index]
+local function search_for_items(player, player_table, query, results_table)
   local player_settings = player.mod_settings
   local show_hidden = player_settings['qis-search-hidden'].value
-  local results = {}
-  if player_settings['qis-fuzzy-search'].value then -- fuzzy search
+  -- fuzzy search
+  if player_settings['qis-fuzzy-search'].value then
     query = query:gsub('.', '%1.*')
   end
   query = string_lower(query)
-  -- search dictionary first, then iterate through that to decrease the number of API calls
-  local search_results = {}
-  local search_table = player_table.dictionary.searchable
+
+  -- data
+  local children = results_table.children
+  local translations = player_table.dictionary.translations
   local item_data = global.item_data
-  for i=1,#search_table do
-    local t = search_table[i]
-    local internal = t.internal
-    if string_match(string_lower(t.translated), query) then
-      search_results[internal] = item_data[internal]
+  local add = results_table.add
+  local index = 0
+  local results = {}
+
+  -- add or update the next result button
+  local function set_result(type, name, number)
+    index = index + 1
+    results[name] = number
+    local button = children[index]
+    if button then
+      button.style = 'qis_'..type..'_result_slot_button'
+      button.sprite = 'item/'..name
+      button.tooltip = translations[name]
+      button.number = number
+    else
+      add{type='sprite-button', name='qis_result_button_'..index, style='qis_'..type..'_result_slot_button', sprite='item/'..name, number=number,
+        tooltip=translations[name]}
     end
   end
+
+  -- match the query to the given name
+  local function match_query(name, translation)
+    return not results[name] and (show_hidden or not item_data[name].hidden) and string_match(string_lower(translation or translations[name]), query)
+  end
+
   -- map editor
   if player.controller_type == defines.controllers.editor then
     local contents = player.get_main_inventory().get_contents()
-    for name,t in pairs(search_results) do
-      results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite='item/'..name}
+    for internal,translated in pairs(translations) do
+      -- we don't care about hidden or other results, so use an optimised condition
+      if string_match(string_lower(translated), query) then
+        set_result('inventory', internal, contents[internal])
+      end
     end
   else
     -- player inventory
     if player_settings['qis-search-inventory'].value then
       local contents = player.get_main_inventory().get_contents()
-      for name,t in pairs(search_results) do
-        if not results[name] and contents[name] and (show_hidden or not t.hidden) then
-          results[name] = {count=contents[name], tooltip=t.localised_name, type='inventory', sprite='item/'..name}
+      for name,count in pairs(contents) do
+        if match_query(name) then
+          set_result('inventory', name, count)
         end
       end
     end
-    if player.character then
+    -- logistic network(s)
+    if player.character and player_settings['qis-search-logistics'].value then
       local character = player.character
-      -- logistic network(s)
-      if player_settings['qis-search-logistics'].value then
-        for _,point in ipairs(character.get_logistic_point()) do
-          local network = point.logistic_network
-          if network.valid then
-            local contents = point.logistic_network.get_contents()
-            for name,t in pairs(search_results) do
-              if not results[name] and contents[name] and (show_hidden or not t.hidden) then
-                results[name] = {count=contents[name], tooltip=t.localised_name, type='logistics', sprite='item/'..name}
-              end
+      for _,point in ipairs(character.get_logistic_point()) do
+        local network = point.logistic_network
+        if network.valid then
+          local contents = point.logistic_network.get_contents()
+          for name,count in pairs(contents) do
+            if match_query(name) then
+              set_result('logistics', name, count)
             end
           end
         end
@@ -146,14 +165,18 @@ local function search_for_items(player, query)
     end
     -- unavailable
     if player_settings['qis-search-unavailable'].value then
-      for name,t in pairs(search_results) do
-        if not results[name] and (show_hidden or not t.hidden) then
-          results[name] = {tooltip=t.localised_name, type='unavailable', sprite='item/'..name}
+      for internal,translated in pairs(translations) do
+        if match_query(internal, translated) then
+          set_result('unavailable', internal)
         end
       end
     end
   end
-  return results
+
+  -- remove extra buttons, if any
+  for i=index+1, #children do
+    children[i].destroy()
+  end
 end
 
 -- take action on the selected item
@@ -279,26 +302,7 @@ local function search_textfield_text_changed(e)
   end
   if e.element.text == '' then results_table.clear(); return end
   -- update results
-  local i = 0
-  local children = table.deepcopy(results_table.children)
-  for _,t in pairs(search_for_items(player, string.lower(e.element.text))) do
-    i = i + 1
-    local elem = children[i]
-    if not elem then -- create button
-      results_table.add{type='sprite-button', name='qis_result_button_'..i, style='qis_'..t.type..'_result_slot_button', sprite=t.sprite, number=t.count,
-                        tooltip=t.tooltip}
-    else -- update button
-      elem.sprite = t.sprite
-      elem.number = t.count
-      elem.tooltip = t.tooltip
-      elem.style = 'qis_'..t.type..'_result_slot_button'
-      children[i] = nil
-    end
-  end
-  -- delete remaining elements
-  for _,elem in pairs(children) do
-    elem.destroy()
-  end
+  search_for_items(player, player_table, e.element.text, results_table)
 end
 
 local function search_textfield_confirmed(e)
@@ -458,7 +462,6 @@ event.register(translation.finish_event, function(e)
   player_table.flags.can_open_gui = true
   player_table.dictionary = {
     lookup = e.lookup,
-    searchable = e.searchable,
     translations = e.translations
   }
   if player_table.flags.tried_to_open_gui then
@@ -568,6 +571,8 @@ event.on_configuration_changed(function(e)
           f(e)
         end
       end
+    else
+      return -- don't do generic migrations because we just initialized
     end
   end
   -- retranslate for all players
