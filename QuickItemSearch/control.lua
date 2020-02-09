@@ -64,24 +64,33 @@ local function update_request_counts(e)
   if not player.character then return end
   local character = player.character
   local player_table = global.players[e.player_index]
-  local requests = player_table.logistics_requests
   local inv_contents = player.get_main_inventory().get_contents()
   if player.cursor_stack and player.cursor_stack.valid_for_read then
     local stack = player.cursor_stack
     inv_contents[stack.name] = stack.count + (inv_contents[stack.name] or 0)
   end
-  for name,count in pairs(requests) do -- for each request we're keeping track of
-    if (inv_contents[name] or 0) >= count then
-      -- set logistic request
-      local get_slot = character.get_request_slot
-      for i=1,character.request_slot_count do
-        local slot = get_slot(i)
-        if slot and slot.name == name then
-          character.clear_request_slot(i)
-          requests[name] = nil
-          break
-        end
+  -- build table of the player's current requests
+  local requests = {}
+  local get_slot = character.get_request_slot
+  for i=1,character.request_slot_count do
+    local slot = get_slot(i)
+    if slot then
+      requests[slot.name] = i
+    end
+  end
+  -- for each request we're keeping track of
+  local tracked_requests = player_table.logistics_requests
+  for name,count in pairs(tracked_requests) do
+    local request = requests[name]
+    if request then
+      if (inv_contents[name] or 0) >= count then
+        -- clear request
+        character.clear_request_slot(request)
+        tracked_requests[name] = nil
       end
+    else
+      -- stop tracking this request, as it has been canceled
+      tracked_requests[name] = nil
     end
   end
   if table_size(requests) == 0 then
@@ -617,6 +626,21 @@ local migrations = {
     for _,t in pairs(global.players) do
       -- remove flag as it as been moved to gui_data
       t.flags.selecting_result = nil
+      -- reset translation module data
+      global.__lualib.translation = {
+        active_translations_count = 0,
+        players = {}
+      }
+      for i,_ in pairs(game.players) do
+        global.__lualib.translation.players[i] = {
+          active_translations = {},
+          active_translations_count = 0,
+          next_index = 1,
+          string_registry = {},
+          strings = {},
+          strings_len = 0
+        }
+      end
     end
   end
 }
