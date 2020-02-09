@@ -71,7 +71,7 @@ end
 -- ------------------------------------------------------------------------------
 -- FRAME STYLES
 
-styles['qis_toolbar'] = {
+styles.qis_toolbar = {
   type = 'frame_style',
   parent = 'subheader_frame',
   horizontal_flow_style = {
@@ -83,12 +83,29 @@ styles['qis_toolbar'] = {
   }
 }
 
+styles.qis_invalid_textfield = {
+  type = 'textbox_style',
+  parent = 'short_number_textfield',
+  default_background = {
+    base = {position = {248,0}, corner_size=8, tint=warning_red_color},
+    shadow = textbox_dirt
+  },
+  active_background = {
+    base = {position={265,0}, corner_size=8, tint=warning_red_color},
+    shadow = textbox_dirt
+  },
+  disabled_background = {
+    base = {position = {282,0}, corner_size=8, tint=warning_red_color},
+    shadow = textbox_dirt
+  }
+}
+
 -- ------------------------------------------------------------------------------
 -- SCROLLPANE STYLES
 
 local outer_frame_light = outer_frame_light()
 outer_frame_light.base.center = {position = {42,8}, size=1}
-styles['results_scroll_pane'] = {
+styles.results_scroll_pane = {
   type = 'scroll_pane_style',
   -- parent = 'scroll_pane',
   padding = 0,
@@ -109,7 +126,7 @@ styles['results_scroll_pane'] = {
   }
 }
 
-styles['results_slot_table'] = {
+styles.results_slot_table = {
   type = 'table_style',
   parent = 'slot_table',
   horizontal_spacing = 0,
@@ -119,12 +136,12 @@ styles['results_slot_table'] = {
 -- ------------------------------------------------------------------------------
 -- FLOW STYLES
 
-styles['qis_vertically_centered_flow'] = {
+styles.qis_vertically_centered_flow = {
   type='horizontal_flow_style',
   vertical_align = 'center'
 }
 
-styles['qis_entity_window_content_flow'] = {
+styles.qis_entity_window_content_flow = {
   type = 'horizontal_flow_style',
   horizontal_spacing = 10
 }
@@ -132,12 +149,12 @@ styles['qis_entity_window_content_flow'] = {
 -- ------------------------------------------------------------------------------
 -- EMPTY WIDGET STYLES
 
-styles['qis_invisible_horizontal_pusher'] = {
+styles.qis_invisible_horizontal_pusher = {
   type = 'empty_widget_style',
   horizontally_stretchable = 'on'
 }
 
-styles['qis_invisible_vertical_pusher'] = {
+styles.qis_invisible_vertical_pusher = {
   type = 'empty_widget_style',
   vertically_stretchable = 'on'
 }
@@ -145,7 +162,7 @@ styles['qis_invisible_vertical_pusher'] = {
 -- ------------------------------------------------------------------------------
 -- BUTTON STYLES
 
-styles['qis_active_tool_button'] = {
+styles.qis_active_tool_button = {
   type = 'button_style',
   parent = 'tool_button',
   default_graphical_set = {
@@ -165,12 +182,12 @@ styles['qis_active_tool_button'] = {
 }
 
 -- REMOVE WHEN UPDATING TO 0.18:
-styles['filter_slot_button'] = {
+styles.filter_slot_button = {
   type = 'button_style',
   parent = 'quick_bar_slot_button'
 }
 
-styles['qis_active_filter_slot_button'] = {
+styles.qis_active_filter_slot_button = {
   type = 'button_style',
   parent = 'filter_slot_button',
   default_graphical_set = {
@@ -188,7 +205,7 @@ styles['qis_active_filter_slot_button'] = {
   }
 }
 
-styles['qis_close_button'] = {
+styles.qis_close_button = {
   type = 'button_style',
   parent = 'close_button',
   top_margin = 4
@@ -214,8 +231,8 @@ local function tinted_result_slot_button(type, glow_color)
     }
   }
 end
-styles['qis_inventory_result_slot_button'] = {type='button_style', parent='filter_slot_button'}
-styles['qis_active_inventory_result_slot_button'] = {type='button_style', parent='qis_active_filter_slot_button'}
+styles.qis_inventory_result_slot_button = {type='button_style', parent='filter_slot_button'}
+styles.qis_active_inventory_result_slot_button = {type='button_style', parent='qis_active_filter_slot_button'}
 for type,color in pairs{logistics={34,181,255,128}, recipe={34,255,75,128}, unavailable={255,166,123,128}} do
   local style = tinted_result_slot_button(type, color)
   styles['qis_'..type..'_result_slot_button'] = table.deepcopy(style)
