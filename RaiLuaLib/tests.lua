@@ -3,6 +3,6 @@ return
   -- 'event',
   -- 'gui',
   -- 'gui-standalone',
-  -- 'sandbox',
-  'translation',
+  'sandbox',
+  -- 'translation',
 }
