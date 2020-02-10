@@ -203,31 +203,3 @@ styles.rll_production_table_row_frame = {
     horizontal_spacing = 16
   }
 }
-
-styles.rll_production_table = {
-  type = 'table_style',
-  vertical_spacing = 4,
-  horizontal_spacing = 8,
-  cell_padding = 4,
-  width = 800,
-  default_row_graphical_set = {
-    base = {position={240,0}, corner_size=12, filename=tileset},
-    shadow = default_shadow
-  },
-  column_alignments = {
-    {column=1, alignment='middle-center'},
-    {column=2, alignment='middle-center'},
-    {column=3, alignment='middle-center'},
-    {column=4, alignment='middle-center'},
-    {column=5, alignment='middle-center'},
-    {column=6, alignment='middle-center'},
-    {column=7, alignment='middle-center'},
-    {column=8, alignment='middle-left'},
-    {column=9, alignment='middle-left'}
-  }
-}
-
-styles.rll_production_table_label = {
-  type = 'label_style',
-  parent = 'bold_label'
-}
