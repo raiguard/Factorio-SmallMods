@@ -272,7 +272,7 @@ event.on_player_joined_game(function(e)
             }}
           }},
           -- scroll pane
-          {type='scroll-pane', style='rll_rows_scroll_pane', save_as='production_table_pane'}
+          {type='scroll-pane', style='rll_rows_scroll_pane', vertical_scroll_policy='auto-and-reserve-space', save_as='production_table_pane'}
         }}
       }}
     }}

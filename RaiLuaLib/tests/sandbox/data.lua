@@ -145,16 +145,13 @@ styles.rll_row_slot_button_no_background = {
 styles.rll_rows_scroll_pane = {
   type = "scroll_pane_style",
   parent = "scroll_pane_with_dark_background_under_subheader",
+  height = 726,
   background_graphical_set = {
     position = {282, 17},
     corner_size = 8,
     overall_tiling_vertical_spacing = 12,
     overall_tiling_vertical_size = 32,
     overall_tiling_vertical_padding = 4
-  },
-  vertical_flow_style = {
-    type = 'vertical_flow_style',
-    vertically_stretchable = 'on'
   }
 }
 
@@ -173,6 +170,7 @@ styles.rll_subfactory_scroll_pane = {
   vertically_stretchable = 'on',
   padding = 0,
   width = 250,
+  height = 750,
   vertical_flow_style = {
     type = 'vertical_flow_style',
     vertical_spacing = 0
