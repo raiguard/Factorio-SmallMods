@@ -120,7 +120,11 @@ local function recursive_load(parent, t, output, name, player_index)
     end
     -- register handlers
     if t.handlers then
-      register_handlers(name, t.handlers, {player_index=player_index, gui_filters=elem.index})
+      if name and player_index then
+        register_handlers(name, t.handlers, {player_index=player_index, gui_filters=elem.index})
+      else
+        error('Must specify name and player index to register GUI events!')
+      end
     end
     -- add children
     local children = t.children
@@ -158,6 +162,12 @@ end)
 
 -- -----------------------------------------------------------------------------
 -- OBJECT
+
+-- builds a template without worrying about event handling
+function self.build_template(parent, template)
+  build_data = {}
+  return recursive_load(parent, template, {})
+end
 
 function self.create(parent, name, player_index, template)
   build_data = {}
