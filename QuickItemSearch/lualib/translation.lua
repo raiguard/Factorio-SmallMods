@@ -322,7 +322,7 @@ local function setup_remote()
       'retranslate-all-dictionaries',
       '- retranslates all of your personal dictionaries',
       function(e)
-        event.raise(translation.retranslate_all_event, {player_index=e.player_index})
+        event.raise(event.generate_id('retranslate_all_event'), {player_index=e.player_index})
       end
     )
   end

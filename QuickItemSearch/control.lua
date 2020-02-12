@@ -40,6 +40,14 @@ local function build_prototype_data()
   global.item_data = item_data
 end
 
+-- closes all of a player's open GUIs
+local function close_player_guis(player, player_table)
+  player_table.flags.can_open_gui = false
+  if player_table.gui then
+    gui.close(player, player_table)
+  end
+end
+
 -- runs translations for all currently connected players
 local function translate_for_all_players()
   local translation_data = global.__lualib.translation.translation_data
@@ -516,6 +524,12 @@ end
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
 
+local function close_guis_then_translate(e)
+  local player = game.get_player(e.player_index)
+  close_player_guis(player, global.players[e.player_index])
+  translation.start(player, 'items', global.__lualib.translation.translation_data)
+end
+
 event.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
@@ -523,6 +537,11 @@ event.on_init(function()
   end
   build_prototype_data()
   translate_for_all_players()
+  event.register(translation.retranslate_all_event, close_guis_then_translate)
+end)
+
+event.on_load(function()
+  event.register(translation.retranslate_all_event, close_guis_then_translate)
 end)
 
 event.on_player_created(function(e)
@@ -533,15 +552,7 @@ event.on_player_removed(function(e)
   global.players[e.player_index] = nil
 end)
 
-event.on_player_joined_game(function(e)
-  translation.start(game.get_player(e.player_index), 'items', global.__lualib.translation.translation_data)
-  -- close open GUIs
-  local player_table = global.players[e.player_index]
-  player_table.flags.can_open_gui = false
-  if player_table.gui then
-    gui.close(game.get_player(e.player_index), player_table)
-  end
-end)
+event.on_player_joined_game(close_guis_then_translate)
 
 event.register(translation.finish_event, function(e)
   local player_table = global.players[e.player_index]
@@ -555,8 +566,6 @@ event.register(translation.finish_event, function(e)
     game.get_player(e.player_index).print{'qis-message.translation-finished'}
   end
 end)
-
-event.register(translation.retranslate_all_event, translate_for_all_players)
 
 event.register('qis-search', function(e)
   local player = game.get_player(e.player_index)
@@ -659,11 +668,11 @@ end
 
 -- handle migrations
 event.on_configuration_changed(function(e)
+  -- version migrations
   local changes = e.mod_changes[script.mod_name]
   if changes then
     local old = changes.old_version
     if old then
-      -- version migrations
       local migrate = false
       for v,f in pairs(migrations) do
         if migrate or compare_versions(old, v) then
@@ -676,16 +685,14 @@ event.on_configuration_changed(function(e)
       return -- don't do generic migrations because we just initialized
     end
   end
+
+  -- close open GUIs
+  for i,p in pairs(game.players) do
+    local player_table = global.players[i]
+    close_player_guis(p, player_table)
+  end
   -- retranslate for all players
   translation.cancel_all()
   build_prototype_data()
   translate_for_all_players()
-  -- close open GUIs
-  for i,p in pairs(game.players) do
-    local player_table = global.players[i]
-    player_table.flags.can_open_gui = false
-    if player_table.gui then -- close the open GUI
-      gui.close(p, player_table)
-    end
-  end
 end)
