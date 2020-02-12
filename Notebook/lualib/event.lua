@@ -3,19 +3,28 @@
 
 -- DOCUMENTATION: https://github.com/raiguard/SmallFactorioMods/wiki/Event-Module-Documentation
 
+local util = require('__core__/lualib/util')
+
+-- locals
+local table_deepcopy = table.deepcopy
+local table_insert = table.insert
+
 -- module
 local event = {}
 -- holds registered events
 local event_registry = {}
+
 -- GUI filter matching functions
 local gui_filter_matchers = {
   string = function(element, filter) return element.name:match(filter) end,
-  number = function(element, filter) return element.id == filter end,
+  number = function(element, filter) return element.index == filter end,
   table = function(element, filter) return element == filter end
 }
+
 -- calls handler functions tied to an event
 -- ALL events go through this function
 local function dispatch_event(e)
+  local global_data = global.__lualib.event
   local id = e.name
   -- set ID for special events
   if e.nth_tick then
@@ -28,7 +37,6 @@ local function dispatch_event(e)
   if not event_registry[id] then
     error('Event is registered but has no handlers!')
   end
-  local con_registry = global.__lualib.event
   for _,t in ipairs(event_registry[id]) do -- for every handler registered to this event
     local options = t.options
     if not options.skip_validation then
@@ -39,13 +47,24 @@ local function dispatch_event(e)
         end
       end
     end
-    -- insert registered players if necessary
-    if options.name then
-      e.registered_players = con_registry[t.name] and con_registry[t.name].players
+    -- if we are a conditional event, insert registered players
+    local name = options.name
+    local gui_filters
+    if name then
+      local con_data = global_data[name]
+      if not con_data then error('Conditional event has been raised, but has no data!') end
+      e.registered_players = con_data.players
+      -- if there are GUI filters, check them
+      gui_filters = con_data.gui_filters[e.player_index]
+      if not gui_filters and table_size(con_data.gui_filters) > 0 then
+        goto continue
+      end
+    else
+      gui_filters = t.gui_filters
     end
-    -- check GUI filters if they exist
-    local filters = options.gui_filters
-    if filters then
+    -- check GUI filters, if any
+    if gui_filters then
+      -- check GUI filters if they exist
       local elem = e.element
       if not elem then
         -- there is no element to filter, so skip calling the handler
@@ -53,8 +72,8 @@ local function dispatch_event(e)
         goto continue
       end
       local matchers = gui_filter_matchers
-      for i=1,#filters do
-        local filter = filters[i]
+      for i=1,#gui_filters do
+        local filter = gui_filters[i]
         if matchers[type(filter)](elem, filter) then
           goto call_handler
         end
@@ -91,36 +110,53 @@ local bootstrap_handlers = {
 
 -- registers a handler to run when the event is called
 function event.register(id, handler, options)
+  options = options or {}
   -- we must do this here as well since this can get called before on_init
   if not global.__lualib then global.__lualib = {event={}} end
-  options = options or {}
+  -- locals
+  local global_data = global.__lualib.event
+  local name = options.name
+  local player_index = options.player_index
+  local gui_filters = options.gui_filters
   -- nest GUI filters into an array if they're not already
-  local filters = options.gui_filters
-  if filters then
-    if type(filters) ~= 'table' or filters.gui then
-      options.gui_filters = {filters}
+  if gui_filters then
+    if type(gui_filters) ~= 'table' or gui_filters.gui then
+      gui_filters = {gui_filters}
     end
   end
-  -- add to conditional event registry if needed
-  local name = options.name
+  -- add to conditional event registry
   if name then
-    local player_index = options.player_index
-    local con_registry = global.__lualib.event[name]
-    options.player_index = nil
-    if not con_registry then
-      global.__lualib.event[name] = {id=id, players={player_index}, options=options}
+    local t = global_data[name]
+    local skip_registration = false
+    if not t then
+      global_data[name] = {id=id, players={}, gui_filters={}}
+      t = global_data[name]
     elseif player_index then
-      -- check to be sure this player isn't already registered
-      local players = con_registry.players
+      -- check if the player already registered this event
+      local players = t.players
       for i=1,#players do
         if players[i] == player_index then
-          log('Tried to re-register a conditional event to player '..player_index..', skipping!')
-          return event -- don't do anything else
+          -- don't do anything
+          if not options.suppress_logging then
+            log('Tried to re-register conditional event \''..name..'\' for player '..player_index..', skipping!')
+          end
+          return event
         end
       end
-      table.insert(con_registry.players, player_index)
-      return event -- don't do anything else
+      -- if we're here, we want to do everything for the conditional event but not register the handler
+      skip_registration = true
     end
+    if gui_filters then
+      if player_index then
+        t.gui_filters[player_index] = gui_filters
+      else
+        error('Must specify a player_index when using gui filters on a conditional event.')
+      end
+    end
+    if player_index then
+      table_insert(t.players, player_index)
+    end
+    if skip_registration then return event end
   end
   -- register handler
   if type(id) ~= 'table' then id = {id} end
@@ -145,34 +181,49 @@ function event.register(id, handler, options)
       -- if it is a conditional event,
       if t.handler == handler and not name then
         -- remove handler for re-insertion at the bottom
-        log('Re-registering existing event ID, moving to bottom')
+        if not options.suppress_logging then
+          log('Re-registering existing event \''..n..'\', moving to bottom')
+        end
         table.remove(registry, i)
       end
     end
+    -- clean up options table, deepcopy it so the original is unmodified
+    local n_options = table_deepcopy(options)
+    n_options.player_index = nil
+    n_options.gui_filters = nil
+    if name then gui_filters = nil end
     -- add the handler to the events table
-    table.insert(registry, {handler=handler, options=options})
+    local data = {handler=handler, gui_filters=gui_filters, options=n_options}
+    if options.insert_at_front then
+      table_insert(registry, 1, data)
+    else
+      table_insert(registry, data)
+    end
   end
   return event -- function call chaining
 end
 
 -- deregisters a handler from the given event
-function event.deregister(id, handler, options)
-  options = options or {}
-  local name = options.name
-  local player_index = options.player_index
+function event.deregister(id, handler, name, player_index)
+  local global_data = global.__lualib.event
   -- remove from conditional event registry if needed
   if name then
-    local con_registry = global.__lualib.event[name]
+    local con_registry = global_data[name]
     if con_registry then
       if player_index then
         for i,pi in ipairs(con_registry.players) do
           if pi == player_index then
             table.remove(con_registry.players, i)
+            break
           end
         end
+        con_registry.gui_filters[player_index] = nil
       end
       if #con_registry.players == 0 then
-        global.__lualib.event[name] = nil
+        global_data[name] = nil
+      else
+        -- don't do anything else
+        return event
       end
     else
       error('Tried to deregister a conditional event whose data does not exist')
@@ -229,23 +280,23 @@ function event.generate_id(name)
   if not custom_id_registry[name] then
     custom_id_registry[name] = script.generate_event_name()
   end
-  return custom_id_registry[name], event
+  return custom_id_registry[name]
 end
 
 -- -------------------------------------
 -- SHORTCUT FUNCTIONS
 
 -- bootstrap events
-function event.on_init(handler)
-  return event.register('on_init', handler)
+function event.on_init(handler, options)
+  return event.register('on_init', handler, options)
 end
 
-function event.on_load(handler)
-  return event.register('on_load', handler)
+function event.on_load(handler, options)
+  return event.register('on_load', handler, options)
 end
 
-function event.on_configuration_changed(handler)
-  return event.register('on_configuration_changed', handler)
+function event.on_configuration_changed(handler, options)
+  return event.register('on_configuration_changed', handler, options)
 end
 
 function event.on_nth_tick(nthTick, handler, options)
@@ -262,19 +313,13 @@ end
 -- -----------------------------------------------------------------------------
 -- CONDITIONAL EVENTS
 
--- create global table for conditional events on init
-event.on_init(function()
-  if not global.__lualib then global.__lualib = {event={}}
-  else global.__lualib.event = {}
-  end
-end)
-
 -- re-registers conditional handlers if they're in the registry
 function event.load_conditional_handlers(data)
+  local global_data = global.__lualib.event
   for name, handler in pairs(data) do
-    local registry = global.__lualib.event[name]
+    local registry = global_data[name]
     if registry then
-        event.register(registry.id, handler, {name=name, gui_filters=registry.gui_filters})
+      event.register(registry.id, handler, {name=name})
     end
   end
   return event
@@ -298,11 +343,13 @@ function event.is_registered(name, player_index)
 end
 
 -- gets the event IDs from the conditional registry so you don't have to provide them
-function event.deregister_conditional(handler, options)
-  local con_registry = global.__lualib.event[options.name]
+function event.deregister_conditional(handler, name, player_index)
+  local con_registry = global.__lualib.event[name]
   if con_registry then
-    event.deregister(con_registry.id, handler, options)
+    event.deregister(con_registry.id, handler, name, player_index)
   end
 end
+
+function event.get_registry() return event_registry end
 
 return event
