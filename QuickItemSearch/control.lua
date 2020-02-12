@@ -612,7 +612,12 @@ local migrations = {
       input_confirm = input_confirm,
       result_button_clicked = result_button_clicked
     }
-    global.__lualib.translation.build_data = nil
+    global.conditional_event_registry = nil
+    global.__translation = nil
+    global.__lualib.translation = {
+      dictionary_count = 0,
+      players = {}
+    }
     -- deregister GUI events so they can be created with the new format
     for n,t in pairs(global.__lualib.event) do
       -- so the next code doesn't crash

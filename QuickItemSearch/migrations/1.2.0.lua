@@ -2,7 +2,5 @@
 if global.conditional_event_registry then
   global.__lualib = {
     event = table.deepcopy(global.conditional_event_registry),
-    translation = table.deepcopy(global.__translation)
   }
-  global.conditional_event_registry = nil
 end

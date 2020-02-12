@@ -10,6 +10,7 @@ Date: 2020-02-10
     - Fixed that the mod would continue to track your items forever if you canceled a temporary logistics request
     - Fixed more issues with the translation module duplicating keys
     - Fixed a crash if a multiplayer save were to be upgraded from 1.1.0 while other players had the GUI open
+    - Fixed some leftover migration issues
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.1
