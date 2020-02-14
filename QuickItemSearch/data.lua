@@ -181,61 +181,37 @@ styles.qis_active_tool_button = {
   },
 }
 
--- REMOVE WHEN UPDATING TO 0.18:
-styles.filter_slot_button = {
-  type = 'button_style',
-  parent = 'quick_bar_slot_button'
-}
+local tileset = '__QuickItemSearch__/graphics/button-tileset.png'
 
-styles.qis_active_filter_slot_button = {
-  type = 'button_style',
-  parent = 'filter_slot_button',
-  default_graphical_set = {
-    base = {border=4, position={80,736}, size=80},
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
-  },
-  hovered_graphical_set = {
-    base = {border=4, position={80,736}, size=80},
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
-    glow = offset_by_2_rounded_corners_glow(default_glow_color)
-  },
-  clicked_graphical_set = {
-    base = {border=4, position={160,736}, size=80},
-    shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
-  }
-}
-
-styles.qis_close_button = {
-  type = 'button_style',
-  parent = 'close_button',
-  top_margin = 4
-}
-
-local function tinted_result_slot_button(type, glow_color)
-  local file = '__QuickItemSearch__/graphics/gui/result-slot-button-'..type..'.png'
+local function slot_button(y, glow_color, default_x)
   return {
     type = 'button_style',
-    parent = 'filter_slot_button',
+    parent = 'quick_bar_slot_button',
     default_graphical_set = {
-      base = {border=4, position={0,0}, size=80, filename=file},
+      base = {border=4, position={(default_x or 0),y}, size=80, filename=tileset},
       shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
     },
     hovered_graphical_set = {
-      base = {border=4, position={80,0}, size=80, filename=file},
+      base = {border=4, position={80,y}, size=80, filename=tileset},
       shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
       glow = offset_by_2_rounded_corners_glow(glow_color)
     },
     clicked_graphical_set = {
-      base = {border=4, position={160,0}, size=80, filename=file},
+      base = {border=4, position={160,y}, size=80, filename=tileset},
       shadow = offset_by_2_rounded_corners_glow(default_dirt_color),
     }
   }
 end
-styles.qis_inventory_result_slot_button = {type='button_style', parent='filter_slot_button'}
-styles.qis_active_inventory_result_slot_button = {type='button_style', parent='qis_active_filter_slot_button'}
-for type,color in pairs{logistics={34,181,255,128}, recipe={34,255,75,128}, unavailable={255,166,123,128}} do
-  local style = tinted_result_slot_button(type, color)
-  styles['qis_'..type..'_result_slot_button'] = table.deepcopy(style)
-  style.default_graphical_set.base.position = {80,0}
-  styles['qis_active_'..type..'_result_slot_button'] = table.deepcopy(style)
+
+local slot_button_data = {
+  {name='inventory', y=0, glow=default_glow_color},
+  -- {name='light_grey', y=80, glow=default_glow_color},
+  {name='unavailable', y=160, glow={255,166,123,128}},
+  {name='recipe', y=240, glow={34,255,75,128}},
+  {name='logistics', y=320, glow={34,181,255,128}},
+}
+
+for _,data in ipairs(slot_button_data) do
+  styles['qis_slot_button_'..data.name] = slot_button(data.y, data.glow)
+  styles['qis_active_slot_button_'..data.name] = slot_button(data.y, data.glow, 80)
 end

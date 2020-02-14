@@ -131,12 +131,12 @@ local function search_for_items(player, player_table, query, results_table)
     results[name] = number
     local button = children[index]
     if button then
-      button.style = 'qis_'..type..'_result_slot_button'
+      button.style = 'qis_slot_button_'..type
       button.sprite = 'item/'..name
       button.tooltip = translations[name]
       button.number = number
     else
-      add{type='sprite-button', name='qis_result_button_'..index, style='qis_'..type..'_result_slot_button', sprite='item/'..name, number=number,
+      add{type='sprite-button', name='qis_result_button_'..index, style='qis_slot_button_'..type, sprite='item/'..name, number=number,
         tooltip=translations[name]}
     end
   end
@@ -279,7 +279,7 @@ end
 
 -- get the slot type (inventory, logistics, unavailable) from the slot's style
 local function extract_slot_type(elem)
-  return elem.style.name:gsub('qis_(.+)_result_slot_button', '%1'):gsub('active_', '')
+  return elem.style.name:gsub('_active', ''):gsub('qis_slot_button_(.+)', '%1')
 end
 
 -- -----------------------------------------------------------------------------
