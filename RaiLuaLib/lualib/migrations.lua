@@ -27,7 +27,7 @@ function migrations.compare_versions(v1, v2)
 end
 
 -- handle migrations generically
-function migrations.generic(old, migrations_table)
+function migrations.generic(old, migrations_table, ...)
   local migrate = false
   for v,f in pairs(migrations_table) do
     if migrate or migrations.compare_versions(old, v) then
@@ -39,12 +39,12 @@ function migrations.generic(old, migrations_table)
 end
 
 -- handle version migrations in on_configuration_changed
-function migrations.on_config_changed(e, migrations_table)
+function migrations.on_config_changed(e, migrations_table, ...)
   local changes = e.mod_changes[script.mod_name]
   if changes then
     local old = changes.old_version
     if old then
-      migrations.generic(old, migrations_table)
+      migrations.generic(old, migrations_table, ...)
     else
       return false -- don't do generic migrations, because we just initialized
     end
