@@ -1,11 +1,18 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
--- CURSOR UPGRADE CAROUSEL CONTROL SCRIPTING
+-- CONTROL SCRIPTING
 
--- build upgrade/downgrade registry
-local function build_upgrade_registry()
+ -- debug adapter
+ pcall(require,'__debugadapter__/debugadapter.lua')
+
+local util = require('__core__/lualib/util')
+
+-- -----------------------------------------------------------------------------
+-- UPGRADE REGISTRY ASSEMBLY
+
+-- build the default upgrade/downgrade registry
+local function build_default_registry()
   local prototypes = game.entity_prototypes
   local data = {}
-  -- build default registry
   for name,prototype in pairs(prototypes) do
     if prototype.next_upgrade and prototype.items_to_place_this then
       local upgrade = prototype.next_upgrade.name
@@ -19,17 +26,28 @@ local function build_upgrade_registry()
       end
     end
   end
-  -- build custom registry
-  for name,upgrade in pairs(load('return '..settings.global['cuc-custom-upgrade-registry'].value)()) do
+  global.default_registry = data
+end
+
+-- apply a player's overrides to create their custom registry
+local function apply_registry_overrides(player)
+  local prototypes = game.entity_prototypes
+  local data = table.deepcopy(global.default_registry)
+  local registry = game.json_to_table(player.mod_settings['cuc-custom-upgrade-registry'].value)
+  if not registry then
+    player.print{'cuc-message.invalid-string'}
+    return data
+  end
+  for name,upgrade in pairs(registry) do
     -- get objects and validate them, or error if not
     local prototype = prototypes[name]
     if not prototype then
-      game.print{'chat-message.invalid-name', name}
+      player.print{'cuc-message.invalid-name', name}
       goto continue
     end
     local upgrade_prototype = prototypes[upgrade]
     if not upgrade_prototype then
-      game.print{'chat-message.invalid-upgrade-name', upgrade}
+      player.print{'cuc-message.invalid-upgrade-name', upgrade}
       goto continue
     end
     for _,item in ipairs(prototype.items_to_place_this or {}) do
@@ -42,21 +60,39 @@ local function build_upgrade_registry()
     end
     ::continue::
   end
-  global.registry = data
+  return data
 end
 
-script.on_init(function()
-  build_upgrade_registry()
-end)
+-- refresh all registries
+local function refresh_registries()
+  build_default_registry()
+  for i,p in pairs(game.players) do
+    global.players[i].registry = apply_registry_overrides(p)
+  end
+end
 
-script.on_configuration_changed(function(e)
-  build_upgrade_registry()
+-- -----------------------------------------------------------------------------
+-- EVENT HANDLERS
+
+script.on_init(function()
+  global.players = {}
+  refresh_registries()
 end)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(e)
   if e.setting == 'cuc-custom-upgrade-registry' then
-    build_upgrade_registry()
+    global.players[e.player_index].registry = apply_registry_overrides(game.get_player(e.player_index))
   end
+end)
+
+script.on_event(defines.events.on_player_created, function(e)
+  local data = {}
+  data.registry = apply_registry_overrides(game.get_player(e.player_index))
+  global.players[e.player_index] = data
+end)
+
+script.on_event(defines.events.on_player_removed, function(e)
+  global.players[e.player_index] = nil
 end)
 
 script.on_event({'cuc-cycle-forwards', 'cuc-cycle-backwards'}, function(e)
@@ -71,7 +107,7 @@ script.on_event({'cuc-cycle-forwards', 'cuc-cycle-backwards'}, function(e)
   else
     return
   end
-  local registry = global.registry
+  local registry = global.players[e.player_index].registry
   -- get upgrade or downgrade depending on event
   local grade = e.input_name:find('forwards') and 'upgrade' or 'downgrade'
   -- if we're in the map editor and the setting is enabled, always give the actual item
@@ -97,4 +133,54 @@ script.on_event({'cuc-cycle-forwards', 'cuc-cycle-backwards'}, function(e)
     -- if we're here, then they don't have any of the items, so put the first one in the ghost cursor
     player.cursor_ghost = grade_items[1].name
   end
+end)
+
+-- -----------------------------------------------------------------------------
+-- MIGRATIONS
+
+-- table of migration functions
+local migrations = {
+  ['1.1.0'] = function(e)
+    -- remove old registry location
+    global.registry = nil
+    -- create player tables
+    global.players = {}
+    for i,_ in pairs(game.players) do
+      global.players[i] = {}
+    end
+  end
+}
+
+-- returns true if v2 is newer than v1, false if otherwise
+local function compare_versions(v1, v2)
+  local v1_split = util.split(v1, '.')
+  local v2_split = util.split(v2, '.')
+  for i=1,#v1_split do
+    if v1_split[i] < v2_split[i] then
+      return true
+    end
+  end
+  return false
+end
+
+script.on_configuration_changed(function(e)
+  -- version migrations
+  local changes = e.mod_changes[script.mod_name]
+  if changes then
+    local old = changes.old_version
+    if old then
+      local migrate = false
+      for v,f in pairs(migrations) do
+        if migrate or compare_versions(old, v) then
+          migrate = true
+          log('Applying migration: '..v)
+          f(e)
+        end
+      end
+    else
+      return -- don't do generic migrations because we just initialized
+    end
+  end
+  -- global migrations
+  refresh_registries()
 end)

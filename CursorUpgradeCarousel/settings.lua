@@ -10,7 +10,7 @@ data:extend{
     type = 'string-setting',
     name = 'cuc-custom-upgrade-registry',
     setting_type = 'runtime-per-user',
-    default_value = '{[\'medium-electric-pole\'] = \'big-electric-pole\', [\'big-electric-pole\'] = \'substation\'}',
+    default_value = '{"small-electric-pole": "medium-electric-pole", "medium-electric-pole": "big-electric-pole", "big-electric-pole": "substation"}',
     order = 'b'
-  },
+  }
 }
