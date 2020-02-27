@@ -2,8 +2,8 @@ return
 {
   -- 'event',
   -- 'factory-planner-mockup',
-  -- 'gui',
+  'gui',
   -- 'gui-standalone',
-  'sandbox',
+  -- 'sandbox',
   -- 'translation',
 }

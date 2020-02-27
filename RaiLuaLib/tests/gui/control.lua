@@ -36,15 +36,16 @@ event.on_gui_click(function(e)
   local frame_flow = mod_gui.get_frame_flow(player)
   local window = frame_flow.demo_window
   if window then
-    gui.destroy(window, 'demo', e.player_index)
+    gui.deregister_all('demo', e.player_index)
+    window.destroy()
   else
-    local data = gui.create(frame_flow, 'demo', e.player_index,
+    local data = gui.build(frame_flow, 'demo', e.player_index,
       {type='frame', name='demo_window', style='dialog_frame', direction='vertical', children={
         -- checkboxes
         {type='flow', name='checkboxes_flow', direction='horizontal', children={
-          {type='checkbox', name='autoclear', caption='Auto-clear', state=true, handlers='auto_clear_checkbox', save_as=true},
+          {type='checkbox', name='autoclear', caption='Auto-clear', state=true, handlers='auto_clear_checkbox', save_as='checkboxes.auto_clear'},
           {template='pushers.horizontal'},
-          {type='checkbox', name='cardinals', caption='Cardinals only', state=true, handlers='cardinals_checkbox', save_as=true}
+          {type='checkbox', name='cardinals', caption='Cardinals only', state=true, handlers='cardinals_checkbox', save_as='checkboxes.cardinals.cardinals'}
         }},
         -- grid type switch
         {type='flow', name='switch_flow', style={vertical_align='center'}, direction='horizontal', children={
@@ -63,8 +64,7 @@ event.on_gui_click(function(e)
           {type='textfield', name='textfield', style={width=50, horizontal_align='center'}, numeric=true, lose_focus_on_confirm=true, text=5,
             handlers='divisor_textfield', save_as=true}
         }}
-      }}
-    )
+      }})
     game.print(serpent.block(data))
   end
 end, {gui_filters='gui_module_mod_gui_button'})
