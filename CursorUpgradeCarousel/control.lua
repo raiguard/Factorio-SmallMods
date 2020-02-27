@@ -76,6 +76,12 @@ end
 
 script.on_init(function()
   global.players = {}
+  -- create player tables
+  global.players = {}
+  for i,_ in pairs(game.players) do
+    global.players[i] = {}
+  end
+  -- create registries
   refresh_registries()
 end)
 
