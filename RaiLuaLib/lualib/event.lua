@@ -291,6 +291,13 @@ function event.generate_id(name)
   return custom_id_registry[name]
 end
 
+-- updates the GUI filters for the given conditional event
+function event.update_gui_filters(name, player_index, filters)
+  local event_data = global.__lualib.event[name]
+  if not event_data then error('Cannot update GUI filters for a non-existent event!') end
+  event_data.gui_filters[player_index] = filters
+end
+
 -- -------------------------------------
 -- SHORTCUT FUNCTIONS
 
