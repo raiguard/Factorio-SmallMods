@@ -1,0 +1,9 @@
+{
+  "name": "Sandbox",
+  "version": "1.0.0",
+  "title": "Sandbox",
+  "author": "raiguard",
+  "factorio_version": "0.18",
+  "dependencies": ["base >= 0.18.0"],
+  "description": "Rai's playground, weeeeeeeeeeeeee!"
+}

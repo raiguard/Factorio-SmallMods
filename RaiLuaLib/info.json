@@ -1,9 +1,0 @@
-{
-  "name": "RaiLuaLib",
-  "version": "1.0.0",
-  "title": "Rai's LUA Library",
-  "author": "raiguard",
-  "factorio_version": "0.18",
-  "dependencies": ["base >= 0.18.0"],
-  "description": "Raiguard's LUA library. Not intended to be an distributed mod, only for testing purposes!"
-}
