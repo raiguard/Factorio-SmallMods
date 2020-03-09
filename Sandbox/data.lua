@@ -1,12 +1,4 @@
-local tests = require('tests')
-for _,test in pairs(tests) do
-  require('tests/'..test..'/data')
+local modules = require('modules')
+for _,module in pairs(modules) do
+  require(module..'.data')
 end
-
-data:extend{
-  {
-    type = 'custom-input',
-    name = 'debug-inspect-global',
-    key_sequence = 'CONTROL + SHIFT + ENTER'
-  }
-}
