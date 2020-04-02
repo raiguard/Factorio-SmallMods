@@ -10,9 +10,11 @@ if __DebugAdapter then
 end
 
 -- dependencies
-local event = require('lualib/event')
+local event = require('__RaiLuaLib__.lualib.event')
+local migration = require('__RaiLuaLib__.lualib.migration')
 local mod_gui = require('mod-gui')
-local translation = require('lualib/translation')
+local translation = require('__RaiLuaLib__.lualib.translation')
+local util = require('__core__.lualib.util')
 
 -- locals
 local string_find = string.find
@@ -102,9 +104,8 @@ local function update_request_counts(e)
     end
   end
   if table_size(requests) == 0 then
-    -- deregister this event
-    event.deregister({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
-      'update_request_counts', player.index)
+    -- disable this event
+    event.disable('update_request_counts', player.index)
   end
 end
 
@@ -260,9 +261,8 @@ local function take_item_action(player, player_table, name, count, type, shift, 
         character.set_request_slot({name=name, count=stack_size}, slot_to_insert)
         player.print{'qis-message.request-from-logistic-network', stack_size, global.item_data[name].localised_name}
         -- set up event to adjust request amount as items come in
-        if not event.is_registered('update_request_counts', player.index) then
-          event.register({defines.events.on_player_main_inventory_changed, defines.events.on_player_cursor_stack_changed}, update_request_counts,
-            {name='update_request_counts', player_index=player.index})
+        if not event.is_enabled('update_request_counts', player.index) then
+          event.enable('update_request_counts', player.index)
         end
         -- add to player table
         player_table.logistics_requests[name] = stack_size
@@ -357,9 +357,8 @@ local function search_textfield_confirmed(e)
     gui_data.selected_index = 1
     results_table.focus()
     game.get_player(e.player_index).opened = gui_data.results_table
-    -- register events for selecting an item
-    event.register({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, {name='input_nav', player_index=e.player_index})
-    event.register({'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, input_confirm, {name='input_confirm', player_index=e.player_index})
+    -- enable gui navigation events
+    event.enable_group('gui.nav', e.player_index)
     -- set initial selection
     results_table.children[1].style = string_gsub(results_table.children[1].style.name, 'qis', 'qis_active')
     gui_data.query = gui_data.search_textfield.text
@@ -383,9 +382,8 @@ local function search_textfield_clicked(e)
     gui_data.query = nil
     gui_data.search_textfield.focus()
     game.get_player(e.player_index).opened = gui_data.search_textfield
-    -- deregister navigation events
-    event.deregister({'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, input_nav, 'input_nav', e.player_index)
-    event.deregister({'qis-nav-confirm', 'qis-nav-alt-confirm'}, input_confirm, 'input_confirm', e.player_index)
+    -- disable navigation events
+    event.disable_group('gui.nav', e.player_index)
   end
 end
 
@@ -429,24 +427,18 @@ local function gui_closed(e)
   end
 end
 
-local handlers = {
-  search_textfield_text_changed = search_textfield_text_changed,
-  search_textfield_confirmed = search_textfield_confirmed,
-  search_textfield_clicked = search_textfield_clicked,
-  input_nav = input_nav,
-  input_confirm = input_confirm,
-  result_button_clicked = result_button_clicked,
-  input_textfield_text_changed = input_textfield_text_changed,
-  input_textfield_confirmed = input_textfield_confirmed,
-  gui_closed = gui_closed
+event.register_conditional{
+  search_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=search_textfield_text_changed, group={'gui', 'gui.search_textfield'}},
+  search_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=search_textfield_confirmed, group={'gui', 'gui.search_textfield'}},
+  search_textfield_clicked = {id=defines.events.on_gui_click, handler=search_textfield_clicked, group={'gui', 'gui.search_textfield'}},
+  input_nav = {id={'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, handler=input_nav, group={'gui', 'gui.nav'}},
+  input_confirm = {id={'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, handler=input_confirm, group={'gui', 'gui.nav'}},
+  result_button_clicked = {id=defines.events.on_gui_click, handler=result_button_clicked, group='gui', options={match_filter_strings=true}},
+  input_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=input_textfield_text_changed, group={'gui', 'gui.input_textfield'}},
+  input_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=input_textfield_confirmed, group={'gui', 'gui.input_textfield'}},
+  gui_closed = {id=defines.events.on_gui_closed, handler=gui_closed, group='gui'},
+  update_request_counts = {id=defines.events.on_player_main_inventory_changed, handler=update_request_counts}
 }
-
-event.on_load(function()
-  event.load_conditional_handlers(handlers)
-  event.load_conditional_handlers{
-    update_request_counts = update_request_counts
-  }
-end)
 
 -- ----------------------------------------
 -- GUI MANAGEMENT
@@ -501,22 +493,17 @@ function gui.open(parent, player, settings)
   -- events
   search_textfield.select_all()
   search_textfield.focus()
-  event.on_gui_text_changed(search_textfield_text_changed, {name='search_textfield_text_changed', player_index=player.index, gui_filters=search_textfield})
-  event.on_gui_confirmed(search_textfield_confirmed, {name='search_textfield_confirmed', player_index=player.index, gui_filters=search_textfield})
-  event.on_gui_click(search_textfield_clicked, {name='search_textfield_clicked', player_index=player.index, gui_filters=search_textfield})
-  event.on_gui_click(result_button_clicked, {name='result_button_clicked', player_index=player.index, gui_filters='qis_result_button'})
-  event.on_gui_text_changed(input_textfield_text_changed, {name='input_textfield_text_changed', player_index=player.index, gui_filters=input_textfield})
-  event.on_gui_confirmed(input_textfield_confirmed, {name='input_textfield_confirmed', player_index=player.index, gui_filters=input_textfield})
-  event.on_gui_closed(gui_closed, {name='gui_closed', player_index=player.index, gui_filters={search_textfield, results_table, input_textfield}})
+  event.enable_group('gui.search_textfield', player.index, search_textfield.index)
+  event.enable('result_button_clicked', player.index, 'qis_result_button')
+  event.enable_group('gui.input_textfield', player.index, input_textfield.index)
+  event.enable('gui_closed', player.index, {search_textfield.index, results_table.index, input_textfield.index})
+
   return {window=window, search_textfield=search_textfield, results_scroll=results_scroll, results_table=results_table, input_flow=input_flow,
           input_textfield=input_textfield, selected_index=1, state='search', last_request_amount=''}
 end
 
 function gui.close(player, player_table)
-  -- deregister all GUI events if needed
-  for cn,h in pairs(handlers) do
-    event.deregister_conditional(h, cn, player.index)
-  end
+  event.disable_group('gui', player.index)
   player_table.gui.window.destroy()
   player_table.gui = nil
 end
@@ -594,7 +581,7 @@ end)
 
 -- table of migration functions
 local migrations = {
-  ['1.1.0'] = function(e)
+  ['1.1.0'] = function()
     global.dictionaries = nil
     global.__translation = {
       dictionary_count = 0,
@@ -604,7 +591,7 @@ local migrations = {
       global.players[i].flags.can_open_gui = false
     end
   end,
-  ['1.2.0'] = function(e)
+  ['1.2.0'] = function()
     local to_deregister = {
       search_textfield_text_changed = search_textfield_text_changed,
       search_textfield_confirmed = search_textfield_confirmed,
@@ -624,11 +611,11 @@ local migrations = {
       t.gui_filters = {}
       -- completely nuke all gui-related conditional events
       if to_deregister[n] then
-        event.deregister_conditional(to_deregister[n], n)
+        event.disable(to_deregister[n], n)
       end
     end
     -- destroy any open GUIs
-    for i,t in pairs(global.players) do
+    for _,t in pairs(global.players) do
       t.search = nil
       if t.gui then
         t.gui.window.destroy()
@@ -636,7 +623,7 @@ local migrations = {
       end
     end
   end,
-  ['1.3.0'] = function(e)
+  ['1.3.0'] = function()
     for _,t in pairs(global.players) do
       -- remove flag as it as been moved to gui_data
       t.flags.selecting_result = nil
@@ -659,45 +646,17 @@ local migrations = {
   end
 }
 
--- returns true if v2 is newer than v1, false if otherwise
-local function compare_versions(v1, v2)
-  local v1_split = util.split(v1, '.')
-  local v2_split = util.split(v2, '.')
-  for i=1,#v1_split do
-    if v1_split[i] < v2_split[i] then
-      return true
-    end
-  end
-  return false
-end
-
 -- handle migrations
 event.on_configuration_changed(function(e)
-  -- version migrations
-  local changes = e.mod_changes[script.mod_name]
-  if changes then
-    local old = changes.old_version
-    if old then
-      local migrate = false
-      for v,f in pairs(migrations) do
-        if migrate or compare_versions(old, v) then
-          migrate = true
-          log('Applying migration: '..v)
-          f(e)
-        end
-      end
-    else
-      return -- don't do generic migrations because we just initialized
+  if migration.on_config_changed(e, migrations) then
+    -- close open GUIs
+    for i,p in pairs(game.players) do
+      local player_table = global.players[i]
+      close_player_guis(p, player_table)
     end
+    -- retranslate for all players
+    translation.cancel_all()
+    build_prototype_data()
+    translate_for_all_players()
   end
-
-  -- close open GUIs
-  for i,p in pairs(game.players) do
-    local player_table = global.players[i]
-    close_player_guis(p, player_table)
-  end
-  -- retranslate for all players
-  translation.cancel_all()
-  build_prototype_data()
-  translate_for_all_players()
 end)

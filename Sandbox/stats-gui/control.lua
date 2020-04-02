@@ -23,7 +23,9 @@ local function setup_player(index, player)
     },
     settings = {
       evolution = 'complex',
-      time_played = true
+      playtime = true,
+      time = 'complex',
+      
     }
   }
 end
@@ -42,7 +44,3 @@ end)
 script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
   set_gui_location(game.get_player(e.player_index), global.players[e.player_index].gui.stats.window)
 end)
-
--- script.on_event(defines.events.on_gui_location_changed, function(e)
---   game.print(serpent.line(e.element.location))
--- end)
