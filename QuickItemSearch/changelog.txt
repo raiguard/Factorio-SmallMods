@@ -1,9 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.4.0
+Date: ????
+  Changes:
+    - Default location setting is now the center of the screen for both play modes
+    - Default number of rows is now four, up from three
+---------------------------------------------------------------------------------------------------
 Version: 1.3.1
 Date: 2020.02-15
   Bugfixes:
     - Fixed a crash when a translation was canceled after the translation requests had been made, but before they all had been sorted
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.3.0
 Date: 2020-02-12
@@ -17,13 +22,11 @@ Date: 2020-02-12
     - Fixed more issues with the translation module duplicating keys
     - Fixed a crash if a multiplayer save were to be upgraded from 1.1.0 while other players had the GUI open
     - Fixed some leftover migration issues
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.1
 Date: 2020-01-28
   Bugfixes:
     - Fixed the "unfixable migration" that prevented a direct upgrade to 1.2
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
 Date: 2020-01-25
@@ -36,7 +39,6 @@ Date: 2020-01-25
     - Optimized text search loop
   Bugfixes:
     - Fixed error when joining a game in the middle of a translation
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2019-12-27
@@ -53,20 +55,17 @@ Date: 2019-12-27
     - Fixed missing locale
     - Fixed not being able to use the mouse to pick a result until after pressing enter
     - Fixed several incorrectly handled edge cases with the GUI navigation
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: 2019-12-23
   Bugfixes:
     - ACTUALLY fixed a crash when an item has no localised name
     - Fixed missing controls locale
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2019-12-23
   Bugfixes:
     - Fixed a crash when an item has no localised name
-
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 2019-12-23
