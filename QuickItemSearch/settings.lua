@@ -39,7 +39,7 @@ data:extend{
     name = 'qis-default-location',
     setting_type = 'runtime-per-user',
     allowed_values = {'mod gui', 'top', 'bottom', 'center'},
-    default_value = 'mod gui',
+    default_value = 'center',
     order = 'ba'
   },
   {
@@ -47,7 +47,7 @@ data:extend{
     name = 'qis-editor-location',
     setting_type = 'runtime-per-user',
     allowed_values = {'mod gui', 'top', 'bottom', 'center'},
-    default_value = 'bottom',
+    default_value = 'center',
     order = 'bb'
   },
   {
@@ -62,7 +62,7 @@ data:extend{
     type = 'int-setting',
     name = 'qis-row-count',
     setting_type = 'runtime-per-user',
-    default_value = 3,
+    default_value = 4,
     minimum_value = 1,
     order = 'cb'
   }
