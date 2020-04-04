@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
-Date: ????
+Date: 2020-04-04
+  Features:
+    - Items that you don't have will be spawned in if you're in cheat mode
   Changes:
     - Each player can now define their own custom upgrade registry
     - The custom upgrade registry is now defined in json format, to fix some potential edge case crashes
