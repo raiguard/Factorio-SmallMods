@@ -8,6 +8,7 @@ Date: 2020-04-04
     - Default location setting is now the center of the screen for both play modes
     - Default number of rows is now four, up from three
     - Removed lualib and made it a separate mod, RaiLuaLib
+    - Marked Death Markers as an incompatible mod, since it somehow causes this mod to desync in multiplayer
 ---------------------------------------------------------------------------------------------------
 Version: 1.3.1
 Date: 2020.02-15
