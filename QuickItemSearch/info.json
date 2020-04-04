@@ -3,8 +3,9 @@
   "version": "1.4.0",
   "title": "Quick Item Search",
   "author": "raiguard",
+  "contact": "Discord: Raiguard#7402",
   "homepage": "https://github.com/raiguard/Factorio-SmallMods",
   "factorio_version": "0.18",
-  "dependencies": ["base >= 0.18.14", "RaiLuaLib >= 0.2.1"],
+  "dependencies": ["base >= 0.18.14", "RaiLuaLib >= 0.2.2", "!DeathMarkers"],
   "description": "Quickly and easily search for items in your inventory or connected logistic network. Use keyboard shortcuts to navigate the results, and take actions depending on where the item is. Quickly access items without having to browse your inventory, temporarily request a stack of items from the logistic network, or place entity ghosts for your robots to build. When using the map editor, items that you don't have will be given to you."
 }
