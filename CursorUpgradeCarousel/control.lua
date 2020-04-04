@@ -1,9 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- CONTROL SCRIPTING
 
- -- debug adapter
- pcall(require,'__debugadapter__/debugadapter.lua')
-
 local util = require('__core__/lualib/util')
 
 -- -----------------------------------------------------------------------------
@@ -116,8 +113,8 @@ script.on_event({'cuc-cycle-forwards', 'cuc-cycle-backwards'}, function(e)
   local registry = global.players[e.player_index].registry
   -- get upgrade or downgrade depending on event
   local grade = e.input_name:find('forwards') and 'upgrade' or 'downgrade'
-  -- if we're in the map editor and the setting is enabled, always give the actual item
-  local always_give = player.mod_settings['cuc-always-give-in-map-editor'].value
+  -- if we're in the map editor or cheat mode, and the setting is enabled, always give the actual item
+  local spawn_item = player.mod_settings['cuc-spawn-items-when-cheating'].value
   -- if the thing we're holding has an upgrade/downgrade
   if registry[name] and registry[name][grade] then
     player.clean_cursor()
@@ -130,7 +127,7 @@ script.on_event({'cuc-cycle-forwards', 'cuc-cycle-backwards'}, function(e)
         -- we actually have this item, so replace the cursor stack from the inventory
         stack.set_stack{name=item.name, count=inventory.remove{name=item.name, count=game.item_prototypes[item.name].stack_size}}
         return
-      elseif always_give and player.controller_type == defines.controllers.editor then
+      elseif spawn_item and (player.cheat_mode or (player.controller_type == defines.controllers.editor)) then
         -- replace the cursor stack without taking from the inventory
         stack.set_stack{name=item.name, count=game.item_prototypes[item.name].stack_size}
         return
@@ -146,7 +143,7 @@ end)
 
 -- table of migration functions
 local migrations = {
-  ['1.1.0'] = function(e)
+  ['1.1.0'] = function()
     -- remove old registry location
     global.registry = nil
     -- create player tables
@@ -164,6 +161,8 @@ local function compare_versions(v1, v2)
   for i=1,#v1_split do
     if v1_split[i] < v2_split[i] then
       return true
+    elseif v1_split[i] > v2_split[i] then
+      return false
     end
   end
   return false
@@ -179,7 +178,6 @@ script.on_configuration_changed(function(e)
       for v,f in pairs(migrations) do
         if migrate or compare_versions(old, v) then
           migrate = true
-          log('Applying migration: '..v)
           f(e)
         end
       end

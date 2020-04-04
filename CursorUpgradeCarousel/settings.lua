@@ -1,7 +1,7 @@
 data:extend{
   {
     type = 'bool-setting',
-    name = 'cuc-always-give-in-map-editor',
+    name = 'cuc-spawn-items-when-cheating',
     setting_type = 'runtime-per-user',
     default_value = true,
     order = 'a'
