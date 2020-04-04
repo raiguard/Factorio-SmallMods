@@ -125,6 +125,7 @@ local function search_for_items(player, player_table, query, results_table)
   local add = results_table.add
   local index = 0
   local results = {}
+  local button_indexes = {}
 
   -- add or update the next result button
   local function set_result(type, name, number)
@@ -137,9 +138,10 @@ local function search_for_items(player, player_table, query, results_table)
       button.tooltip = translations[name]
       button.number = number
     else
-      add{type='sprite-button', style='qis_slot_button_'..type, sprite='item/'..name, number=number,
+      button = add{type='sprite-button', style='qis_slot_button_'..type, sprite='item/'..name, number=number,
         tooltip=translations[name]}
     end
+    button_indexes[index] = button.index
   end
 
   -- match the query to the given name
@@ -199,6 +201,9 @@ local function search_for_items(player, player_table, query, results_table)
   for i=index+1, #children do
     children[i].destroy()
   end
+
+  -- set event GUI filters
+  event.update_gui_filters('result_button_clicked', player.index, button_indexes, 'overwrite')
 end
 
 -- take action on the selected item
@@ -452,14 +457,15 @@ event.register_conditional{
   search_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=search_textfield_text_changed, group={'gui', 'gui.search_textfield'}},
   search_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=search_textfield_confirmed, group={'gui', 'gui.search_textfield'}},
   search_textfield_clicked = {id=defines.events.on_gui_click, handler=search_textfield_clicked, group={'gui', 'gui.search_textfield'}},
-  input_nav = {id={'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, handler=input_nav, group={'gui', 'gui.nav'}},
-  input_confirm = {id={'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, handler=input_confirm, group={'gui', 'gui.nav'}},
+  input_nav = {id={'qis-nav-up', 'qis-nav-left', 'qis-nav-down', 'qis-nav-right'}, handler=input_nav, group={'gui', 'gui.nav'}, options={suppress_logging=true}},
+  input_confirm = {id={'qis-nav-confirm', 'qis-nav-shift-confirm', 'qis-nav-control-confirm'}, handler=input_confirm, group={'gui', 'gui.nav'},
+    options={suppress_logging=true}},
   result_button_clicked = {id=defines.events.on_gui_click, handler=result_button_clicked, group='gui', options={match_filter_strings=true}},
   input_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=input_textfield_text_changed, group={'gui', 'gui.input_textfield'}},
   input_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=input_textfield_confirmed, group={'gui', 'gui.input_textfield'}},
   gui_closed = {id=defines.events.on_gui_closed, handler=gui_closed, group='gui'},
   gui_opened = {id=defines.events.on_gui_opened, handler=gui_opened},
-  update_request_counts = {id=defines.events.on_player_main_inventory_changed, handler=update_request_counts, group={'gui'}}
+  update_request_counts = {id=defines.events.on_player_main_inventory_changed, handler=update_request_counts, group={'gui'}, options={suppress_logging=true}}
 }
 
 -- ----------------------------------------
@@ -516,7 +522,7 @@ function gui.open(parent, player, settings)
   search_textfield.select_all()
   search_textfield.focus()
   event.enable_group('gui.search_textfield', player.index, search_textfield.index)
-  event.enable('result_button_clicked', player.index, 'qis_result_button')
+  event.enable('result_button_clicked', player.index)
   event.enable_group('gui.input_textfield', player.index, input_textfield.index)
   event.enable('gui_closed', player.index, {search_textfield.index, results_table.index, input_textfield.index})
 
