@@ -2,5 +2,5 @@ return
 {
   -- 'factory-planner-mockup',
   -- 'sandbox',
-  'stats-gui',
+  -- 'stats-gui',
 }
