@@ -1,11 +1,10 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.4.0
-Date: ????
+Date: 2020-04-04
   Features:
     - Shift + selecting an unavailable item while in cheat mode will spawn that item into your cursor
-    - Added option to show an item both in the logistics networks and your inventory
+    - Added option to still show a logistics item even if it's already in your inventory
   Changes:
-    - Planners and blueprint books will be excluded from the results
     - Default location setting is now the center of the screen for both play modes
     - Default number of rows is now four, up from three
     - Removed lualib and made it a separate mod, RaiLuaLib
