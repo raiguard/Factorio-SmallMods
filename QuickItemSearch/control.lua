@@ -137,14 +137,15 @@ local function search_for_items(player, player_table, query, results_table)
       button.tooltip = translations[name]
       button.number = number
     else
-      add{type='sprite-button', name='qis_result_button_'..index, style='qis_slot_button_'..type, sprite='item/'..name, number=number,
+      add{type='sprite-button', style='qis_slot_button_'..type, sprite='item/'..name, number=number,
         tooltip=translations[name]}
     end
   end
 
   -- match the query to the given name
-  local function match_query(name, translation)
-    return not results[name] and (show_hidden or not item_data[name].hidden) and string_match(string_lower(translation or translations[name]), query)
+  local function match_query(name, translation, ignore_unique)
+    return (ignore_unique or not results[name]) and (show_hidden or not item_data[name].hidden)
+      and string_match(string_lower(translation or translations[name]), query)
   end
 
   -- map editor
@@ -168,13 +169,16 @@ local function search_for_items(player, player_table, query, results_table)
     end
     -- logistic network(s)
     if player.character and player_settings['qis-search-logistics'].value then
+      local ignore_unique = not player_settings['qis-logistics-unique-only'].value
       local character = player.character
+      local network_contents = {}
       for _,point in ipairs(character.get_logistic_point()) do
         local network = point.logistic_network
         if network.valid then
           local contents = point.logistic_network.get_contents()
           for name,count in pairs(contents) do
-            if match_query(name) then
+            if match_query(name, nil, not network_contents[name] and ignore_unique) then
+              network_contents[name] = count
               set_result('logistics', name, count)
             end
           end
@@ -268,12 +272,24 @@ local function take_item_action(player, player_table, name, count, type, shift, 
         player_table.logistics_requests[name] = stack_size
         -- close gui
         gui.close(player, player_table)
+        -- update request counts immediately
+        update_request_counts{player_index=player.index}
         return
       end
     end
   elseif type == 'unavailable' then
-    set_ghost_cursor()
-    gui.close(player, player_table)
+    if shift then
+      if player.cheat_mode then
+        player.clean_cursor()
+        player.cursor_stack.set_stack{name=name, count=stack_size}
+        gui.close(player, player_table)
+      else
+        player.print{'qis-message.not-in-cheat-mode'}
+      end
+    else
+      set_ghost_cursor()
+      gui.close(player, player_table)
+    end
   end
 end
 
@@ -427,6 +443,11 @@ local function gui_closed(e)
   end
 end
 
+local function gui_opened(e)
+  -- if it's not one of our elements, close everything
+
+end
+
 event.register_conditional{
   search_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=search_textfield_text_changed, group={'gui', 'gui.search_textfield'}},
   search_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=search_textfield_confirmed, group={'gui', 'gui.search_textfield'}},
@@ -437,7 +458,8 @@ event.register_conditional{
   input_textfield_text_changed = {id=defines.events.on_gui_text_changed, handler=input_textfield_text_changed, group={'gui', 'gui.input_textfield'}},
   input_textfield_confirmed = {id=defines.events.on_gui_confirmed, handler=input_textfield_confirmed, group={'gui', 'gui.input_textfield'}},
   gui_closed = {id=defines.events.on_gui_closed, handler=gui_closed, group='gui'},
-  update_request_counts = {id=defines.events.on_player_main_inventory_changed, handler=update_request_counts}
+  gui_opened = {id=defines.events.on_gui_opened, handler=gui_opened},
+  update_request_counts = {id=defines.events.on_player_main_inventory_changed, handler=update_request_counts, group={'gui'}}
 }
 
 -- ----------------------------------------

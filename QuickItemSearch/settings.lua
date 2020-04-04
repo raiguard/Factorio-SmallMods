@@ -35,6 +35,13 @@ data:extend{
     order = 'ae'
   },
   {
+    type = 'bool-setting',
+    name = 'qis-logistics-unique-only',
+    setting_type = 'runtime-per-user',
+    default_value = true,
+    order = 'af'
+  },
+  {
     type = 'string-setting',
     name = 'qis-default-location',
     setting_type = 'runtime-per-user',
