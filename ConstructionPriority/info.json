@@ -1,0 +1,10 @@
+{
+  "name": "ConstructionPriority",
+  "version": "1.0.0",
+  "title": "Construction Priority",
+  "author": "Raiguard",
+  "contact": "Discord: Raiguard#7402",
+  "factorio_version": "0.18",
+  "dependencies": ["base >= 0.18.16"],
+  "description": "Use a hotkey to transfer nearby construction, upgrade, and deconstruction orders from the main network to your personal roboport."
+}
