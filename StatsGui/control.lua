@@ -46,18 +46,32 @@ local function ticks_to_time(ticks)
   end
 end
 
-local function update_stats(e)
+local function update_stats()
   local evo_factor = game.forces.enemy.evolution_factor
   local playtime = ticks_to_time(game.tick)
-  local days = math.floor(game.tick / 24)
+  local days = math.floor(game.tick / 60 / 60 / 60 / 24)
+  local daytime = ticks_to_time(game.surfaces.nauvis.daytime)
   for i,t in pairs(global.players) do
     local label = t.gui.stats.label
     local settings = t.settings
     local caption = {''}
 
+
     if settings.evolution then
-      local c = {'', {'statsgui.evolution'}, string.format(' = %.1f', evo_factor)}
+      caption[#caption+1] = {'', {'statsgui.evolution'}, string.format(' = %.'..settings.evolution_decimals..'f', evo_factor)..'\n'}
     end
+    if settings.playtime == 'on' then
+      caption[#caption+1] = {'', {'statsgui.playtime'}, ' = '..playtime..'\n'}
+    end
+    if settings.time ~= 'off' then
+      local c = {'', {'statsgui.time'}, ' = '..daytime}
+      if settings.time == 'complex' then
+        c[#c+1] = {'', ', ', {'statsgui.day'}, ' '..days}
+      end
+      c[#c+1] = '\n'
+      caption[#caption+1] = c
+    end
+    label.caption = caption
   end
 end
 
