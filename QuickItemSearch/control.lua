@@ -1,14 +1,6 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- QUICK ITEM SEARCH CONTROL SCRIPTING
 
- -- debug adapter
-pcall(require,'__debugadapter__/debugadapter.lua')
-if __DebugAdapter then
-  script.on_event('DEBUG-INSPECT-GLOBAL', function(e)
-    local breakpoint -- put breakpoint here to inspect global at any time
-  end)
-end
-
 -- dependencies
 local event = require('__RaiLuaLib__.lualib.event')
 local migration = require('__RaiLuaLib__.lualib.migration')
@@ -62,7 +54,8 @@ end
 local function setup_player(player)
   global.players[player.index] = {
     flags = {
-      can_open_gui = false
+      can_open_gui = false,
+      translate_on_join = true
     },
     logistics_requests = {}
   }
@@ -561,13 +554,12 @@ end)
 
 event.on_player_created(function(e)
   setup_player(game.get_player(e.player_index))
+  close_guis_then_translate(e)
 end)
 
 event.on_player_removed(function(e)
   global.players[e.player_index] = nil
 end)
-
-event.on_player_joined_game(close_guis_then_translate)
 
 event.register(translation.finish_event, function(e)
   local player_table = global.players[e.player_index]
