@@ -1,6 +1,7 @@
 return
 {
+  -- "disk-mockup",
   -- 'factory-planner-mockup',
-  -- 'sandbox',
+  "sandbox",
   -- 'stats-gui',
 }
