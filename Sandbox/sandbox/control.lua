@@ -105,10 +105,12 @@ local function place_fire(e)
   -- use the registered_players table that is passed with conditional events
   for _,i in pairs(e.registered_players) do
     local player = game.players[i]
-    player.surface.create_entity{
-      name = "fire-flame",
-      position = player.position
-    }
+    if player.connected then
+      player.surface.create_entity{
+        name = "fire-flame",
+        position = player.position
+      }
+    end
   end
 end
 
@@ -118,11 +120,11 @@ event.register(defines.events.on_lua_shortcut, function(e)
   if player.is_shortcut_toggled("toggle-fire-at-feet") then
     player.set_shortcut_toggled("toggle-fire-at-feet", false)
     -- disable the conditional event for this player specifically
-    event.disable("place_fire_at_feet", e.player_index)
+    event.disable("set_player_aflame", e.player_index)
   else
     player.set_shortcut_toggled("toggle-fire-at-feet", true)
     -- enable the conditional event for this player specifically
-    event.enable("place_fire_at_feet", e.player_index)
+    event.enable("set_player_aflame", e.player_index)
   end
 end)
 
@@ -132,7 +134,7 @@ end)
 
 -- register the conditional events to allow for save/load safety
 event.register_conditional{
-  place_fire_at_feet = {id=-6, handler=place_fire, options={skip_validation=true}},
+  set_player_aflame = {id=-6, handler=place_fire, options={skip_validation=true}},
   void_chests_tick = {id=defines.events.on_tick, handler=void_chests_tick}
 }
 
@@ -174,6 +176,37 @@ event.on_gui_checked_state_changed(function(e)
       event.enable_group(4)
     else
       event.disable_group("demo_group")
+    end
+  end
+end)
+
+-- TEMPORARY
+
+local function on_button_clicked(e)
+  if e.element and e.element.name == "flib_event_demo_2" then
+    game.print("Player ["..game.get_player(e.player_index).name.."] clicked the demo button!")
+  end
+end
+
+event.register_conditional{
+  demo_button_event = {id=defines.events.on_gui_click, handler=on_button_clicked}
+}
+
+event.on_player_created(function(e)
+  local player = game.players[e.player_index]
+  local button_flow = mod_gui.get_button_flow(player)
+  button_flow.add{type="checkbox", name="flib_event_demo_1", caption="Toggle enabled", state=false}
+  button_flow.add{type="button", name="flib_event_demo_2", caption="Trigger event"}
+end)
+
+event.on_gui_click(function(e)
+  if e.element and e.element.name == "flib_event_demo_1" then
+    if e.element.state then
+      event.enable("demo_button_event", e.player_index)
+      game.print("event enabled!")
+    else
+      event.disable("demo_button_event", e.player_index)
+      game.print("event disabled!")
     end
   end
 end)
