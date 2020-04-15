@@ -9,8 +9,8 @@ local function set_gui_location(player, window)
 end
 
 local function create_stats_gui(player)
-  local window = player.gui.screen.add{type='frame', style='statsgui_empty_frame'}
-  local label = window.add{type='label', name='statsgui_main_label', style='statsgui_label'}
+  local window = player.gui.screen.add{type="frame", style="statsgui_empty_frame"}
+  local label = window.add{type="label", name="statsgui_main_label", style="statsgui_label"}
   set_gui_location(player, window)
   return {window=window, label=label}
 end
@@ -23,9 +23,9 @@ local function setup_player(index, player)
     },
     settings = {
       evolution = true,
-      evolution_decimals = 1,
-      playtime = 'on',
-      time = 'complex',
+      evolution_decimals = 2,
+      playtime = "on",
+      time = "complex",
     }
   }
 end
@@ -34,41 +34,45 @@ end
 -- always shows minutes and seconds, hours is optional
 local function ticks_to_time(ticks)
   local seconds = math.floor(ticks / 60)
-  local hours = string.format('%02.f', math.floor(seconds/3600));
+  local hours = string.format("%01.f", math.floor(seconds/3600));
   if tonumber(hours) > 0 then
-    local mins = string.format('%02.f', math.floor(seconds/60 - (hours*60)));
-    local secs = string.format('%02.f', math.floor(seconds - hours*3600 - mins *60));
-    return hours..':'..mins..':'..secs
+    local mins = string.format("%02.f", math.floor(seconds/60 - (hours*60)));
+    local secs = string.format("%02.f", math.floor(seconds - hours*3600 - mins *60));
+    return hours..":"..mins..":"..secs
   else
     local mins = math.floor(seconds/60);
-    local secs = string.format('%02.f', math.floor(seconds - hours*3600 - mins *60));
-    return mins..':'..secs
+    local secs = string.format("%02.f", math.floor(seconds - hours*3600 - mins *60));
+    return mins..":"..secs
   end
 end
 
 local function update_stats()
-  local evo_factor = game.forces.enemy.evolution_factor
+  local evo_factor = game.forces.enemy.evolution_factor * 100
   local playtime = ticks_to_time(game.tick)
-  local days = math.floor(game.tick / 60 / 60 / 60 / 24)
-  local daytime = ticks_to_time(game.surfaces.nauvis.daytime)
+  local days = math.floor(1 + ((game.tick + 12500) / 25000))
   for i,t in pairs(global.players) do
+    local player = game.get_player(i)
+    local daytime = player.surface.daytime + 0.5
+    local daytime_minutes = math.floor(daytime * 24 * 60)
+    local daytime_hours = math.floor(daytime_minutes / 60)
+    daytime_minutes = daytime_minutes - (daytime_minutes % 15)
     local label = t.gui.stats.label
     local settings = t.settings
-    local caption = {''}
+    local caption = {""}
 
 
     if settings.evolution then
-      caption[#caption+1] = {'', {'statsgui.evolution'}, string.format(' = %.'..settings.evolution_decimals..'f', evo_factor)..'\n'}
+      caption[#caption+1] = {"", {"statsgui.evolution"}, string.format(" = %."..settings.evolution_decimals.."f", evo_factor).."%\n"}
     end
-    if settings.playtime == 'on' then
-      caption[#caption+1] = {'', {'statsgui.playtime'}, ' = '..playtime..'\n'}
+    if settings.playtime == "on" then
+      caption[#caption+1] = {"", {"statsgui.playtime"}, " = "..playtime.."\n"}
     end
-    if settings.time ~= 'off' then
-      local c = {'', {'statsgui.time'}, ' = '..daytime}
-      if settings.time == 'complex' then
-        c[#c+1] = {'', ', ', {'statsgui.day'}, ' '..days}
+    if settings.time ~= "off" then
+      local c = {"", {"statsgui.time"}, " = "..string.format("%d:%02d", daytime_hours, daytime_minutes % 60),}
+      if settings.time == "complex" then
+        c[#c+1] = {"", ", ", {"statsgui.day"}, " "..days}
       end
-      c[#c+1] = '\n'
+      c[#c+1] = "\n"
       caption[#caption+1] = c
     end
     label.caption = caption
