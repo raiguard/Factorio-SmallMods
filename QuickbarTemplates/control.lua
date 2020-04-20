@@ -133,7 +133,7 @@ end
 script.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
-    local window = setup_player(player)
+    setup_player(player)
   end
 end)
 
@@ -144,17 +144,11 @@ script.on_event(defines.events.on_player_created, function(e)
   -- apply default template if one is set up
   local template = player.mod_settings["qt-default-template"].value
   if template ~= "" then
-    -- put a blueprint into the cursor stack to retrieve a LuaItemStack object
-    player.clean_cursor()
-    local cursor_stack = player.cursor_stack
-    cursor_stack.set_stack{name="blueprint"}
-    local blueprint = cursor_stack
-    -- error checking
-    if not blueprint or blueprint.valid == false then
-      player.print{"qt-chat-message.default-template-import-failed"}
-      player.clean_cursor()
-      return
-    end
+    -- create inventory and insert a blueprint
+    local inventory = game.create_inventory(1)
+    inventory.insert{name="blueprint"}
+    local blueprint = inventory[1]
+
     -- import the default template
     if blueprint.import_stack(template) == 0 then
       -- apply to quickbar
@@ -163,8 +157,9 @@ script.on_event(defines.events.on_player_created, function(e)
       -- error
       player.print{"qt-chat-message.invalid-default-blueprint"}
     end
-    -- remove blueprint
-    blueprint.clear()
+
+    -- destroy inventory
+    inventory.destroy()
   end
 end)
 
