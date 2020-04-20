@@ -129,7 +129,6 @@ end
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
 
--- on init
 script.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
@@ -137,7 +136,6 @@ script.on_init(function()
   end
 end)
 
--- when a player is created
 script.on_event(defines.events.on_player_created, function(e)
   local player = game.players[e.player_index]
   setup_player(player)
@@ -163,8 +161,6 @@ script.on_event(defines.events.on_player_created, function(e)
   end
 end)
 
--- when a player's cursor stack changes
--- separated so we can call it internally
 local function on_cursor_stack_changed(e)
   local player = game.players[e.player_index]
   local gui = global.players[e.player_index]
@@ -187,12 +183,10 @@ local function on_cursor_stack_changed(e)
 end
 script.on_event(defines.events.on_player_cursor_stack_changed, on_cursor_stack_changed)
 
--- when a player's display resolution or scale changes
 script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
   set_gui_location(game.players[e.player_index], global.players[e.player_index].window)
 end)
 
--- when a player clicks a GUI button
 script.on_event(defines.events.on_gui_click, function(e)
   if e.element.name == "qt_export_button" then
     local player = game.players[e.player_index]
