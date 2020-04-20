@@ -48,13 +48,13 @@ end
 
 local function update_stats()
   local evo_factor = game.forces.enemy.evolution_factor * 100
-  local playtime = ticks_to_time(game.tick)
+  local playtime = ticks_to_time(game.ticks_played)
   local days = math.floor(1 + ((game.tick + 12500) / 25000))
   for i,t in pairs(global.players) do
     local player = game.get_player(i)
     local daytime = player.surface.daytime + 0.5
     local daytime_minutes = math.floor(daytime * 24 * 60)
-    local daytime_hours = math.floor(daytime_minutes / 60)
+    local daytime_hours = math.floor(daytime_minutes / 60) % 24
     daytime_minutes = daytime_minutes - (daytime_minutes % 15)
     local label = t.gui.stats.label
     local settings = t.settings
