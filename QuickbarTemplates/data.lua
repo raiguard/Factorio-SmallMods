@@ -6,30 +6,30 @@
 
 data:extend{
   {
-    type = 'sprite',
-    name = 'qt-export-blueprint-white',
-    filename = '__QuickbarTemplates__/graphics/icons/export-blueprint-x32-white.png',
+    type = "sprite",
+    name = "qt-export-blueprint-white",
+    filename = "__QuickbarTemplates__/graphics/icons/export-blueprint-x32-white.png",
     size = 32,
     mipmap_count = 2,
-    flags = {'icon'}
+    flags = {"icon"}
   },
   {
-    type = 'sprite',
-    name = 'qt-import-blueprint-white',
-    filename = '__QuickbarTemplates__/graphics/icons/import-blueprint-x32-white.png',
+    type = "sprite",
+    name = "qt-import-blueprint-white",
+    filename = "__QuickbarTemplates__/graphics/icons/import-blueprint-x32-white.png",
     size = 32,
     mipmap_count = 2,
-    flags = {'icon'}
+    flags = {"icon"}
   }
 }
 
 -- DEBUGGING TOOL
-if mods['debugadapter'] then
+if mods["debugadapter"] then
   data:extend{
     {
-      type = 'custom-input',
-      name = 'DEBUG-INSPECT-GLOBAL',
-      key_sequence = 'CONTROL + SHIFT + ENTER'
+      type = "custom-input",
+      name = "DEBUG-INSPECT-GLOBAL",
+      key_sequence = "CONTROL + SHIFT + ENTER"
     }
   }
 end

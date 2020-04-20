@@ -6,13 +6,13 @@
 
 -- create the GUI
 local function create_gui(player)
-  local window = player.gui.screen.add{type='frame', name='qt_window', style='shortcut_bar_window_frame'}
+  local window = player.gui.screen.add{type="frame", name="qt_window", style="shortcut_bar_window_frame"}
   window.style.right_padding = 4
-  local inner_panel = window.add{type='frame', name='qt_inner_panel', style='shortcut_bar_inner_panel'}
-  local export_button = inner_panel.add{type='sprite-button', name='qt_export_button', style='shortcut_bar_button_blue', sprite='qt-export-blueprint-white',
-                                        tooltip={'qt-gui.export'}}
-  local import_button = inner_panel.add{type='sprite-button', name='qt_import_button', style='shortcut_bar_button_blue', sprite='qt-import-blueprint-white',
-                                        tooltip={'qt-gui.import'}}
+  local inner_panel = window.add{type="frame", name="qt_inner_panel", style="shortcut_bar_inner_panel"}
+  local export_button = inner_panel.add{type="sprite-button", name="qt_export_button", style="shortcut_bar_button_blue", sprite="qt-export-blueprint-white",
+                                        tooltip={"qt-gui.export"}}
+  local import_button = inner_panel.add{type="sprite-button", name="qt_import_button", style="shortcut_bar_button_blue", sprite="qt-import-blueprint-white",
+                                        tooltip={"qt-gui.import"}}
   window.visible = false
   return {window=window, export_button=export_button, import_button=import_button}
 end
@@ -44,7 +44,7 @@ local function export_quickbar(player)
   local filters = {}
   for i=1,100 do
     local item = get_slot(i)
-    if item and item.name ~= 'blueprint' and item.name ~= 'blueprint-book' then
+    if item and item.name ~= "blueprint" and item.name ~= "blueprint-book" then
       filters[i] = item.name
     end
   end
@@ -55,7 +55,7 @@ local function export_quickbar(player)
     -- add blank combinator
     entities[i] = {
       entity_number = i,
-      name = 'constant-combinator',
+      name = "constant-combinator",
       position = {x=pos.x, y=pos.y},
     }
     -- set combinator signal if there's a filter
@@ -67,7 +67,7 @@ local function export_quickbar(player)
             index = 1,
             signal = {
               name = filters[i],
-              type = 'item'
+              type = "item"
             }
           }
         }
@@ -87,7 +87,7 @@ end
 local function import_quickbar(player, entities)
   -- error checking: should have exactly 100 entities
   if #entities ~= 100 then
-    player.print{'qt-chat-message.invalid-blueprint'}
+    player.print{"qt-chat-message.invalid-blueprint"}
     return
   end
   -- assemble filters into a table
@@ -95,8 +95,8 @@ local function import_quickbar(player, entities)
   for i=1,100 do
     local entity = entities[i]
     -- error checking: should be a constant combinator
-    if entity == nil or entity.name ~= 'constant-combinator' then
-      player.print{'qt-chat-message.invalid-blueprint'}
+    if entity == nil or entity.name ~= "constant-combinator" then
+      player.print{"qt-chat-message.invalid-blueprint"}
       return
     end
     -- get_blueprint_entities() does not return them in any particular order, so calculate the index by position
@@ -105,12 +105,12 @@ local function import_quickbar(player, entities)
     if entity.control_behavior then
       -- error checking: should only have one filter
       if #entity.control_behavior.filters > 1 then
-        player.print{'qt-chat-message.invalid-blueprint'}
+        player.print{"qt-chat-message.invalid-blueprint"}
         return
       end
       filters[filter_index] = entities[i].control_behavior.filters[1].signal.name
     else
-      filters[filter_index] = ''
+      filters[filter_index] = ""
     end
   end
   local length = #filters
@@ -121,7 +121,7 @@ local function import_quickbar(player, entities)
   local set_filter = player.set_quick_bar_slot
   for i=start,length do
     local filter = filters[i]
-    if filter == '' then filter = nil end
+    if filter == "" then filter = nil end
     set_filter(i+offset, filter)
   end
 end
@@ -142,16 +142,16 @@ script.on_event(defines.events.on_player_created, function(e)
   local player = game.players[e.player_index]
   setup_player(player)
   -- apply default template if one is set up
-  local template = player.mod_settings['qt-default-template'].value
-  if template ~= '' then
+  local template = player.mod_settings["qt-default-template"].value
+  if template ~= "" then
     -- put a blueprint into the cursor stack to retrieve a LuaItemStack object
     player.clean_cursor()
     local cursor_stack = player.cursor_stack
-    cursor_stack.set_stack{name='blueprint'}
+    cursor_stack.set_stack{name="blueprint"}
     local blueprint = cursor_stack
     -- error checking
     if not blueprint or blueprint.valid == false then
-      player.print{'qt-chat-message.default-template-import-failed'}
+      player.print{"qt-chat-message.default-template-import-failed"}
       player.clean_cursor()
       return
     end
@@ -161,7 +161,7 @@ script.on_event(defines.events.on_player_created, function(e)
       import_quickbar(player, blueprint.get_blueprint_entities())
     else
       -- error
-      player.print{'qt-chat-message.invalid-default-blueprint'}
+      player.print{"qt-chat-message.invalid-default-blueprint"}
     end
     -- remove blueprint
     blueprint.clear()
@@ -174,7 +174,7 @@ local function on_cursor_stack_changed(e)
   local player = game.players[e.player_index]
   local gui = global.players[e.player_index]
   local stack = player.cursor_stack
-  if stack and stack.valid_for_read and stack.name == 'blueprint' then
+  if stack and stack.valid_for_read and stack.name == "blueprint" then
     -- show GUI
     set_gui_location(player, gui.window)
     if stack.is_blueprint_setup() then
@@ -199,19 +199,19 @@ end)
 
 -- when a player clicks a GUI button
 script.on_event(defines.events.on_gui_click, function(e)
-  if e.element.name == 'qt_export_button' then
+  if e.element.name == "qt_export_button" then
     local player = game.players[e.player_index]
     local stack = player.cursor_stack
-    if stack and stack.valid_for_read and stack.name == 'blueprint' then
+    if stack and stack.valid_for_read and stack.name == "blueprint" then
       -- export to held blueprint
       stack.set_blueprint_entities(export_quickbar(player))
       -- update visible button
       on_cursor_stack_changed(e)
     end
-  elseif e.element.name == 'qt_import_button' then
+  elseif e.element.name == "qt_import_button" then
     local player = game.players[e.player_index]
     local stack = player.cursor_stack
-    if stack and stack.valid_for_read and stack.name == 'blueprint' then
+    if stack and stack.valid_for_read and stack.name == "blueprint" then
       -- import from held blueprint
       import_quickbar(player, stack.get_blueprint_entities())
     end
