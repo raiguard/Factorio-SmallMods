@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.2
-Date: ????
+Date: 2020-04-20
   Changes:
     - Use new script inventories feature to import default template instead of the cursor stack, to avoid potential conflicts with scenarios.
 ---------------------------------------------------------------------------------------------------
