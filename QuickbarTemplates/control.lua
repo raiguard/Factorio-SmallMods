@@ -10,9 +10,9 @@ local function create_gui(player)
   window.style.right_padding = 4
   local inner_panel = window.add{type="frame", name="qt_inner_panel", style="shortcut_bar_inner_panel"}
   local export_button = inner_panel.add{type="sprite-button", name="qt_export_button", style="shortcut_bar_button_blue", sprite="qt-export-blueprint-white",
-                                        tooltip={"qt-gui.export"}}
+    tooltip={"qt-gui.export"}}
   local import_button = inner_panel.add{type="sprite-button", name="qt_import_button", style="shortcut_bar_button_blue", sprite="qt-import-blueprint-white",
-                                        tooltip={"qt-gui.import"}}
+    tooltip={"qt-gui.import"}}
   window.visible = false
   return {window=window, export_button=export_button, import_button=import_button}
 end
@@ -87,7 +87,7 @@ end
 local function import_quickbar(player, entities)
   -- error checking: should have exactly 100 entities
   if #entities ~= 100 then
-    player.print{"qt-chat-message.invalid-blueprint"}
+    player.print{"qt-message.invalid-blueprint"}
     return
   end
   -- assemble filters into a table
@@ -96,7 +96,7 @@ local function import_quickbar(player, entities)
     local entity = entities[i]
     -- error checking: should be a constant combinator
     if entity == nil or entity.name ~= "constant-combinator" then
-      player.print{"qt-chat-message.invalid-blueprint"}
+      player.print{"qt-message.invalid-blueprint"}
       return
     end
     -- get_blueprint_entities() does not return them in any particular order, so calculate the index by position
@@ -105,7 +105,7 @@ local function import_quickbar(player, entities)
     if entity.control_behavior then
       -- error checking: should only have one filter
       if #entity.control_behavior.filters > 1 then
-        player.print{"qt-chat-message.invalid-blueprint"}
+        player.print{"qt-message.invalid-blueprint"}
         return
       end
       filters[filter_index] = entities[i].control_behavior.filters[1].signal.name
@@ -153,7 +153,7 @@ script.on_event(defines.events.on_player_created, function(e)
       import_quickbar(player, blueprint.get_blueprint_entities())
     else
       -- error
-      player.print{"qt-chat-message.invalid-default-blueprint"}
+      player.print{"qt-message.invalid-default-blueprint"}
     end
 
     -- destroy inventory
