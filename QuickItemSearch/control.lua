@@ -4,16 +4,14 @@
 -- dependencies
 local event = require("__RaiLuaLib__.lualib.event")
 local migration = require("__RaiLuaLib__.lualib.migration")
-local mod_gui = require("mod-gui")
 local translation = require("__RaiLuaLib__.lualib.translation")
-local util = require("__core__.lualib.util")
 
 -- locals
 local string_gsub = string.gsub
 local string_sub = string.sub
 
 -- -----------------------------------------------------------------------------
--- PROTOTYPING
+-- DATA MANAGEMENT
 
 local function build_prototype_data()
   local item_data = {}
@@ -30,7 +28,8 @@ local function setup_player(player, index)
   global.players[index] = {
     flags = {
       can_open_gui = false,
-      translate_on_join = false
+      translate_on_join = false,
+      show_message_after_translation = false
     },
     gui = {},
     translations = nil,
@@ -65,6 +64,9 @@ local function refresh_player_data(player, player_table)
     player_table.flags.translate_on_join = true
   end
 end
+
+-- -----------------------------------------------------------------------------
+-- EVENT HANDLERS
 
 event.on_init(function()
   global.players = {}
@@ -104,12 +106,30 @@ event.register(translation.finish_event, function(e)
   -- add translations to player table
   local player_table = global.players[e.player_index]
   player_table.translations = e.translations
+  -- show message if needed
+  if player_table.flags.show_message_after_translation then
+    game.get_player(e.player_index).print{'qis-message.can-open-gui'}
+  end
   -- update flags
   player_table.flags.can_open_gui = true
   player_table.flags.translate_on_join = false
+  player_table.flags.show_message_after_translation = false
 end)
 
--- mod debugging / fixing commands
+event.register("qis-search", function(e)
+  local player = game.get_player(e.player_index)
+  local player_table = global.players[e.player_index]
+  if player_table.flags.can_open_gui then
+    -- TODO: toggle GUI
+  else
+    player.print{"qis-message.cannot-open-gui"}
+    player_table.flags.show_message_after_translation = true
+  end
+end)
+
+-- -----------------------------------------------------------------------------
+-- COMMANDS
+
 commands.add_command("QuickItemSearch", " [parameter]\nrefresh-player-data - retranslate dictionaries and update settings",
   function(e)
     if e.parameter == "refresh-player-data" then
