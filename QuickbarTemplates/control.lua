@@ -1,8 +1,5 @@
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------
--- QUICKBAR TEMPLATES CONTROL SCRIPTING
-
- -- debug adapter
- pcall(require,'__debugadapter__/debugadapter.lua')
+-- CONTROL SCRIPTING
 
 -- -----------------------------------------------------------------------------
 -- UTILITIES
@@ -220,10 +217,3 @@ script.on_event(defines.events.on_gui_click, function(e)
     end
   end
 end)
-
--- DEBUGGING
-if __DebugAdapter then
-  script.on_event('DEBUG-INSPECT-GLOBAL', function(e)
-    local breakpoint -- put breakpoint here to inspect global at any time
-  end)
-end
