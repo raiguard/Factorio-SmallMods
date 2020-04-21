@@ -10,6 +10,9 @@ local translation = require("__RaiLuaLib__.lualib.translation")
 local string_gsub = string.gsub
 local string_sub = string.sub
 
+-- modules
+local qis_gui = require("scripts.gui")
+
 -- -----------------------------------------------------------------------------
 -- DATA MANAGEMENT
 
@@ -120,7 +123,7 @@ event.register("qis-search", function(e)
   local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
   if player_table.flags.can_open_gui then
-    -- TODO: toggle GUI
+    qis_gui.create(player, player_table)
   else
     player.print{"qis-message.cannot-open-gui"}
     player_table.flags.show_message_after_translation = true
