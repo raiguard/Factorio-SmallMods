@@ -28,4 +28,14 @@ migration.run("3", {
   ["6"] = function()
     log("6")
   end
-}, "%02d")
+})
+
+script.on_init(function()
+  local profiler = game.create_profiler()
+  for _=1,1000 do
+    migration.is_new_version("1.2.3", "4.15.6")
+  end
+  profiler.stop()
+  profiler.divide(1000)
+  log(profiler)
+end)

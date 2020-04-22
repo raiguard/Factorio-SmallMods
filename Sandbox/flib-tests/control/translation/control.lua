@@ -29,15 +29,15 @@ local function build_data()
   global.__flib.translation.build_data = translation_data
 end
 
-local function translate_whole(player)
+local function translate_whole(player_index)
   for name,t in pairs(global.__flib.translation.build_data) do
-    translation.start(player, name, t)
+    translation.start(player_index, name, t)
   end
 end
 
 local function translate_for_all_players()
   for _,player in ipairs(game.connected_players) do
-    translate_whole(player)
+    translate_whole(player.index)
   end
 end
 
@@ -73,10 +73,10 @@ event.on_player_created(function(e)
 end)
 
 event.on_player_joined_game(function(e)
-  translate_whole(game.get_player(e.player_index))
+  translate_whole(e.player_index)
 end)
 
-event.register(translation.finish_event, function(e)
+event.register(translation.on_finished, function(e)
   game.print("[color=255,200,150]finished translation of dictionary: "..e.dictionary_name.."[/color]")
   global.players[e.player_index].dictionary[e.dictionary_name] = {
     lookup = e.lookup,
@@ -90,12 +90,12 @@ end)
 event.on_gui_click(function(e)
   local name = e.element.name
   if name == "translation_cancel_recipe" then
-    translation.cancel(game.get_player(e.player_index), "recipe")
+    translation.cancel(e.player_index, "recipe")
   elseif name == "translation_cancel_all" then
-    translation.cancel_all_for_player(game.get_player(e.player_index))
+    translation.cancel_all(e.player_index)
   elseif name == "translation_start_recipe" then
-    translation.start(game.get_player(e.player_index), "recipe", global.__flib.translation.build_data.recipe)
+    translation.start(e.player_index, "recipe", global.__flib.translation.build_data.recipe)
   elseif name == "translation_start_all" then
-    translate_whole(game.get_player(e.player_index))
+    translate_whole(e.player_index)
   end
 end)
