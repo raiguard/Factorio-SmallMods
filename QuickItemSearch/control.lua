@@ -34,7 +34,7 @@ local function setup_player(player, index)
       translate_on_join = false,
       show_message_after_translation = false
     },
-    gui = {},
+    gui = nil,
     translations = nil,
     settings = nil
   }
