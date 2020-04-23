@@ -76,7 +76,7 @@ event.on_player_joined_game(function(e)
   translate_whole(e.player_index)
 end)
 
-event.register(translation.on_finished, function(e)
+translation.on_finished(function(e)
   game.print("[color=255,200,150]finished translation of dictionary: "..e.dictionary_name.."[/color]")
   global.players[e.player_index].dictionary[e.dictionary_name] = {
     lookup = e.lookup,
