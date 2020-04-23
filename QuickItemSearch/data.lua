@@ -101,7 +101,15 @@ end
 -- --------------------------------------
 -- FRAME STYLES
 
-styles.qis_dark_content_frame_in_light_frame = {
+styles.qis_content_frame = {
+  type = "frame_style",
+  parent = "window_content_frame",
+  width = 224,
+  height = 184,
+  top_margin = 6
+}
+
+styles.qis_results_frame = {
   type = "frame_style",
   parent = "inside_deep_frame",
   padding = 0,
@@ -119,20 +127,10 @@ styles.qis_dark_content_frame_in_light_frame = {
 -- --------------------------------------
 -- SCROLLPANE STYLES
 
-styles.qis_blank_scroll_pane = {
+styles.qis_results_scroll_pane = {
   type = "scroll_pane_style",
   extra_padding_when_activated = 0,
-  padding = 4,
-  graphical_set = {
-    shadow = default_inner_shadow
-  }
-}
-
-styles.qis_results_slot_table_scroll_pane = {
-  type = "scroll_pane_style",
-  parent = "qis_blank_scroll_pane",
   padding = 0,
-  margin = 0,
   height = 160,
   minimal_width = 200,
   horizontally_squashable = "off",
@@ -153,7 +151,7 @@ styles.qis_results_slot_table_scroll_pane = {
 -- --------------------------------------
 -- TABLE STYLES
 
-styles.qis_results_slot_table = {
+styles.qis_results_table = {
   type = "table_style",
   parent = "filter_slot_table",
   width = 200
