@@ -1,17 +1,18 @@
-local event = require("__flib__.control.event")
 local gui = require("__flib__.control.gui")
 local mod_gui = require("mod-gui")
 
-local debug_print = function(e) game.get_player(e.player_index).print(serpent.block(e)) end
+local Profiler = require("__profiler__.profiler")
 
-gui.templates:extend{
+local function debug_print(e) game.get_player(e.player_index).print(serpent.block(e)) end
+
+gui.add_templates{
   pushers = {
-    horizontal = {type="empty-widget", name="pusher", style_mods={horizontally_stretchable=true}},
-    vertical = {type="empty-widget", name="pusher", style_mods={vertically_stretchable=true}}
+    horizontal = {type="empty-widget", style_mods={horizontally_stretchable=true}},
+    vertical = {type="empty-widget", style_mods={vertically_stretchable=true}}
   }
 }
 
-gui.handlers:extend{
+gui.add_handlers{
   demo = {
     auto_clear_checkbox = {
       on_gui_checked_state_changed = debug_print
@@ -32,30 +33,45 @@ gui.handlers:extend{
   }
 }
 
-event.on_player_created(function(e)
-  mod_gui.get_button_flow(game.get_player(e.player_index)).add{type="button", name="gui_module_mod_gui_button", style=mod_gui.button_style, caption="Template"}
+script.on_init(function()
+  gui.on_init()
+  gui.bootstrap_postprocess()
 end)
 
-event.on_gui_click(function(e)
+script.on_load(function()
+  gui.bootstrap_postprocess()
+end)
+
+script.on_event(defines.events.on_player_created, function(e)
+  mod_gui.get_button_flow(game.get_player(e.player_index)).add{
+    type = "button",
+    name = "gui_module_mod_gui_button",
+    style = mod_gui.button_style,
+    caption = "Template"
+  }
+end)
+
+script.on_event(defines.events.on_gui_click, function(e)
+  gui.dispatch_handlers(e)
   if e.element.name ~= "gui_module_mod_gui_button" then return end
   local player = game.get_player(e.player_index)
   local frame_flow = mod_gui.get_frame_flow(player)
   local window = frame_flow.demo_window
   if window then
-    event.disable_group("gui.demo", e.player_index)
     window.destroy()
   else
+    -- Profiler.Start()
     local profiler = game.create_profiler()
     profiler.stop()
-    for i=1,100 do
+    for i=1,1000 do
       profiler.restart()
-      local elems = gui.build(frame_flow, {
+      local elems, filters = gui.build(frame_flow, {
         {type="frame", name="demo_window", style="dialog_frame", direction="vertical", save_as="window", children={
           -- checkboxes
           {type="flow", name="checkboxes_flow", direction="horizontal", children={
-            {type="checkbox", name="autoclear", caption="Auto-clear", state=true, handlers="demo.auto_clear_checkbox", save_as="checkboxes.auto_clear"},
+            {type="checkbox", name="checkbox__autoclear", caption="Auto-clear", state=true, handlers="demo.auto_clear_checkbox", save_as="checkboxes.auto_clear"},
             {template="pushers.horizontal"},
-            {type="checkbox", name="cardinals", caption="Cardinals only", state=true, handlers="demo.cardinals_checkbox",
+            {type="checkbox", name="checkbox__cardinals", caption="Cardinals only", state=true, handlers="demo.cardinals_checkbox",
               save_as="checkboxes.cardinals.cardinals"}
           }},
           -- grid type switch
@@ -80,12 +96,19 @@ event.on_gui_click(function(e)
       })
       profiler.stop()
       -- reset
-      if i ~= 100 then
-        event.disable_group("gui.demo", e.player_index)
+      if i ~= 1000 then
+        for id, t in pairs(filters) do
+          gui.update_filters(id, player.index, t, "remove")
+        end
         elems.window.destroy()
       end
     end
-    profiler.divide(100)
+    profiler.divide(1000)
     game.print(profiler)
+    -- Profiler.Stop()
   end
+end)
+
+script.on_event(defines.events.on_gui_checked_state_changed, function(e)
+  gui.dispatch_handlers(e)
 end)

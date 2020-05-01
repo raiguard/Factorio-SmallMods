@@ -42,22 +42,26 @@ local function translate_for_all_players()
 end
 
 event.on_init(function()
+  translation.on_init()
   global.players = {}
-  for i,p in pairs(game.players) do
+  for i in pairs(game.players) do
     global.players[i] = {dictionary={}}
   end
   build_data()
   translate_for_all_players()
-  event.register(translation.retranslate_all_event, translate_for_all_players)
-end)
-
-event.on_load(function()
-  event.register(translation.retranslate_all_event, translate_for_all_players)
 end)
 
 event.on_configuration_changed(function()
   build_data()
   translate_for_all_players()
+end)
+
+event.on_tick(function(e)
+  translation.translate_batch(e)
+end)
+
+event.on_string_translated(function(e)
+  translation.sort_string(e)
 end)
 
 event.on_player_created(function(e)
