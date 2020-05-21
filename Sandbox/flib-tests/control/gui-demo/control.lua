@@ -52,10 +52,6 @@ local function create_gui(player)
   elems.titlebar.drag_handle.drag_target = elems.window
   elems.window.force_auto_center()
 
-  -- this needs to be less complicated
-  -- gui.update_filters(defines.events.on_gui_click, player.index, {demo_slot_button="slot_button.on_gui_click"}, "add")
-
-  -- simpler, but more bloated on the backend
   gui.update_filters("slot_button", player.index, {"demo_slot_button"}, "add")
 
   global.gui = elems
