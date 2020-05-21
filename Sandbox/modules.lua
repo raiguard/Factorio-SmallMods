@@ -1,9 +1,10 @@
 return {
-  -- "flib-tests.control.event"
-  -- "flib-tests.control.gui-demo"
-  -- "flib-tests.control.gui",
-  -- "flib-tests.control.migration",
-  -- "flib-tests.control.translation",
+  -- "flib-tests.event"
+  -- "flib-tests.gui-demo"
+  -- "flib-tests.gui",
+  -- "flib-tests.migration",
+  "flib-tests.translation",
+  -- "flib-tests.translation-desync-standalone",
   -- "recipe-book-mockup",
   -- "sandbox"
 }
