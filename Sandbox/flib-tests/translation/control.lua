@@ -1,5 +1,5 @@
-local event = require("__flib__.control.event")
-local translation = require("__flib__.control.translation")
+local event = require("__flib__.event")
+local translation = require("__flib__.translation")
 
 local function add_requests(player_index)
   translation.add_requests(player_index, global.strings, true)
@@ -19,8 +19,6 @@ event.on_string_translated(function(e)
   local _, finished = translation.process_result(e)
   if finished then
     game.print("Player ["..e.player_index.."] has finished translations")
-
-    local breakpoint
   end
 end)
 
