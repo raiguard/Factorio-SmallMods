@@ -1,13 +1,6 @@
--- -------------------------------------------------------------------------------------------------------------------------------------------------------------
--- CONTROL SCRIPTING
-
--- -----------------------------------------------------------------------------
--- UTILITIES
-
 -- create the GUI
 local function create_gui(player)
-  local window = player.gui.screen.add{type="frame", name="qt_window", style="shortcut_bar_window_frame"}
-  window.style.right_padding = 4
+  local window = player.gui.screen.add{type="frame", name="qt_window", style="quick_bar_window_frame"}
   local inner_panel = window.add{type="frame", name="qt_inner_panel", style="shortcut_bar_inner_panel"}
   local export_button = inner_panel.add{type="sprite-button", name="qt_export_button", style="shortcut_bar_button_blue", sprite="qt-export-blueprint-white",
     tooltip={"qt-gui.export"}}
@@ -21,7 +14,6 @@ end
 local function setup_player(player)
   local data = create_gui(player)
   global.players[player.index] = data
-  return data.window
 end
 
 -- set window location relative to the player's quickbar
@@ -33,9 +25,6 @@ local function set_gui_location(player, window)
     y = (resolution.height - (56 * scale))
   }
 end
-
--- -----------------------------------------------------------------------------
--- QUICKBAR
 
 -- export the current quickbar filters to a blueprint
 local function export_quickbar(player)
@@ -126,13 +115,20 @@ local function import_quickbar(player, entities)
   end
 end
 
--- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
 
 script.on_init(function()
   global.players = {}
   for _,player in pairs(game.players) do
     setup_player(player)
+  end
+end)
+
+script.on_configuration_changed(function()
+  for i, player_table in pairs(global.players) do
+    local player = game.get_player(i)
+    player_table.window.destroy()
+    global.players[i] = create_gui(player)
   end
 end)
 
