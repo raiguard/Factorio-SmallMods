@@ -1,12 +1,13 @@
 -- GUI DEMO
 
-local gui = require("__flib__.control.gui")
-gui.register_events()
+local gui = require("__flib__.gui")
+gui.register_handlers()
 
 gui.add_templates{
+  mouse_filter = {type="button", mouse_button_filter={"left"}},
   drag_handle = {type="empty-widget", style="draggable_space_header", style_mods={minimal_width=30, height=24,
     right_margin=4, horizontally_stretchable=true}},
-  frame_action_button = {type="button", style="close_button", style_mods={width=20, height=20, top_margin=2}}
+  frame_action_button = {template="mouse_filter", style="frame_action_button"}
 }
 
 local function debug_print(e) game.print(serpent.block(e)) end
@@ -31,7 +32,7 @@ end)
 
 local function create_gui(player)
   local elems = gui.build(player.gui.screen, {
-    {type="frame", style="dialog_frame", direction="vertical", save_as="window", children={
+    {type="frame", style="standalone_inner_frame_in_outer_frame", direction="vertical", save_as="window", children={
       {type="flow", children={
         {type="label", style="frame_title", caption="Demo GUI"},
         {template="drag_handle", save_as="titlebar.drag_handle"},
@@ -39,10 +40,10 @@ local function create_gui(player)
         {template="frame_action_button", handlers="titlebar_button"},
         {template="frame_action_button", handlers="titlebar_button"}
       }},
-      {type="frame", style="window_content_frame", style_mods={padding=12}, children={
-        {type="frame", style="demo_dark_content_frame_in_light_frame", children={
+      {type="frame", style="inside_shallow_frame_with_padding", style_mods={padding=12}, children={
+        {type="frame", style="deep_frame_in_shallow_frame", children={
           {type="scroll-pane", style="demo_slot_table_scroll_pane", style_mods={height=200}, children={
-            {type="table", style="demo_slot_table", style_mods={width=400}, column_count=10, save_as="slot_table"}
+            {type="table", style="slot_table", style_mods={width=400}, column_count=10, save_as="slot_table"}
           }}
         }}
       }}
@@ -74,7 +75,7 @@ script.on_event(defines.events.on_player_main_inventory_changed, function(e)
   local i = 0
   for name, count in pairs(player.get_main_inventory().get_contents()) do
     i = i + 1
-    table.add{type="sprite-button", name="demo_slot_button__"..i, style="CGUI_filter_slot_button", sprite="item/"..name,
-    number=count}
+    table.add{type="sprite-button", name="demo_slot_button__"..i, style="slot_button", sprite="item/"..name,
+      number=count}
   end
 end)
