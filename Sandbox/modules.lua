@@ -6,5 +6,6 @@ return {
   -- "flib-tests.translation",
   -- "flib-tests.translation-desync-standalone",
   -- "recipe-book-mockup",
+  -- "resource-tracker",
   -- "sandbox"
 }
