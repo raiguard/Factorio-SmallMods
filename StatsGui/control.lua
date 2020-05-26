@@ -9,7 +9,7 @@ local function set_gui_location(player, window)
 end
 
 local function create_stats_gui(player)
-  local window = player.gui.screen.add{type="frame", style="statsgui_empty_frame"}
+  local window = player.gui.screen.add{type="frame", style="invisible_frame"}
   local label = window.add{type="label", name="statsgui_main_label", style="statsgui_label"}
   set_gui_location(player, window)
   return {window=window, label=label}
