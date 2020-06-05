@@ -1,7 +1,6 @@
 -- GUI DEMO
 
 local gui = require("__flib__.gui")
-gui.register_handlers()
 
 gui.add_templates{
   mouse_filter = {type="button", mouse_button_filter={"left"}},
@@ -29,6 +28,8 @@ end)
 script.on_load(function()
   gui.build_lookup_tables()
 end)
+
+gui.register_handlers()
 
 local function create_gui(player)
   local elems = gui.build(player.gui.screen, {
