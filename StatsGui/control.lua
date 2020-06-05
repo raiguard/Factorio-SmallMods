@@ -1,3 +1,5 @@
+local event = require("__flib__.event")
+
 -- reposition the GUI
 local function set_gui_location(player, window)
   local resolution = player.display_resolution
@@ -79,25 +81,32 @@ local function update_stats()
   end
 end
 
-script.on_init(function()
+event.on_init(function()
   global.players = {}
-  for i,p in pairs(game.players) do
-    setup_player(i, p)
+  for i, player in pairs(game.players) do
+    setup_player(i, player)
   end
 end)
 
-script.on_event(defines.events.on_player_created, function(e)
+event.on_configuration_changed(function()
+  for i, player_table in pairs(global.players) do
+    player_table.gui.stats.window.destroy()
+    player_table.gui.stats = create_stats_gui(game.get_player(i))
+  end
+end)
+
+event.on_player_created(function(e)
   setup_player(e.player_index, game.get_player(e.player_index))
 end)
 
-script.on_event(defines.events.on_player_removed, function(e)
+event.on_player_removed(function(e)
   global.players[e.player_index] = nil
 end)
 
 -- update the GUI location whenever screen properties change
-script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
+event.register({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
   set_gui_location(game.get_player(e.player_index), global.players[e.player_index].gui.stats.window)
 end)
 
 -- update info once per second
-script.on_nth_tick(60, update_stats)
+event.on_nth_tick(60, update_stats)
