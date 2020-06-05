@@ -31,7 +31,7 @@ local function apply_registry_overrides(player)
   local prototypes = game.entity_prototypes
   local data = table.deepcopy(global.default_registry)
   local registry = game.json_to_table(player.mod_settings['cuc-custom-upgrade-registry'].value)
-  if not registry then
+  if not registry or type(registry) == "string" then
     player.print{'cuc-message.invalid-string'}
     return data
   end
