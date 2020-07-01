@@ -126,9 +126,14 @@ end)
 
 script.on_configuration_changed(function()
   for i, player_table in pairs(global.players) do
-    local player = game.get_player(i)
     player_table.window.destroy()
-    global.players[i] = create_gui(player)
+    local player = game.get_player(i)
+    if player then
+      global.players[i] = create_gui(player)
+    else
+      -- clean up unneeded tables
+      global.players[i] = nil
+    end
   end
 end)
 
