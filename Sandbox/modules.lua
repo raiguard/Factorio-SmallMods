@@ -9,4 +9,5 @@ return {
   -- "recipe-book-mockup",
   -- "resource-tracker",
   -- "sandbox"
+  "wiki.gui-styles"
 }
