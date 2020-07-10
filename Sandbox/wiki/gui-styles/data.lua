@@ -39,6 +39,8 @@ styles.subheader_frame_under_tab_row = {
     },
     shadow = bottom_shadow
   },
+  -- adding the glow throws off the perception of height,
+  -- so decrease the height by two pixels to correct it
   top_padding = 1,
   height = 34
 }
