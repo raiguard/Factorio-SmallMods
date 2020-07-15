@@ -8,6 +8,6 @@ return {
   -- "flib-tests.translation-desync-standalone",
   -- "recipe-book-mockup",
   -- "resource-tracker",
-  "sandbox"
-  -- "wiki.gui-styles"
+  -- "sandbox"
+  "wiki.gui-style-guide"
 }
