@@ -36,14 +36,14 @@ event.on_player_created(function(e)
   local elems = gui.build(player.gui.screen, {
     {type="frame", style="invisible_frame", save_as="window", children={
       -- messing around
-      {type="frame", style="quick_bar_window_frame", children={
-        {type="frame", style="inside_deep_frame", children={
-          {type="flow", style_mods={horizontal_spacing=2, padding=1}, children={
-            {type="button", style=mod_gui.button_style, caption="My mod"},
-            {type="sprite-button", style=mod_gui.button_style, sprite="utility/trash"}
-          }}
-        }}
-      }}
+      -- {type="frame", style="quick_bar_window_frame", children={
+      --   {type="frame", style="inside_deep_frame", children={
+      --     {type="flow", style_mods={horizontal_spacing=2, padding=1}, children={
+      --       {type="button", style=mod_gui.button_style, caption="My mod"},
+      --       {type="sprite-button", style=mod_gui.button_style, sprite="utility/trash"}
+      --     }}
+      --   }}
+      -- }}
 
       -- window types
       -- {type="frame", direction="vertical", children={
