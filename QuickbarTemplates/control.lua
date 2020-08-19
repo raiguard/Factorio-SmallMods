@@ -89,8 +89,6 @@ local function import_quickbar(player, entities)
       player.print{"qt-message.invalid-blueprint"}
       return
     end
-    local pos = entity.position
-    -- prefer tags when available, but also continue supporting old templates
     local filter_index = (entity.tags or {}).QuickbarTemplates
     if not filter_index then
       player.print{"qt-message.old-or-placed-blueprint"}
