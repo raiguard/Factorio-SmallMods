@@ -46,6 +46,7 @@ local function export_quickbar(player)
       entity_number = i,
       name = "constant-combinator",
       position = {x=pos.x, y=pos.y},
+      tags = {QuickbarTemplates=i}
     }
     -- set combinator signal if there's a filter
     if filters[i] ~= nil then
@@ -88,9 +89,13 @@ local function import_quickbar(player, entities)
       player.print{"qt-message.invalid-blueprint"}
       return
     end
-    -- get_blueprint_entities() does not return them in any particular order, so calculate the index by position
     local pos = entity.position
-    local filter_index = 46 + (pos.x) + (-pos.y*10)
+    -- prefer tags when available, but also continue supporting old templates
+    local filter_index = (entity.tags or {}).QuickbarTemplates
+    if not filter_index then
+      player.print{"qt-message.old-or-placed-blueprint"}
+      return
+    end
     if entity.control_behavior then
       -- error checking: should only have one filter
       if #entity.control_behavior.filters > 1 then
