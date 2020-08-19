@@ -1,11 +1,11 @@
 {
   "name": "QuickbarTemplates",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "title": "Quickbar Templates",
   "author": "raiguard",
   "contact": "Discord: Raiguard#7402",
   "homepage": "https://github.com/raiguard/Factorio-SmallMods",
-  "factorio_version": "0.18",
-  "dependencies": ["base >= 0.18.27"],
+  "factorio_version": "1.0",
+  "dependencies": ["base >= 1.0.0"],
   "description": "Import and export quickbar filters as blueprints. Set a default template that will be applied when you start a new game."
 }

@@ -1,7 +1,11 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.5
+Version: 2.0.0
 Date: ????
   Changes:
+    - Updated to Factorio 1.0
+  Bugfixes:
+    - Fixed broken import due to blueprint format changes in Factorio 1.0
+      - Due to this change, all existing template blueprints are now incompatible
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2020-07-01
