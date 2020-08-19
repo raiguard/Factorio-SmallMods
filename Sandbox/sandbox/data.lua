@@ -1,7 +1,18 @@
 local styles = data.raw["gui-style"].default
 
-styles.green_slot = styles.flib_slot_green
-styles.blue_slot = styles.flib_slot_blue
-styles.yellow_slot = styles.flib_slot_yellow
-styles.red_slot = styles.flib_slot_red
-styles.closed_inventory_slot = styles.flib_slot_red
+styles.therenas_scroll_pane = {
+  type = "scroll_pane_style",
+  extra_padding_when_activated = 0,
+  padding = 0,
+  graphical_set = {
+    base = {
+      top = {position = {93, 0}, size = {1, 8}},
+      draw_type = "outer"
+    },
+    shadow = default_inner_shadow
+  },
+  vertical_flow_style = {
+    type = "vertical_flow_style",
+    padding = 12
+  }
+}

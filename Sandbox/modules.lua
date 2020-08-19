@@ -4,12 +4,12 @@ return {
   -- "flib-tests.gui",
   -- "flib-tests.gui-remove-player-filters",
   -- "flib-tests.migration",
-  -- "flib-tests.slot-styles",
-  "flib-tests.table",
+  "flib-tests.slot-styles",
+  -- "flib-tests.table",
   -- "flib-tests.translation",
   -- "flib-tests.translation-desync-standalone",
   -- "recipe-book-mockup",
   -- "resource-tracker",
-  -- "sandbox"
+  -- "sandbox",
   -- "wiki.gui-style-guide"
 }
