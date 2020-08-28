@@ -59,10 +59,6 @@ local function create_gui(player)
   global.gui = elems
 end
 
-script.on_configuration_changed(function()
-  create_gui(game.get_player(1))
-end)
-
 script.on_event(defines.events.on_player_created, function(e)
   create_gui(game.get_player(e.player_index))
 
