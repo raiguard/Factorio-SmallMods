@@ -1,4 +1,4 @@
-local modules = require('modules')
+local modules = require("modules")
 for _,module in pairs(modules) do
-  require(module..'.control')
+  pcall(require, module..".control")
 end
