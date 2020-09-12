@@ -1,7 +1,5 @@
-local gui = require("__flib__.control.gui")
+local gui = require("__flib__.gui")
 local mod_gui = require("mod-gui")
-
-local Profiler = require("__profiler__.profiler")
 
 local function debug_print(e) game.get_player(e.player_index).print(serpent.block(e)) end
 
@@ -28,18 +26,20 @@ gui.add_handlers{
     },
     divisor_textfield = {
       on_gui_confirmed = debug_print,
-      on_gui_text_changed = debug_print
+      on_gui_text_changed = debug_print,
+      -- this should crash
+      -- on_gui_invalid_event = debug_print
     }
   }
 }
 
 script.on_init(function()
-  gui.on_init()
-  gui.bootstrap_postprocess()
+  gui.init()
+  gui.build_lookup_tables()
 end)
 
 script.on_load(function()
-  gui.bootstrap_postprocess()
+  gui.build_lookup_tables()
 end)
 
 script.on_event(defines.events.on_player_created, function(e)
@@ -66,7 +66,7 @@ script.on_event(defines.events.on_gui_click, function(e)
     for i=1,1000 do
       profiler.restart()
       local elems, filters = gui.build(frame_flow, {
-        {type="frame", name="demo_window", style="dialog_frame", direction="vertical", save_as="window", children={
+        {type="frame", name="demo_window", direction="vertical", save_as="window", children={
           -- checkboxes
           {type="flow", name="checkboxes_flow", direction="horizontal", children={
             {type="checkbox", name="checkbox__autoclear", caption="Auto-clear", state=true, handlers="demo.auto_clear_checkbox", save_as="checkboxes.auto_clear"},

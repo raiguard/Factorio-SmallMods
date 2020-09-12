@@ -1,8 +1,9 @@
 return {
   -- "flib-tests.event"
-  -- "flib-tests.gui-demo"
+  -- "flib-tests.gui-demo",
   -- "flib-tests.gui",
   -- "flib-tests.gui-remove-player-filters",
+  -- "flib-tests.math",
   -- "flib-tests.migration",
   -- "flib-tests.mini-wiki",
   -- "flib-tests.slot-styles",

@@ -1,4 +1,4 @@
-local migration = require("__flib__.control.migration")
+local migration = require("__flib__.migration")
 
 migration.run("0.1.0", {
   ["0.33.169"] = function()
@@ -33,7 +33,7 @@ migration.run("3", {
 script.on_init(function()
   local profiler = game.create_profiler()
   for _=1,1000 do
-    migration.is_new_version("1.2.3", "4.15.6")
+    migration.is_newer_version("1.2.3", "4.15.6")
   end
   profiler.stop()
   profiler.divide(1000)
