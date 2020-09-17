@@ -106,7 +106,7 @@ local function export_quickbar(player)
 end
 
 -- apply the filters from the given blueprint to our quickbar
-local function import_quickbar(player, entities)
+local function import_quickbar(player, entities, ignore_empty)
   -- error checking: should have exactly 100 entities
   if #entities ~= 100 then
     player.print{"qt-message.invalid-blueprint"}
@@ -138,11 +138,22 @@ local function import_quickbar(player, entities)
   -- due to floating point imprecision, we must check if all of the indexes are off by one, and compensate if so
   local offset = length == 101 and -1 or 0
   local start = length == 101 and 2 or 1
+  -- local
+  local get_slot = player.get_quick_bar_slot
   -- apply the filters
   local set_filter = player.set_quick_bar_slot
-  for i=start,length do
+  for i = start, length do
     local filter = filters[i]
-    if filter == "" then filter = nil end
+    if ignore_empty then
+      local existing_filter = get_slot(i)
+      if existing_filter then
+        filter = existing_filter
+      else
+        filter = nil
+      end
+    elseif filter == "" then
+      filter = nil
+    end
     set_filter(i + offset, filter)
   end
 end
@@ -241,7 +252,7 @@ script.on_event(defines.events.on_gui_click, function(e)
     local stack = player.cursor_stack
     if stack and stack.valid_for_read and stack.name == "blueprint" then
       -- import from held blueprint
-      import_quickbar(player, stack.get_blueprint_entities())
+      import_quickbar(player, stack.get_blueprint_entities(), e.shift)
     end
   end
 end)
