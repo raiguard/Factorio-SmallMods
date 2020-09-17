@@ -138,23 +138,13 @@ local function import_quickbar(player, entities, ignore_empty)
   -- due to floating point imprecision, we must check if all of the indexes are off by one, and compensate if so
   local offset = length == 101 and -1 or 0
   local start = length == 101 and 2 or 1
-  -- local
-  local get_slot = player.get_quick_bar_slot
   -- apply the filters
   local set_filter = player.set_quick_bar_slot
   for i = start, length do
     local filter = filters[i]
-    if ignore_empty then
-      local existing_filter = get_slot(i)
-      if existing_filter then
-        filter = existing_filter
-      else
-        filter = nil
-      end
-    elseif filter == "" then
-      filter = nil
+    if not ignore_empty or filter ~= "" then
+      set_filter(i + offset, filter ~= "" and filter or nil)
     end
-    set_filter(i + offset, filter)
   end
 end
 

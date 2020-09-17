@@ -1,12 +1,14 @@
 ---------------------------------------------------------------------------------------------------
 Version: 2.1.1
 Date: ????
-  Changes:
+  Bugfixes:
+    - Fixed that shift+importing didn't work whatsoever
+    - Fixed typo in changelog
 ---------------------------------------------------------------------------------------------------
 Version: 2.1.0
 Date: 2020-09-17
   Features:
-    - Right-clicking the import button will ignore blank filters
+    - Shift-clicking the import button will ignore blank filters
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.1
 Date: 2020-09-17
