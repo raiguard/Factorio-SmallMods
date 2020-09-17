@@ -40,11 +40,14 @@ local function round(value)
   return math.floor(value + 0.5)
 end
 
-local function position_to_index(position, zeroPosition)
-  local result = round(position.x - zeroPosition.x) + round(zeroPosition.y - position.y) * 10 + 1
+-- convert an entity position to quickbar index
+-- tags are still used whenever possible, this is a backup option
+local function position_to_index(position, zero_position)
+  local result = round(position.x - zero_position.x) + round(zero_position.y - position.y) * 10 + 1
   return result
 end
 
+-- get the center of a blueprint
 local function get_zero_position(entities)
   local result = {x = entities[1].position.x, y = entities[1].position.y}
   for i = 2, 100 do
@@ -60,7 +63,7 @@ local function export_quickbar(player)
   -- get quickbar filters
   local get_slot = player.get_quick_bar_slot
   local filters = {}
-  for i=1,100 do
+  for i = 1, 100 do
     local item = get_slot(i)
     if item and item.name ~= "blueprint" and item.name ~= "blueprint-book" then
       filters[i] = item.name
