@@ -13,5 +13,6 @@ return {
   -- "recipe-book-mockup",
   -- "resource-tracker",
   -- "sandbox",
-  -- "wiki.gui-style-guide"
+  -- "wiki.gui-style-guide",
+  -- "remote-call-crash"
 }
