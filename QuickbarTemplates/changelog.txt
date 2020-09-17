@@ -2,6 +2,8 @@
 Version: 2.0.1
 Date: ????
   Changes:
+    - Got off my high horse and re-introduced position-based indexing
+      - The mod will still use tags whenever possible, but now supports placing the blueprints and modifying them
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.0
 Date: 2020-08-19

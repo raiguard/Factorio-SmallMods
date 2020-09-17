@@ -1,13 +1,23 @@
 -- create the GUI
 local function create_gui(player)
-  local window = player.gui.screen.add{type="frame", name="qt_window", style="quick_bar_window_frame"}
-  local inner_panel = window.add{type="frame", name="qt_inner_panel", style="shortcut_bar_inner_panel"}
-  local export_button = inner_panel.add{type="sprite-button", name="qt_export_button", style="shortcut_bar_button_blue", sprite="qt-export-blueprint-white",
-    tooltip={"qt-gui.export"}}
-  local import_button = inner_panel.add{type="sprite-button", name="qt_import_button", style="shortcut_bar_button_blue", sprite="qt-import-blueprint-white",
-    tooltip={"qt-gui.import"}}
+  local window = player.gui.screen.add{type = "frame", name = "qt_window", style = "quick_bar_window_frame"}
+  local inner_panel = window.add{type = "frame", name = "qt_inner_panel", style = "shortcut_bar_inner_panel"}
+  local export_button = inner_panel.add{
+    type = "sprite-button",
+    name = "qt_export_button",
+    style = "shortcut_bar_button_blue",
+    sprite = "qt-export-blueprint-white",
+    tooltip={"qt-gui.export"}
+  }
+  local import_button = inner_panel.add{
+    type = "sprite-button",
+    name = "qt_import_button",
+    style = "shortcut_bar_button_blue",
+    sprite = "qt-import-blueprint-white",
+    tooltip={"qt-gui.import"}
+  }
   window.visible = false
-  return {window=window, export_button=export_button, import_button=import_button}
+  return {window = window, export_button = export_button, import_button = import_button}
 end
 
 -- setup player global table and GUI
@@ -26,6 +36,25 @@ local function set_gui_location(player, window)
   }
 end
 
+local function round(value)
+  return math.floor(value + 0.5)
+end
+
+local function position_to_index(position, zeroPosition)
+  local result = round(position.x - zeroPosition.x) + round(zeroPosition.y - position.y) * 10 + 1
+  return result
+end
+
+local function get_zero_position(entities)
+  local result = {x = entities[1].position.x, y = entities[1].position.y}
+  for i = 2, 100 do
+    local position = entities[i].position
+    if result.x > position.x then result.x = position.x end
+    if result.y < position.y then result.y = position.y end
+  end
+  return result
+end
+
 -- export the current quickbar filters to a blueprint
 local function export_quickbar(player)
   -- get quickbar filters
@@ -39,14 +68,14 @@ local function export_quickbar(player)
   end
   -- assemble blueprint entities
   local entities = {}
-  local pos = {x=-4,y=4}
-  for i=1,100 do
+  local pos = {x = -4, y = 4}
+  for i = 1, 100 do
     -- add blank combinator
     entities[i] = {
       entity_number = i,
       name = "constant-combinator",
-      position = {x=pos.x, y=pos.y},
-      tags = {QuickbarTemplates=i}
+      position = {x = pos.x, y = pos.y},
+      tags = {QuickbarTemplates = i}
     }
     -- set combinator signal if there's a filter
     if filters[i] ~= nil then
@@ -82,18 +111,15 @@ local function import_quickbar(player, entities)
   end
   -- assemble filters into a table
   local filters = {}
-  for i=1,100 do
+  local zero_position = get_zero_position(entities)
+  for i = 1, 100 do
     local entity = entities[i]
     -- error checking: should be a constant combinator
     if entity == nil or entity.name ~= "constant-combinator" then
       player.print{"qt-message.invalid-blueprint"}
       return
     end
-    local filter_index = (entity.tags or {}).QuickbarTemplates
-    if not filter_index then
-      player.print{"qt-message.old-or-placed-blueprint"}
-      return
-    end
+    local filter_index = (entity.tags or {}).QuickbarTemplates or position_to_index(entity.position, zero_position)
     if entity.control_behavior then
       -- error checking: should only have one filter
       if #entity.control_behavior.filters > 1 then
@@ -114,7 +140,7 @@ local function import_quickbar(player, entities)
   for i=start,length do
     local filter = filters[i]
     if filter == "" then filter = nil end
-    set_filter(i+offset, filter)
+    set_filter(i + offset, filter)
   end
 end
 
@@ -187,9 +213,15 @@ local function on_cursor_stack_changed(e)
 end
 script.on_event(defines.events.on_player_cursor_stack_changed, on_cursor_stack_changed)
 
-script.on_event({defines.events.on_player_display_resolution_changed, defines.events.on_player_display_scale_changed}, function(e)
-  set_gui_location(game.players[e.player_index], global.players[e.player_index].window)
-end)
+script.on_event(
+  {
+    defines.events.on_player_display_resolution_changed,
+    defines.events.on_player_display_scale_changed
+  },
+  function(e)
+    set_gui_location(game.players[e.player_index], global.players[e.player_index].window)
+  end
+)
 
 script.on_event(defines.events.on_gui_click, function(e)
   if e.element.name == "qt_export_button" then
