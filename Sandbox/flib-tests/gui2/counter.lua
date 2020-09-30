@@ -10,7 +10,7 @@ function component.init()
 end
 
 -- mutates the state in-place, so nothing is returned
-function component.update(msg, state)
+function component.update(_, msg, state)
   if msg.name == "increment" then
     state.count = state.count + 1
   elseif msg.name == "reset" then
