@@ -1,2 +1,3 @@
-local assembling_machine = data.raw["assembling-machine"]["assembling-machine-3"]
-local breakpoint
+local boiler = data.raw["boiler"]["boiler"]
+
+-- boiler.energy_consumption = "10MW"
