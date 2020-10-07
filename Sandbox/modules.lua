@@ -1,4 +1,3 @@
 return {
-  -- "flib-tests.gui-new",
-  "sandbox"
+  "flib-tests.gui3"
 }

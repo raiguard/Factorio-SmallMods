@@ -1,8 +1,8 @@
 local event = require("__flib__.event")
 local gui = require("__flib__.gui2")
 
-local counter = require("flib-tests.gui2.counter")
-local todo = require("flib-tests.gui2.todo")
+local counter = require("modules.flib-tests.gui2.counter")
+local todo = require("modules.flib-tests.gui2.todo")
 
 event.on_init(function()
   gui.init()
