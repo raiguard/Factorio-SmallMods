@@ -1,19 +1,19 @@
 local gui = require("__flib__.gui3")
 local table = require("__flib__.table")
 
-local todo = gui.root("todo")
+local TodoGui = gui.root("Todo")
 
-function todo.init()
+function TodoGui:init()
   return {
     mode = "all",
     new_todo_text = "",
-    next_id = 0,
+    next_id = 1,
     todos = {},
     visible = true
   }
 end
 
-function todo.update(state, msg, e)
+function TodoGui:update(state, msg, e)
   local action = msg.action
   if action == "close" then
     state.visible = false
@@ -23,12 +23,12 @@ function todo.update(state, msg, e)
   elseif action == "open" then
     state.visible = true
   elseif action == "add_todo" then
-    state.next_id = state.next_id + 1
-    state.todos[#state.todos + 1] = {
+    state.todos[state.next_id] = {
       completed = false,
       text = state.new_todo_text,
       id = state.next_id
     }
+    state.next_id = state.next_id + 1
     state.new_todo_text = ""
   elseif action == "toggle_todo_completed" then
     local todo = state.todos[msg.id]
@@ -44,7 +44,7 @@ function todo.update(state, msg, e)
   end
 end
 
-function todo.view(state)
+function TodoGui:view(state)
   -- flatten TODOs into an array
   local todo_elems = {}
   local i = 0
@@ -75,6 +75,7 @@ function todo.view(state)
       )
     end
   end
+
   return (
     {
       type = "frame",
@@ -117,7 +118,7 @@ function todo.view(state)
             type = "frame",
             style = "subfooter_frame",
             left_padding = 12,
-            visible = #state.todos > 0,
+            visible = table_size(state.todos) > 0,
             children = {
               {type = "flow", vertical_align = "center", children = {
                 {
@@ -150,7 +151,8 @@ function todo.view(state)
                 {
                   type = "button",
                   caption = "Clear completed",
-                  on_click = {action = "clear_completed"}
+                  on_click = {action = "clear_completed"},
+                  enabled = table.for_each(state.todos, function(todo) return todo.completed end)
                 }
               }}
             }
@@ -161,4 +163,4 @@ function todo.view(state)
   )
 end
 
-return todo
+return TodoGui
