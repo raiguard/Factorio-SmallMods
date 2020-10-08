@@ -25,6 +25,7 @@ function TodoGui:update(state, msg, e)
   elseif action == "add_todo" then
     state.todos[state.next_id] = {
       completed = false,
+      id = state.next_id,
       text = state.new_todo_text
     }
     state.next_id = state.next_id + 1
@@ -109,7 +110,7 @@ function TodoGui:view(state)
               type = "flow",
               direction = "vertical",
               top_padding = 8,
-              visible = #state.todos > 0,
+              visible = table_size(state.todos) > 0,
               children = todo_elems
             }
           }},
