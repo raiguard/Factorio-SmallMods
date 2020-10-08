@@ -1,14 +1,14 @@
 local gui = require("__flib__.gui3")
 
-local counter = gui.new("counter")
+local CounterGui = gui.root("Counter")
 
-function counter.init()
+function CounterGui:init()
   return {
     count = 0
   }
 end
 
-function counter.update(state, msg)
+function CounterGui:update(state, msg)
   if msg == "increment" then
     state.count = state.count + 1
   elseif msg == "reset" then
@@ -16,7 +16,7 @@ function counter.update(state, msg)
   end
 end
 
-function counter.view(state)
+function CounterGui:view(state)
   return (
     {type = "flow", children = {
       {
@@ -35,4 +35,4 @@ function counter.view(state)
   )
 end
 
-return counter
+return CounterGui
