@@ -1,9 +1,9 @@
 local event = require("__flib__.event")
 local gui = require("__flib__.gui3")
 
-local CounterGui = require("modules.flib-tests.gui3.Counter")
-local TabsGui = require("modules.flib-tests.gui3.Tabs")
-local TodoGui = require("modules.flib-tests.gui3.Todo")
+local counter_gui = require("modules.flib-tests.gui3.Counter")
+local tabs_gui = require("modules.flib-tests.gui3.Tabs")
+local todo_gui = require("modules.flib-tests.gui3.Todo")
 
 event.on_init(function()
   gui.init()
@@ -17,9 +17,9 @@ end)
 event.on_player_created(function(e)
   local player = game.get_player(e.player_index)
   global.players[e.player_index] = {
-    Counter = gui.new(CounterGui, player.gui.screen),
-    Tabs = gui.new(TabsGui, player.gui.screen),
-    Todo = gui.new(TodoGui, player.gui.screen)
+    Counter = gui.new(counter_gui, player.gui.screen),
+    Tabs = gui.new(tabs_gui, player.gui.screen),
+    Todo = gui.new(todo_gui, player.gui.screen)
   }
 end)
 

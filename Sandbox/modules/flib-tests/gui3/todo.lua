@@ -1,9 +1,9 @@
 local gui = require("__flib__.gui3")
 local table = require("__flib__.table")
 
-local TodoGui = gui.root("Todo")
+local todo_gui = gui.root("todo")
 
-function TodoGui:init()
+function todo_gui.init()
   return {
     mode = "all",
     new_todo_text = "",
@@ -13,23 +13,23 @@ function TodoGui:init()
   }
 end
 
-function TodoGui:setup(refs, player_index)
+function todo_gui.setup(refs, player_index)
   refs.titlebar_flow.drag_target = refs.window
   refs.window.force_auto_center()
   game.get_player(player_index).opened = refs.window
 end
 
-function TodoGui:update(state, msg, e)
+function todo_gui.update(state, msg, e, refs)
   local player = game.get_player(e.player_index)
   local action = msg.action
   if action == "close" then
     state.visible = false
-    if player.opened == self.refs.window then
+    if player.opened == refs.window then
       player.opened = nil
     end
   elseif action == "open" then
     state.visible = true
-    player.opened = self.refs.window
+    player.opened = refs.window
   elseif action == "add_todo" then
     state.todos[state.next_id] = {
       completed = false,
@@ -52,7 +52,7 @@ function TodoGui:update(state, msg, e)
   end
 end
 
-function TodoGui:view(state)
+function todo_gui.view(state)
   -- flatten TODOs into an array
   local todo_elems = {}
   local i = 0
@@ -172,4 +172,4 @@ function TodoGui:view(state)
   )
 end
 
-return TodoGui
+return todo_gui

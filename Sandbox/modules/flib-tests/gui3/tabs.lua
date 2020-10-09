@@ -1,20 +1,20 @@
 local gui = require("__flib__.gui3")
 
-local TabsGui = gui.root("Tabs")
+local tabs_gui = gui.root("tabs")
 
-function TabsGui:init()
+function tabs_gui.init()
   return {
     selected_tab = 1
   }
 end
 
-function TabsGui:update(state, msg, e)
+function tabs_gui.update(state, msg, e)
   if msg == "switch_tab" then
     state.selected_tab = e.element.selected_tab_index
   end
 end
 
-function TabsGui:view(state)
+function tabs_gui.view(state)
   local tabs = {}
   for i = 1, 10 do
     -- TODO something bugs out with this logic in GUI3, inspect it!
@@ -40,4 +40,4 @@ function TabsGui:view(state)
   )
 end
 
-return TabsGui
+return tabs_gui
