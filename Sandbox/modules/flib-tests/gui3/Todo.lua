@@ -13,6 +13,12 @@ function TodoGui:init()
   }
 end
 
+function TodoGui:setup(refs, player_index)
+  refs.titlebar_flow.drag_target = refs.window
+  refs.window.force_auto_center()
+  game.get_player(player_index).opened = refs.window
+end
+
 function TodoGui:update(state, msg, e)
   local player = game.get_player(e.player_index)
   local action = msg.action
