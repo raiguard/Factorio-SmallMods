@@ -17,8 +17,8 @@ end)
 event.on_player_created(function(e)
   local player = game.get_player(e.player_index)
   global.players[e.player_index] = {
-    -- Counter = CounterGui:new(player.gui.screen),
-    -- Tabs = TabsGui:new(player.gui.screen),
+    Counter = gui.new(CounterGui, player.gui.screen),
+    Tabs = gui.new(TabsGui, player.gui.screen),
     Todo = gui.new(TodoGui, player.gui.screen)
   }
 end)
