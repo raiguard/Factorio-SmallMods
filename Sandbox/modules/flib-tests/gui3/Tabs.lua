@@ -17,11 +17,12 @@ end
 function TabsGui:view(state)
   local tabs = {}
   for i = 1, 10 do
+    -- TODO something bugs out with this logic in GUI3, inspect it!
     local type = state.selected_tab == i and "label" or "empty-widget"
     local caption = type == "label" and "IT CHANGED!" or nil
     tabs[i] = (
       {tab = {type = "tab", caption = tostring(i)}, content = (
-        {type = type, height = 600, width = 600, caption = caption}
+        {type = type, name = tostring(i), height = 600, width = 600, caption = caption}
       )}
     )
   end
