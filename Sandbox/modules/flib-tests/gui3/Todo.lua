@@ -14,14 +14,16 @@ function TodoGui:init()
 end
 
 function TodoGui:update(state, msg, e)
+  local player = game.get_player(e.player_index)
   local action = msg.action
   if action == "close" then
     state.visible = false
-    -- if player.opened == refs.window then
-    --   player.opened = nil
-    -- end
+    if player.opened == self.refs.window then
+      player.opened = nil
+    end
   elseif action == "open" then
     state.visible = true
+    player.opened = self.refs.window
   elseif action == "add_todo" then
     state.todos[state.next_id] = {
       completed = false,
@@ -83,8 +85,9 @@ function TodoGui:view(state)
       width = 500,
       visible = state.visible,
       on_closed = {action = "close"},
+      ref = "window",
       children = {
-        {type = "flow", children = {
+        {type = "flow", ref = "titlebar_flow", children = {
           {type = "label", style = "frame_title", caption = "Todo", ignored_by_interaction = true},
           {type = "empty-widget", style = "flib_titlebar_drag_handle", ignored_by_interaction = true},
           {
