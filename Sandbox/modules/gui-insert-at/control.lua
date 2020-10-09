@@ -15,7 +15,7 @@ local mod_gui = require("__core__.lualib.mod-gui")
 event.on_player_created(function(e)
   local player = game.get_player(e.player_index)
 
-  local frame = mod_gui.get_frame_flow(player).add{type = "frame", direction = "vertical"}
+  local frame = mod_gui.get_frame_flow(player).add{type = "frame", column_count = 3}
 
   for i = 1, 4 do
     frame.add{type = "label", caption = i}
@@ -28,8 +28,14 @@ event.on_player_created(function(e)
   button_flow.add{
     type = "textfield",
     numeric = true,
+    allow_negative = true,
     lose_focus_on_confirm = true,
     text = "1"
+  }
+  button_flow.add{
+    type = "textfield",
+    lose_focus_on_confirm = true,
+    text = "Foo"
   }
   button_flow.add{
     type = "button",
@@ -44,10 +50,11 @@ event.on_gui_click(function(e)
     local player = game.get_player(e.player_index)
     local frame = mod_gui.get_frame_flow(player).children[1]
     local index = tonumber(e.element.parent.children[2].text)
+    local caption = e.element.parent.children[3].text
     frame.add{
       type = "label",
-      caption = index,
-      index = 2
+      caption = caption,
+      index = index
     }
   end
 end)

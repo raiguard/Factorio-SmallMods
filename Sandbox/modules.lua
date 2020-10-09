@@ -1,3 +1,4 @@
 return {
-  "flib-tests.gui3"
+  "flib-tests.gui3",
+  -- "gui-insert-at"
 }
