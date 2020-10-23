@@ -1,4 +1,6 @@
 return {
-  "flib-tests.gui3",
-  -- "gui-insert-at"
+  -- "blueprint-book",
+  -- "flib-tests.gui3",
+  -- "gui-insert-at",
+  -- "sandbox",
 }

@@ -5,5 +5,5 @@
   "author": "raiguard",
   "factorio_version": "0.18",
   "dependencies": ["base >= 0.18.26", "? flib >= 0.1.0"],
-  "description": "Rai's playground, weeeeeeeeeeeeee!"
+  "description": "My playground!"
 }
