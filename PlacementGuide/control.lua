@@ -26,14 +26,20 @@ local function check_stack(player)
       return name
     end
   elseif cursor_ghost then
-    return cursor_ghost.name
+    return cursor_ghost.name, false, true
   else
     return
   end
 end
 
-local function update_item_count(player, item_name)
-  player.cursor_stack.label = tostring(player.get_main_inventory().get_item_count(item_name))
+local function set_label(player, item_name, is_ghost)
+  local count = player.get_main_inventory().get_item_count(item_name)
+  if is_ghost then
+    player.cursor_stack.label = "[img=utility/ghost_cursor]"
+  else
+    player.cursor_stack.label = tostring(count)
+  end
+  return count
 end
 
 local function get_dimensions(area)
@@ -43,7 +49,7 @@ local function get_dimensions(area)
   }
 end
 
-local function setup_guide(player, item_name, entity_prototype, orientation)
+local function setup_guide(player, item_name, entity_prototype, orientation, is_ghost)
   local dimensions = get_dimensions(entity_prototype.selection_box)
   -- set stack
   local cursor_stack = player.cursor_stack
@@ -75,8 +81,12 @@ local function setup_guide(player, item_name, entity_prototype, orientation)
     {signal = {type = "item", name = item_name}, index = 1}
   }
 
-  -- set item count
-  update_item_count(player, item_name)
+  -- set label
+  set_label(player, item_name, is_ghost)
+end
+
+local function positions_different(pos1, pos2)
+  return pos1.x ~= pos2.x or pos1.y ~= pos2.y
 end
 
 -- -----------------------------------------------------------------------------
@@ -90,6 +100,8 @@ event.on_init(function()
   for i in pairs(game.players) do
     global.players[i] = {
       building = false,
+      is_ghost = false,
+      last_error_position = {x = 0, y = 0},
       orientation = 0
     }
   end
@@ -100,6 +112,8 @@ end)
 event.on_player_created(function(e)
   global.players[e.player_index] = {
     building = false,
+    is_ghost = false,
+    last_error_position = {x = 0, y = 0},
     orientation = 0
   }
 end)
@@ -113,7 +127,7 @@ end)
 event.register("pg-activate-guide", function(e)
   local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
-  local item_name, is_guide = check_stack(player)
+  local item_name, is_guide, is_ghost = check_stack(player)
 
   if item_name then
     if is_guide then
@@ -122,7 +136,7 @@ event.register("pg-activate-guide", function(e)
       local item_prototype = game.item_prototypes[item_name]
       local entity_prototype = item_prototype.place_result
       player_table.orientation = math.abs(player_table.orientation - 1)
-      setup_guide(player, item_name, entity_prototype, player_table.orientation)
+      setup_guide(player, item_name, entity_prototype, player_table.orientation, player_table.is_ghost)
     else
       -- create new guide
       local item_prototype = game.item_prototypes[item_name]
@@ -135,11 +149,9 @@ event.register("pg-activate-guide", function(e)
           and not entity_prototype.has_flag("not-blueprintable")
         then
           if player.clear_cursor() then
-            setup_guide(player, item_name, entity_prototype, 0)
+            setup_guide(player, item_name, entity_prototype, 0, is_ghost)
+            player_table.is_ghost = is_ghost
             player_table.orientation = 0
-          else
-            -- the game will create flying text for us
-            player.play_sound{path = "utility/cannot_build"}
           end
         else
           player.create_local_flying_text{
@@ -211,28 +223,28 @@ event.on_built_entity(function(e)
           entity.destroy()
         end
       else
+        if positions_different(entity.position, player_table.last_error_position) then
+          player_table.last_error_position = entity.position
+          player.create_local_flying_text{
+            text = {"cant-reach"},
+            position = entity.position
+          }
+          player.play_sound{path = "utility/cannot_build"}
+        end
         entity.destroy()
-        player.create_local_flying_text{
-          text = {"cant-reach"},
-          create_at_cursor = true
-        }
-        player.play_sound{path = "utility/cannot_build"}
       end
-    else
-      entity.destroy()
-      player.create_local_flying_text{
-        text = {"pg-message.insufficient-items"},
-        create_at_cursor = true
-      }
-      player.play_sound{path = "utility/cannot_build"}
     end
   end
 end)
 
 event.on_player_main_inventory_changed(function(e)
   local player = game.get_player(e.player_index)
+  local player_table = global.players[e.player_index]
   local item_name, is_guide = check_stack(player)
-  if is_guide then
-    update_item_count(player, item_name)
+  if is_guide and not player_table.is_ghost then
+    local new_count = set_label(player, item_name)
+    if new_count == 0 then
+      player.clear_cursor()
+    end
   end
 end)
