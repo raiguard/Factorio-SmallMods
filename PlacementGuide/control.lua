@@ -107,22 +107,7 @@ event.on_init(function()
   end
 end)
 
--- PLAYER DATA
-
-event.on_player_created(function(e)
-  global.players[e.player_index] = {
-    building = false,
-    is_ghost = false,
-    last_error_position = {x = 0, y = 0},
-    orientation = 0
-  }
-end)
-
-event.on_player_removed(function(e)
-  global.players[e.player_index] = nil
-end)
-
--- FUNCTIONALITY
+-- CUSTOM INPUT
 
 event.register("pg-activate-guide", function(e)
   local player = game.get_player(e.player_index)
@@ -170,6 +155,8 @@ event.register("pg-activate-guide", function(e)
     end
   end
 end)
+
+-- ENTITY
 
 event.on_pre_build(function(e)
   if e.shift_build then return end
@@ -237,6 +224,8 @@ event.on_built_entity(function(e)
   end
 end)
 
+-- INVENTORY
+
 event.on_player_main_inventory_changed(function(e)
   local player = game.get_player(e.player_index)
   local player_table = global.players[e.player_index]
@@ -247,4 +236,19 @@ event.on_player_main_inventory_changed(function(e)
       player.clear_cursor()
     end
   end
+end)
+
+-- PLAYER DATA
+
+event.on_player_created(function(e)
+  global.players[e.player_index] = {
+    building = false,
+    is_ghost = false,
+    last_error_position = {x = 0, y = 0},
+    orientation = 0
+  }
+end)
+
+event.on_player_removed(function(e)
+  global.players[e.player_index] = nil
 end)
