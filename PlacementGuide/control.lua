@@ -21,7 +21,7 @@ local function check_stack(player)
   if cursor_stack and cursor_stack.valid_for_read then
     local name = cursor_stack.name
     if name == "pg-guide" then
-      return cursor_stack.get_blueprint_entities()[1].name, true
+      return cursor_stack.blueprint_icons[1].signal.name, true
     else
       return name
     end
@@ -66,8 +66,8 @@ local function setup_guide(player, item_name, entity_prototype, orientation)
 
   -- set grid size
   cursor_stack.blueprint_snap_to_grid = {
-    x = dimensions.width + (GUIDE_MARGIN * 2),
-    y = dimensions.height
+    x = dimensions.width + (GUIDE_MARGIN * (orientation == 0 and 2 or 0)),
+    y = dimensions.height + (GUIDE_MARGIN * (orientation == 1 and 2 or 0))
   }
 
   -- set icon
@@ -92,19 +92,27 @@ end)
 -- PLAYER DATA
 
 event.on_player_created(function(e)
-  -- TODO
+  global.players[e.player_index] = {
+    building = false,
+    orientation = 0
+  }
 end)
 
 -- FUNCTIONALITY
 
 event.register("pg-activate-guide", function(e)
   local player = game.get_player(e.player_index)
+  local player_table = global.players[e.player_index]
   local item_name, is_guide = check_stack(player)
 
   if item_name then
     if is_guide then
       -- swap grid dimensions
-
+      player.clear_cursor()
+      local item_prototype = game.item_prototypes[item_name]
+      local entity_prototype = item_prototype.place_result
+      player_table.orientation = math.abs(player_table.orientation - 1)
+      setup_guide(player, item_name, entity_prototype, player_table.orientation)
     else
       -- create new guide
       local item_prototype = game.item_prototypes[item_name]
@@ -118,6 +126,7 @@ event.register("pg-activate-guide", function(e)
         then
           if player.clear_cursor() then
             setup_guide(player, item_name, entity_prototype, 0)
+            player_table.orientation = 0
           else
             -- the game will create flying text for us
             player.play_sound{path = "utility/cannot_build"}
@@ -146,7 +155,7 @@ event.on_pre_build(function(e)
   local player = game.get_player(e.player_index)
   local _, is_guide = check_stack(player)
   if is_guide then
-    global.revive_for_player[e.player_index] = true
+    global.players[e.player_index].building = true
   end
 end)
 
