@@ -86,7 +86,13 @@ end
 
 event.on_init(function()
   global.players = {}
-  -- TODO
+
+  for i in pairs(game.players) do
+    global.players[i] = {
+      building = false,
+      orientation = 0
+    }
+  end
 end)
 
 -- PLAYER DATA
@@ -96,6 +102,10 @@ event.on_player_created(function(e)
     building = false,
     orientation = 0
   }
+end)
+
+event.on_player_removed(function(e)
+  global.players[e.player_index] = nil
 end)
 
 -- FUNCTIONALITY
