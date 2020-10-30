@@ -1,1 +1,0 @@
-require("__flib__.mini-wiki")
