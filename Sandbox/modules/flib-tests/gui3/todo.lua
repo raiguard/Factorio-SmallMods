@@ -1,4 +1,4 @@
-local gui = require("__flib__.gui3")
+local gui = require("__flib__.gui-new")
 local table = require("__flib__.table")
 
 local todo_gui = gui.root("todo")

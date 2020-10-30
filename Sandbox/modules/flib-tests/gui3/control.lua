@@ -1,5 +1,5 @@
 local event = require("__flib__.event")
-local gui = require("__flib__.gui3")
+local gui = require("__flib__.gui-new")
 
 local counter_gui = require("modules.flib-tests.gui3.Counter")
 local tabs_gui = require("modules.flib-tests.gui3.Tabs")

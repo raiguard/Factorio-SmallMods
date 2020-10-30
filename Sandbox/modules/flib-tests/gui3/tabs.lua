@@ -1,4 +1,4 @@
-local gui = require("__flib__.gui3")
+local gui = require("__flib__.gui-new")
 
 local tabs_gui = gui.root("tabs")
 
