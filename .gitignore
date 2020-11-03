@@ -1,4 +1,2 @@
-SmallFactorioMods.code-workspace
-.vscode
+*.code-workspace
 *.zip
-Sandbox/temp
