@@ -4,7 +4,7 @@ local shortcut_file_24 = "__GhostHighlighter__/graphics/shortcut-x24.png"
 data:extend{
   {
     type = "custom-input",
-    name = "gh-toggle-search",
+    name = "gh-run-search",
     key_sequence = "CONTROL + G"
   },
   {
@@ -13,10 +13,9 @@ data:extend{
   },
   {
     type = "shortcut",
-    name = "gh-toggle-search",
-    associated_control_input = "gh-toggle-search",
+    name = "gh-run-search",
+    associated_control_input = "gh-run-search",
     action = "lua",
-    toggleable = true,
     icon = {
       filename = shortcut_file_32,
       y = 0,
