@@ -9,7 +9,8 @@
       "hookMode": "debug",
       "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
       "hookData": false,
-      "hookSettings": false
+      "hookSettings": false,
+      "factorioArgs": ["--load-scenario", "EditorExtensions/testing"]
     },
     {
       "type": "factoriomod",
@@ -37,8 +38,6 @@
       "factorioPath": "${env:factorioSourceRelease}",
       "hookMode": "profile",
       "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
-      "hookData": false,
-      "hookSettings": false
     }
   ]
 }
