@@ -4,7 +4,7 @@
   "title": "Stats GUI",
   "author": "Raiguard",
   "contact": "Discord: Raiguard#7402",
-  "factorio_version": "0.18",
-  "dependencies": ["base >= 0.18.27", "flib >= 0.1.0"],
-  "description": "Displays various statistics, such as biter evolution, playtime, and more. Slots right in under the FPS/UPS indicator. Similar to EvoGUI."
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.0", "flib >= 0.5.0"],
+  "description": "Displays various statistics, such as biter evolution, playtime, and more. Blends in with the game's FPS/UPS indicator. Similar to EvoGUI."
 }
