@@ -32,12 +32,14 @@ function stats_gui.build(player, player_table)
   stats_gui.update(player, player_table)
 end
 
+function stats_gui.destroy(player_table)
+  player_table.gui.stats.window.destroy()
+  player_table.gui.stats = nil
+end
+
 function stats_gui.update(player, player_table)
   local refs = player_table.gui.stats
   local window = refs.window
-
-  -- local str = {""}
-  -- local delimiter = player_table.settings.single_line and "   " or "\n"
 
   local i = 0
   for _, sensor in pairs(sensors) do
@@ -64,15 +66,5 @@ function stats_gui.set_size(player, player_table)
 
   window.style.width = ((player.display_resolution.width / player.display_scale) - 287 - additional_offset)
 end
-
--- function stats_gui.set_location(player, player_table)
---   local resolution = player.display_resolution
---   local scale = player.display_scale
---   player_table.gui.stats.window.location = {
---     x = resolution.width - (450 * scale),
---     y = (38 * scale)
---   }
--- end
-
 
 return stats_gui

@@ -13,6 +13,7 @@ event.on_init(function()
   global.players = {}
   for i, player in pairs(game.players) do
     player_data.init(i, player)
+    player_data.refresh(player, global.players[i])
   end
 end)
 
@@ -25,7 +26,9 @@ end)
 -- PLAYER
 
 event.on_player_created(function(e)
-  player_data.init(e.player_index, game.get_player(e.player_index))
+  local player = game.get_player(e.player_index)
+  player_data.init(e.player_index, player)
+  player_data.refresh(player, global.players[e.player_index])
 end)
 
 event.on_player_removed(function(e)
@@ -47,8 +50,10 @@ event.register(
 -- TICK
 
 -- update stats once per second
-event.on_nth_tick(60, function(e)
+event.on_nth_tick(60, function()
   for i, player_table in pairs(global.players) do
-    stats_gui.update(game.get_player(i), player_table)
+    if player_table.gui.stats then
+      stats_gui.update(game.get_player(i), player_table)
+    end
   end
 end)
