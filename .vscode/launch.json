@@ -7,7 +7,15 @@
       "name": "Debug",
       "factorioPath": "${env:factorioTestbench1}",
       "hookMode": "debug",
-      "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
+      "hookControl": [
+        "level",
+        "CursorUpgradeCarousel",
+        "GhostHighlighter",
+        "PlacementGuide",
+        "QuickbarTemplates",
+        "Sandbox",
+        "StatsGui"
+      ],
       "hookData": false,
       "hookSettings": false,
       "factorioArgs": ["--load-scenario", "EditorExtensions/testing"]
@@ -18,15 +26,31 @@
       "name": "Profile",
       "factorioPath": "${env:factorioTestbench1}",
       "hookMode": "profile",
-      "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
-    }
+      "hookControl": [
+        "level",
+        "CursorUpgradeCarousel",
+        "GhostHighlighter",
+        "PlacementGuide",
+        "QuickbarTemplates",
+        "Sandbox",
+        "StatsGui"
+      ]
+    },
     {
       "type": "factoriomod",
       "request": "launch",
       "name": "Debug (src)",
       "factorioPath": "${env:factorioSourceRelease}",
       "hookMode": "debug",
-      "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
+      "hookControl": [
+        "level",
+        "CursorUpgradeCarousel",
+        "GhostHighlighter",
+        "PlacementGuide",
+        "QuickbarTemplates",
+        "Sandbox",
+        "StatsGui"
+      ],
       "hookData": false,
       "hookSettings": false,
       "factorioArgs": ["--load-scenario", "EditorExtensions/testing"]
@@ -37,7 +61,15 @@
       "name": "Profile (src)",
       "factorioPath": "${env:factorioSourceRelease}",
       "hookMode": "profile",
-      "hookControl": ["level", "CursorUpgradeCarousel", "GhostHighlighter", "PlacementGuide", "QuickbarTemplates", "Sandbox", "StatsGui"],
+      "hookControl": [
+        "level",
+        "CursorUpgradeCarousel",
+        "GhostHighlighter",
+        "PlacementGuide",
+        "QuickbarTemplates",
+        "Sandbox",
+        "StatsGui"
+      ]
     }
   ]
 }
