@@ -1,4 +1,4 @@
-local gui = require("__flib__.gui-beta")
+local gui = require("__flib__.gui")
 
 local constants = require("constants")
 
@@ -19,7 +19,7 @@ function stats_gui.build(player, player_table)
       style_mods = {top_padding = single_line and 10 or 38, horizontally_stretchable = true},
       direction = single_line and "horizontal" or "vertical",
       ignored_by_interaction = true,
-      ref = {"window"},
+      save_as = "window",
       children = {
         {type = "empty-widget", style = "flib_horizontal_pusher"},
       }
