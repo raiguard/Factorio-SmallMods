@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
-Date: ????
+Date: 2020-11-23
   Changes:
     - Updated to Factorio 1.1
     - Removed edits to selection box colors - only cursor boxes are changed now
