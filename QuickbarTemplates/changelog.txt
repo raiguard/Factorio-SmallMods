@@ -1,7 +1,10 @@
 ---------------------------------------------------------------------------------------------------
-Version: 2.1.2
+Version: 2.2.0
 Date: ????
+  Features:
+    - Added support to import templates directly from the blueprint library
   Changes:
+    - Updated to Factorio 1.1
 ---------------------------------------------------------------------------------------------------
 Version: 2.1.1
 Date: 2020-09-17

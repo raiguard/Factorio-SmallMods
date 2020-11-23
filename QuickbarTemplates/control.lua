@@ -198,11 +198,11 @@ end)
 local function on_cursor_stack_changed(e)
   local player = game.players[e.player_index]
   local gui = global.players[e.player_index]
-  local stack = player.cursor_stack
-  if stack and stack.valid_for_read and stack.name == "blueprint" then
+  if player.is_cursor_blueprint() then
     -- show GUI
     set_gui_location(player, gui.window)
-    if stack.is_blueprint_setup() then
+    local entities = player.get_blueprint_entities()
+    if entities then
       gui.export_button.visible = false
       gui.import_button.visible = true
     else
@@ -239,10 +239,10 @@ script.on_event(defines.events.on_gui_click, function(e)
     end
   elseif e.element.name == "qt_import_button" then
     local player = game.players[e.player_index]
-    local stack = player.cursor_stack
-    if stack and stack.valid_for_read and stack.name == "blueprint" then
+    local entities = player.get_blueprint_entities()
+    if entities then
       -- import from held blueprint
-      import_quickbar(player, stack.get_blueprint_entities(), e.shift)
+      import_quickbar(player, entities, e.shift)
     end
   end
 end)
