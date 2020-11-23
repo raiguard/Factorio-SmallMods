@@ -1,10 +1,10 @@
 {
   "name": "ColorCodedPlanners",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Color-Coded Planners",
   "author": "Raiguard",
   "contact": "Discord: Raiguard#7402",
-  "factorio_version": "0.18",
-  "dependencies": ["base >= 0.18.27"],
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.0"],
   "description": "Improves the vanilla selection tool colors to better match their icons and functionality."
 }
