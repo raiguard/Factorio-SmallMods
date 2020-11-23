@@ -3,7 +3,7 @@ local event = require("__flib__.event")
 -- -----------------------------------------------------------------------------
 -- UTILITIES
 
-local GUIDE_MARGIN = 4
+local MIN_GUIDE_MARGIN = 3
 
 local unsupported_entity_types = {
   ["artillery-wagon"] = true,
@@ -57,10 +57,13 @@ local function setup_guide(player, item_name, entity_prototype, orientation, is_
 
   -- set entity
   local position
+  local guide_margin
   if orientation == 0 then
-    position = {(dimensions.width + (GUIDE_MARGIN * 2) / 2) - (dimensions.width / 2), dimensions.height / 2}
+    guide_margin = math.max(dimensions.width, MIN_GUIDE_MARGIN)
+    position = {(dimensions.width + (guide_margin * 2) / 2) - (dimensions.width / 2), dimensions.height / 2}
   elseif orientation == 1 then
-    position = {dimensions.width / 2, (dimensions.height + (GUIDE_MARGIN * 2) / 2) - (dimensions.height / 2)}
+    guide_margin = math.max(dimensions.height, MIN_GUIDE_MARGIN)
+    position = {dimensions.width / 2, (dimensions.height + (guide_margin * 2) / 2) - (dimensions.height / 2)}
   end
   cursor_stack.set_blueprint_entities{
     {
@@ -72,8 +75,8 @@ local function setup_guide(player, item_name, entity_prototype, orientation, is_
 
   -- set grid size
   cursor_stack.blueprint_snap_to_grid = {
-    x = dimensions.width + (GUIDE_MARGIN * (orientation == 0 and 2 or 0)),
-    y = dimensions.height + (GUIDE_MARGIN * (orientation == 1 and 2 or 0))
+    x = dimensions.width + (guide_margin * (orientation == 0 and 2 or 0)),
+    y = dimensions.height + (guide_margin * (orientation == 1 and 2 or 0))
   }
 
   -- set icon
