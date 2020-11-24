@@ -179,13 +179,16 @@ event.on_built_entity(function(e)
     local entity = e.created_entity
     local player = game.get_player(e.player_index)
 
+    local is_ghost = entity.name == "entity-ghost"
+
     -- get item name
     local item_name = check_stack(player)
     if not item_name then return end
 
     -- get required item count
     local required_count
-    for _, stack in ipairs(game.entity_prototypes[entity.ghost_name].items_to_place_this) do
+    local prototype = game.entity_prototypes[is_ghost and entity.ghost_name or entity.name]
+    for _, stack in ipairs(prototype.items_to_place_this) do
       if stack.name == item_name then
         required_count = stack.count
         break
@@ -197,31 +200,36 @@ event.on_built_entity(function(e)
     local main_inventory = player.get_main_inventory()
     local item_count = main_inventory.get_item_count(item_name)
     if item_count >= required_count then
-      -- check reach distance and other factors
-      if
-        player.can_place_entity{
-          name = entity.ghost_name,
-          position = entity.position,
-          direction = entity.direction
-        }
-      then
-        -- remove items from inventory and revive entity
-        main_inventory.remove{name = item_name, count = required_count}
-        local _, success = entity.revive{raise_revive = true}
-        -- if it was not revived, destroy the ghost
-        if not success then
+      if is_ghost then
+        -- check reach distance and other factors
+        if
+          player.can_place_entity{
+            name = entity.ghost_name,
+            position = entity.position,
+            direction = entity.direction
+          }
+        then
+          -- remove items from inventory and revive entity
+          main_inventory.remove{name = item_name, count = required_count}
+          local _, success = entity.revive{raise_revive = true}
+          -- if it was not revived, destroy the ghost
+          if not success then
+            entity.destroy()
+          end
+        else
+          if positions_different(entity.position, player_table.last_error_position) then
+            player_table.last_error_position = entity.position
+            player.create_local_flying_text{
+              text = {"cant-reach"},
+              position = entity.position
+            }
+            player.play_sound{path = "utility/cannot_build"}
+          end
           entity.destroy()
         end
       else
-        if positions_different(entity.position, player_table.last_error_position) then
-          player_table.last_error_position = entity.position
-          player.create_local_flying_text{
-            text = {"cant-reach"},
-            position = entity.position
-          }
-          player.play_sound{path = "utility/cannot_build"}
-        end
-        entity.destroy()
+        -- just remove the items
+        main_inventory.remove{name = item_name, count = required_count}
       end
     end
   end
