@@ -9,6 +9,7 @@
       "hookMode": "debug",
       "hookControl": [
         "level",
+        "ChainSignalConnections",
         "CursorUpgradeCarousel",
         "GhostHighlighter",
         "PlacementGuide",
@@ -28,6 +29,7 @@
       "hookMode": "profile",
       "hookControl": [
         "level",
+        "ChainSignalConnections",
         "CursorUpgradeCarousel",
         "GhostHighlighter",
         "PlacementGuide",
@@ -44,6 +46,7 @@
       "hookMode": "debug",
       "hookControl": [
         "level",
+        "ChainSignalConnections",
         "CursorUpgradeCarousel",
         "GhostHighlighter",
         "PlacementGuide",
@@ -63,6 +66,7 @@
       "hookMode": "profile",
       "hookControl": [
         "level",
+        "ChainSignalConnections",
         "CursorUpgradeCarousel",
         "GhostHighlighter",
         "PlacementGuide",

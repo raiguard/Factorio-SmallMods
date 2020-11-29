@@ -1,0 +1,11 @@
+{
+  "name": "ConvenientImport",
+  "version": "1.0.0",
+  "title": "Convenient Import",
+  "author": "raiguard",
+  "contact": "Discord: Raiguard#7402",
+  "homepage": "https://github.com/raiguard/Factorio-SmallMods",
+  "description": "Adds an import blueprint button to the blueprint library GUI.",
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.0"]
+}
