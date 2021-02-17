@@ -1,5 +1,7 @@
 local event = require("__flib__.event")
+local migration = require("__flib__.migration")
 
+local migrations = require("scripts.migrations")
 local player_data = require("scripts.player-data")
 
 local stats_gui = require("scripts.gui.stats")
@@ -18,10 +20,12 @@ event.on_init(function()
   end
 end)
 
-event.on_configuration_changed(function()
-  global.research_progress_samples = {}
-  for i, player in pairs(game.players) do
-    player_data.refresh(player, global.players[i])
+event.on_configuration_changed(function(e)
+  if migration.on_config_changed(e, migrations) then
+    global.research_progress_samples = {}
+    for i, player in pairs(game.players) do
+      player_data.refresh(player, global.players[i])
+    end
   end
 end)
 
@@ -56,7 +60,8 @@ event.on_runtime_mod_setting_changed(function(e)
     local player = game.get_player(e.player_index)
     local player_table = global.players[e.player_index]
     if e.setting == "statsgui-single-line" then
-      player_data.refresh(player, player_table) -- recreate the GUI to change the frame direction
+       -- recreate the GUI to change the frame direction
+      player_data.refresh(player, player_table)
     else
       player_data.update_settings(player, player_table)
     end
