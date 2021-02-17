@@ -60,7 +60,7 @@ event.on_runtime_mod_setting_changed(function(e)
     local player = game.get_player(e.player_index)
     local player_table = global.players[e.player_index]
     if e.setting == "statsgui-single-line" then
-       -- recreate the GUI to change the frame direction
+      -- recreate the GUI to change the frame direction
       player_data.refresh(player, player_table)
     else
       player_data.update_settings(player, player_table)
