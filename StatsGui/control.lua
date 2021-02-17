@@ -12,7 +12,7 @@ local stats_gui = require("scripts.gui.stats")
 event.on_init(function()
   global.players = {}
   for i, player in pairs(game.players) do
-    player_data.init(i, player)
+    player_data.init(i)
     player_data.refresh(player, global.players[i])
   end
 end)
@@ -27,7 +27,7 @@ end)
 
 event.on_player_created(function(e)
   local player = game.get_player(e.player_index)
-  player_data.init(e.player_index, player)
+  player_data.init(e.player_index)
   player_data.refresh(player, global.players[e.player_index])
 end)
 
@@ -46,6 +46,16 @@ event.register(
     stats_gui.set_size(player, player_table)
   end
 )
+
+-- SETTINGS
+
+event.on_runtime_mod_setting_changed(function(e)
+  if string.sub(e.setting, 1, 8) == "statsgui" then
+    local player = game.get_player(e.player_index)
+    local player_table = global.players[e.player_index]
+    player_data.refresh(player, player_table) -- TODO: remove this if other stuff is added to refresh()
+  end
+end)
 
 -- TICK
 

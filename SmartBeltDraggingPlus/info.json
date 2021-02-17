@@ -1,0 +1,10 @@
+{
+  "name": "SmartBeltDraggingPlus",
+  "version": "1.0.0",
+  "title": "Smart Belt Dragging +",
+  "author": "raiguard",
+  "contact": "Discord: raiguard#7402",
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.11"],
+  "description": "Improves the smart belt dragging behavior."
+}

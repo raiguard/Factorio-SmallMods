@@ -4,6 +4,6 @@ return function()
     "",
     {"statsgui.evolution"},
     string.format(" = %.2f", evolution),
-    "%"
+    " %"
   }
 end

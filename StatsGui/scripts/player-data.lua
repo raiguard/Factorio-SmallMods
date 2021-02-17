@@ -1,21 +1,36 @@
-local stats_gui = require("scripts.gui.stats")
-
 local player_data = {}
 
-function player_data.init(player_index, player)
+local constants = require("constants")
+
+local stats_gui = require("scripts.gui.stats")
+
+function player_data.init(player_index)
   global.players[player_index] = {
     flags = {},
     gui = {},
-    settings = {
-      single_line = true
-    }
+    settings = {}
   }
+end
+
+function player_data.update_settings(player, player_table)
+  local mod_settings = player.mod_settings
+  local settings = {
+    single_line = mod_settings["statsgui-single-line"].value
+  }
+
+  for sensor_name in pairs(constants.sensors) do
+    settings["show_"..sensor_name] = mod_settings["statsgui-show-sensor-"..sensor_name].value
+  end
+
+  player_table.settings = settings
 end
 
 function player_data.refresh(player, player_table)
   if player_table.gui.stats then
     stats_gui.destroy(player_table)
   end
+
+  player_data.update_settings(player, player_table)
 
   stats_gui.build(player, player_table)
 end

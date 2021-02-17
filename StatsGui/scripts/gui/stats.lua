@@ -1,9 +1,9 @@
-local gui = require("__flib__.gui")
+local gui = require("__flib__.gui-beta")
 
 local constants = require("constants")
 
 local sensors = {}
-for _, sensor_name in pairs(constants.sensors) do
+for sensor_name in pairs(constants.sensors) do
   sensors[sensor_name] = require("scripts.sensor."..sensor_name)
 end
 
@@ -16,10 +16,10 @@ function stats_gui.build(player, player_table)
     {
       type = "frame",
       style = "statsgui_frame",
-      style_mods = {top_padding = single_line and 10 or 38, horizontally_stretchable = true},
+      style_mods = {top_padding = single_line and 10 or 38},
       direction = single_line and "horizontal" or "vertical",
       ignored_by_interaction = true,
-      save_as = "window",
+      ref = {"window"},
       children = {
         {type = "empty-widget", style = "flib_horizontal_pusher"},
       }
@@ -38,22 +38,26 @@ function stats_gui.destroy(player_table)
 end
 
 function stats_gui.update(player, player_table)
+  local settings = player_table.settings
+
   local refs = player_table.gui.stats
   local window = refs.window
 
   local i = 0
-  for _, sensor in pairs(sensors) do
-    i = i + 1
-    local caption = sensor(player, player_table)
-    local label = window.children[i + 1]
-    if label then
-      label.caption = caption
-    else
-      window.add{
-        type = "label",
-        style = "statsgui_label",
-        caption = caption
-      }
+  for sensor_name, sensor in pairs(sensors) do
+    if settings["show_"..sensor_name] then
+      i = i + 1
+      local caption = sensor(player, player_table)
+      local label = window.children[i + 1]
+      if label then
+        label.caption = caption
+      else
+        window.add{
+          type = "label",
+          style = "statsgui_label",
+          caption = caption
+        }
+      end
     end
   end
 end

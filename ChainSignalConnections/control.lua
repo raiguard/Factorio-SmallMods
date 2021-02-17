@@ -87,19 +87,19 @@ event.on_selected_entity_changed(function(e)
         surface = rail.surface
       })
     end
-    -- direction to travel
-    local rail = selected.get_connected_rails()[1]
-    local rail_direction, in_else_out = find_signal_connection_side(rail, selected)
-    local end_rail = rail.get_rail_segment_end(rail_direction)
-    if end_rail then
-      table.insert(objects, rendering.draw_circle{
-        color = {b = 1},
-        radius = 0.25,
-        filled = true,
-        target = end_rail.position,
-        surface = end_rail.surface
-      })
-    end
+    -- -- direction to travel
+    -- local rail = selected.get_connected_rails()[1]
+    -- local rail_direction, in_else_out = find_signal_connection_side(rail, selected)
+    -- local end_rail = rail.get_rail_segment_end(rail_direction)
+    -- if end_rail then
+    --   table.insert(objects, rendering.draw_circle{
+    --     color = {b = 1},
+    --     radius = 0.25,
+    --     filled = true,
+    --     target = end_rail.position,
+    --     surface = end_rail.surface
+    --   })
+    -- end
 
     player_table.objects = objects
   end

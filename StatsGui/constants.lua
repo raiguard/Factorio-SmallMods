@@ -1,9 +1,9 @@
 local constants = {}
 
 constants.sensors = {
-  "evolution",
-  "playtime",
-  "time"
+  evolution = {order = "b"},
+  playtime = {order = "c"},
+  daytime = {order = "d"}
 }
 
 return constants
