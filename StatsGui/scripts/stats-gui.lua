@@ -1,5 +1,3 @@
-local gui = require("__flib__.gui-beta")
-
 local constants = require("constants")
 
 local sensors = {}
@@ -12,33 +10,31 @@ local stats_gui = {}
 function stats_gui.build(player, player_table)
   local single_line = player_table.settings.single_line
 
-  local refs = gui.build(player.gui.screen, {
-    {
-      type = "frame",
-      style = "statsgui_frame",
-      direction = single_line and "horizontal" or "vertical",
-      ignored_by_interaction = true,
-      ref = {"window"}
-    }
-  })
+  local window = player.gui.screen.add{
+    type = "frame",
+    style = "statsgui_frame",
+    direction = single_line and "horizontal" or "vertical",
+    ignored_by_interaction = true
+  }
 
-  player_table.gui.stats = refs
+  player_table.stats_window = window
 
-  stats_gui.set_size(player, player_table)
+  stats_gui.set_width(player, player_table)
   stats_gui.update(player, player_table)
 end
 
 function stats_gui.destroy(player_table)
-  player_table.gui.stats.window.destroy()
-  player_table.gui.stats = nil
+  player_table.stats_window.destroy()
+  player_table.stats_window = nil
 end
 
 function stats_gui.update(player, player_table)
-  local settings = player_table.settings
 
-  local refs = player_table.gui.stats
-  local window = refs.window
+  local window = player_table.stats_window
+  if not window then return end
   local children = window.children
+
+  local settings = player_table.settings
 
   local i = 0
   for sensor_name, sensor in pairs(sensors) do
@@ -65,13 +61,10 @@ function stats_gui.update(player, player_table)
   end
 end
 
-function stats_gui.set_size(player, player_table)
-  local window = player_table.gui.stats.window
-
-  local single_line = player_table.settings.single_line
-  local additional_offset = single_line and 180 or 0
-
-  window.style.width = ((player.display_resolution.width / player.display_scale) - 287 - additional_offset)
+function stats_gui.set_width(player, player_table)
+  local window = player_table.stats_window
+  if not window then return end
+  window.style.width = (player.display_resolution.width / player.display_scale)
 end
 
 return stats_gui

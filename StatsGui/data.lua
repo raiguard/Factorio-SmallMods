@@ -14,13 +14,15 @@ styles.statsgui_frame = {
     horizontal_spacing = 20,
     horizontal_align = "right",
     horizontally_stretchable = "on",
-    top_padding = 10
+    top_padding = 10,
+    right_padding = 287 + 180
   },
   vertical_flow_style = {
     type = "vertical_flow_style",
     vertical_spacing = 0,
     horizontal_align = "right",
     horizontally_stretchable = "on",
-    top_padding = 38
+    top_padding = 38,
+    right_padding = 287
   }
 }

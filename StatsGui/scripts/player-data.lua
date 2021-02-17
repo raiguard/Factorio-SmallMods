@@ -2,12 +2,10 @@ local player_data = {}
 
 local constants = require("constants")
 
-local stats_gui = require("scripts.gui.stats")
+local stats_gui = require("scripts.stats-gui")
 
 function player_data.init(player_index)
   global.players[player_index] = {
-    flags = {},
-    gui = {},
     settings = {}
   }
 end
@@ -26,7 +24,7 @@ function player_data.update_settings(player, player_table)
 end
 
 function player_data.refresh(player, player_table)
-  if player_table.gui.stats then
+  if player_table.stats_window then
     stats_gui.destroy(player_table)
   end
 

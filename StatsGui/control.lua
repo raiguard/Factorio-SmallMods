@@ -4,7 +4,7 @@ local migration = require("__flib__.migration")
 local migrations = require("scripts.migrations")
 local player_data = require("scripts.player-data")
 
-local stats_gui = require("scripts.gui.stats")
+local stats_gui = require("scripts.stats-gui")
 
 -- -----------------------------------------------------------------------------
 -- EVENT HANDLERS
@@ -49,7 +49,7 @@ event.register(
   function(e)
     local player = game.get_player(e.player_index)
     local player_table = global.players[e.player_index]
-    stats_gui.set_size(player, player_table)
+    stats_gui.set_width(player, player_table)
   end
 )
 
@@ -73,8 +73,6 @@ end)
 -- update stats once per second
 event.on_nth_tick(60, function()
   for i, player_table in pairs(global.players) do
-    if player_table.gui.stats then
-      stats_gui.update(game.get_player(i), player_table)
-    end
+    stats_gui.update(game.get_player(i), player_table)
   end
 end)
