@@ -16,13 +16,10 @@ function stats_gui.build(player, player_table)
     {
       type = "frame",
       style = "statsgui_frame",
-      style_mods = {top_padding = single_line and 10 or 38},
+      style_mods = {top_padding = single_line and 10 or 38, horizontally_stretchable = true},
       direction = single_line and "horizontal" or "vertical",
       ignored_by_interaction = true,
-      ref = {"window"},
-      children = {
-        {type = "empty-widget", style = "flib_horizontal_pusher"},
-      }
+      ref = {"window"}
     }
   })
 
@@ -42,23 +39,30 @@ function stats_gui.update(player, player_table)
 
   local refs = player_table.gui.stats
   local window = refs.window
+  local children = window.children
 
   local i = 0
   for sensor_name, sensor in pairs(sensors) do
     if settings["show_"..sensor_name] then
-      i = i + 1
       local caption = sensor(player, player_table)
-      local label = window.children[i + 1]
-      if label then
-        label.caption = caption
-      else
-        window.add{
-          type = "label",
-          style = "statsgui_label",
-          caption = caption
-        }
+      if caption then
+        i = i + 1
+        local label = children[i]
+        if label then
+          label.caption = caption
+        else
+          window.add{
+            type = "label",
+            style = "statsgui_label",
+            caption = caption
+          }
+        end
       end
     end
+  end
+  -- remove extra children
+  for j = i + 1, #children do
+    children[j].destroy()
   end
 end
 

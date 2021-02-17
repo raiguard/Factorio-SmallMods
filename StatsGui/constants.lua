@@ -1,9 +1,12 @@
 local constants = {}
 
+constants.research_progress_samples_count = 3
+
 constants.sensors = {
-  evolution = {order = "b"},
-  playtime = {order = "c"},
-  daytime = {order = "d"}
+  research = {order = "b"},
+  evolution = {order = "c"},
+  playtime = {order = "d"},
+  daytime = {order = "e"}
 }
 
 return constants

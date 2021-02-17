@@ -11,6 +11,7 @@ local stats_gui = require("scripts.gui.stats")
 
 event.on_init(function()
   global.players = {}
+  global.research_progress_samples = {}
   for i, player in pairs(game.players) do
     player_data.init(i)
     player_data.refresh(player, global.players[i])
@@ -18,6 +19,7 @@ event.on_init(function()
 end)
 
 event.on_configuration_changed(function()
+  global.research_progress_samples = {}
   for i, player in pairs(game.players) do
     player_data.refresh(player, global.players[i])
   end
@@ -53,7 +55,11 @@ event.on_runtime_mod_setting_changed(function(e)
   if string.sub(e.setting, 1, 8) == "statsgui" then
     local player = game.get_player(e.player_index)
     local player_table = global.players[e.player_index]
-    player_data.refresh(player, player_table) -- TODO: remove this if other stuff is added to refresh()
+    if e.setting == "statsgui-single-line" then
+      player_data.refresh(player, player_table) -- recreate the GUI to change the frame direction
+    else
+      player_data.update_settings(player, player_table)
+    end
   end
 end)
 
