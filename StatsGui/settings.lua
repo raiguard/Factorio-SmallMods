@@ -16,7 +16,7 @@ for sensor_name, sensor_data in pairs(constants.sensors) do
       type = "bool-setting",
       name = "statsgui-show-sensor-"..sensor_name,
       setting_type = "runtime-per-user",
-      default_value = true,
+      default_value = sensor_data.enabled,
       order = sensor_data.order
     }
   }
