@@ -83,5 +83,10 @@ end)
 -- REMOTE INTERFACE
 
 remote.add_interface("StatsGui", {
-  add_sensor = function(sensor) sensors[#sensors + 1] = sensor end
+  add_sensor = function(interface, func)
+    -- create a dummy function that calls the specified remote interface and returns what it returns
+    sensors[#sensors + 1] = function(player)
+      return remote.call(interface, func, player)
+    end
+  end
 })
