@@ -3,6 +3,7 @@ local migration = require("__flib__.migration")
 
 local migrations = require("scripts.migrations")
 local player_data = require("scripts.player-data")
+local preprocessors = require("scripts.preprocessors")
 local sensors = require("scripts.sensors")
 
 local stats_gui = require("scripts.stats-gui")
@@ -15,6 +16,7 @@ local stats_gui = require("scripts.stats-gui")
 event.on_init(function()
   global.players = {}
   global.research_progress_samples = {}
+  global.research_progress_strings = {}
   for i, player in pairs(game.players) do
     player_data.init(i)
     player_data.refresh(player, global.players[i])
@@ -73,6 +75,11 @@ end)
 
 -- update stats once per second
 event.on_nth_tick(60, function()
+  -- run preprocessors
+  for _, preprocessor in pairs(preprocessors) do
+    preprocessor()
+  end
+  -- update GUIs
   for _, player in pairs(game.connected_players) do
     local player_table = global.players[player.index]
     stats_gui.update(player, player_table)
@@ -83,6 +90,12 @@ end)
 -- REMOTE INTERFACE
 
 remote.add_interface("StatsGui", {
+  add_preprocessor = function(interface, func)
+    -- create a dummy function that calls the specified remote interface and returns what it returns
+    preprocessors[#preprocessors + 1] = function()
+      return remote.call(interface, func, player)
+    end
+  end,
   add_sensor = function(interface, func)
     -- create a dummy function that calls the specified remote interface and returns what it returns
     sensors[#sensors + 1] = function(player)
