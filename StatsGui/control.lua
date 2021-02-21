@@ -3,6 +3,7 @@ local migration = require("__flib__.migration")
 
 local migrations = require("scripts.migrations")
 local player_data = require("scripts.player-data")
+local sensors = require("scripts.sensors")
 
 local stats_gui = require("scripts.stats-gui")
 
@@ -77,3 +78,10 @@ event.on_nth_tick(60, function()
     stats_gui.update(player, player_table)
   end
 end)
+
+-- -----------------------------------------------------------------------------
+-- REMOTE INTERFACE
+
+remote.add_interface("StatsGui", {
+  add_sensor = function(sensor) sensors[#sensors + 1] = sensor end
+})

@@ -1,4 +1,5 @@
-return function(player)
+return function(settings, player)
+  if not settings.show_pollution then return end
   return {
     "",
     {"statsgui.pollution"},

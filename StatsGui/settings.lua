@@ -10,11 +10,11 @@ data:extend{
   }
 }
 
-for sensor_name, sensor_data in pairs(constants.sensors) do
+for _, sensor_data in pairs(constants.builtin_sensors) do
   data:extend{
     {
       type = "bool-setting",
-      name = "statsgui-show-sensor-"..sensor_name,
+      name = "statsgui-show-sensor-"..sensor_data.name,
       setting_type = "runtime-per-user",
       default_value = sensor_data.enabled,
       order = sensor_data.order

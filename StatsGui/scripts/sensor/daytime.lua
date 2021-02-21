@@ -1,4 +1,6 @@
-return function(player)
+return function(settings, player)
+  if not settings.show_daytime then return end
+
   local days = math.floor(1 + ((game.tick + 12500) / 25000))
 
   local daytime = player.surface.daytime + 0.5

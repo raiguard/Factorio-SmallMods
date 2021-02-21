@@ -16,7 +16,8 @@ function player_data.update_settings(player, player_table)
     single_line = mod_settings["statsgui-single-line"].value
   }
 
-  for sensor_name in pairs(constants.sensors) do
+  for _, sensor_data in pairs(constants.builtin_sensors) do
+    local sensor_name = sensor_data.name
     settings["show_"..sensor_name] = mod_settings["statsgui-show-sensor-"..sensor_name].value
   end
 

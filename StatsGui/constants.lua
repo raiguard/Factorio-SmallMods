@@ -2,12 +2,12 @@ local constants = {}
 
 constants.research_progress_samples_count = 3
 
-constants.sensors = {
-  research = {enabled = true, order = "b"},
-  evolution = {enabled = true, order = "c"},
-  pollution = {enabled = false, order = "d"},
-  playtime = {enabled = true, order = "e"},
-  daytime = {enabled = true, order = "f"}
+constants.builtin_sensors = {
+  {name = "research", enabled = true, order = "b"},
+  {name = "evolution", enabled = true, order = "c"},
+  {name = "pollution", enabled = false, order = "d"},
+  {name = "playtime", enabled = true, order = "e"},
+  {name = "daytime", enabled = true, order = "f"}
 }
 
 return constants

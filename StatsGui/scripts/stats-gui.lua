@@ -1,9 +1,4 @@
-local constants = require("constants")
-
-local sensors = {}
-for sensor_name in pairs(constants.sensors) do
-  sensors[sensor_name] = require("scripts.sensor."..sensor_name)
-end
+local sensors = require("scripts.sensors")
 
 local stats_gui = {}
 
@@ -37,21 +32,19 @@ function stats_gui.update(player, player_table)
   local settings = player_table.settings
 
   local i = 0
-  for sensor_name, sensor in pairs(sensors) do
-    if settings["show_"..sensor_name] then
-      local caption = sensor(player, player_table)
-      if caption then
-        i = i + 1
-        local label = children[i]
-        if label then
-          label.caption = caption
-        else
-          window.add{
-            type = "label",
-            style = "statsgui_label",
-            caption = caption
-          }
-        end
+  for _, sensor in pairs(sensors) do
+    local caption = sensor(settings, player)
+    if caption then
+      i = i + 1
+      local label = children[i]
+      if label then
+        label.caption = caption
+      else
+        window.add{
+          type = "label",
+          style = "statsgui_label",
+          caption = caption
+        }
       end
     end
   end

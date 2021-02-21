@@ -4,7 +4,9 @@ local constants = require("constants")
 
 -- code based on "improved research queue" by sonaxaton
 -- https://github.com/dbeckwith/factorio-research-queue/blob/af6404ab696502a86eec40a4baf7fe00d0c714c7/control.lua#L316
-return function(player)
+return function(settings, player)
+  if not settings.show_research then return end
+
   local force = player.force
   local tech = force.current_research
   if tech then

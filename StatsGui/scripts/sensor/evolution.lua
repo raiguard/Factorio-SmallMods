@@ -1,4 +1,6 @@
-return function()
+return function(settings)
+  if not settings.show_evolution then return end
+
   local evolution = game.forces.enemy.evolution_factor * 100
   return {
     "",
