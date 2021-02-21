@@ -1,5 +1,5 @@
-return function(settings, player)
-  if not settings.show_daytime then return end
+return function(player)
+  if not global.players[player.index].settings.show_daytime then return end
 
   local days = math.floor(1 + ((game.tick + 12500) / 25000))
 

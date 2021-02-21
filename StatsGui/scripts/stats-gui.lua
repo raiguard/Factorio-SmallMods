@@ -29,11 +29,9 @@ function stats_gui.update(player, player_table)
   if not window then return end
   local children = window.children
 
-  local settings = player_table.settings
-
   local i = 0
   for _, sensor in pairs(sensors) do
-    local caption = sensor(settings, player)
+    local caption = sensor(player)
     if caption then
       i = i + 1
       local label = children[i]
