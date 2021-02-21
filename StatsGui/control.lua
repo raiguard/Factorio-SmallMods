@@ -72,7 +72,8 @@ end)
 
 -- update stats once per second
 event.on_nth_tick(60, function()
-  for i, player_table in pairs(global.players) do
-    stats_gui.update(game.get_player(i), player_table)
+  for _, player in pairs(game.connected_players) do
+    local player_table = global.players[player.index]
+    stats_gui.update(player, player_table)
   end
 end)
