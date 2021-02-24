@@ -1,11 +1,12 @@
 local event = require("__flib__.event")
 local migration = require("__flib__.migration")
 
+local constants = require("constants")
+
 local migrations = require("scripts.migrations")
 local player_data = require("scripts.player-data")
 local preprocessors = require("scripts.preprocessors")
 local sensors = require("scripts.sensors")
-
 local stats_gui = require("scripts.stats-gui")
 
 -- -----------------------------------------------------------------------------
@@ -101,5 +102,6 @@ remote.add_interface("StatsGui", {
     sensors[#sensors + 1] = function(player)
       return remote.call(interface, func, player)
     end
-  end
+  end,
+  version = function() return constants.interface_version end
 })
