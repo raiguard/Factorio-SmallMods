@@ -1,0 +1,10 @@
+{
+  "name": "BetterAlertArrows",
+  "version": "1.0.0",
+  "title": "Better Alert Arrows",
+  "author": "raiguard",
+  "contact": "https://discord.gg/ptW4kTpY",
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.26"],
+  "description": "Much better-looking alert arrows, with limited customization."
+}
