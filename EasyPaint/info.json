@@ -1,0 +1,11 @@
+{
+  "name": "EasyPaint",
+  "version": "1.0.0",
+  "title": "EasyPaint",
+  "author": "raiguard",
+  "contact": "Discord: Raiguard#7402",
+  "factorio_version": "1.1",
+  "dependencies": ["base >= 1.1.24", "flib >= 0.7.0"],
+  "description": "Easily recolor an entity to the color of an item or fluid."
+}
+
