@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.0
-Date: ????
+Date: 2021-03-11
   Features:
     - Added a setting to fill the space where the FPS/UPS indicator should be, for those who play without it
 ---------------------------------------------------------------------------------------------------
