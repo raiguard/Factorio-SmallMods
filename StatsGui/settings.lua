@@ -6,7 +6,14 @@ data:extend{
     name = "statsgui-single-line",
     setting_type = "runtime-per-user",
     default_value = true,
-    order = "a"
+    order = "aa"
+  },
+  {
+    type = "bool-setting",
+    name = "statsgui-adjust-for-fps-ups",
+    setting_type = "runtime-per-user",
+    default_value = true,
+    order = "ab"
   }
 }
 

@@ -63,8 +63,8 @@ event.on_runtime_mod_setting_changed(function(e)
   if string.sub(e.setting, 1, 8) == "statsgui" then
     local player = game.get_player(e.player_index)
     local player_table = global.players[e.player_index]
-    if e.setting == "statsgui-single-line" then
-      -- recreate the GUI to change the frame direction
+    if e.setting == "statsgui-single-line" or e.setting == "statsgui-adjust-for-fps-ups" then
+      -- recreate the GUI to change the frame direction and/or padding
       player_data.refresh(player, player_table)
     else
       player_data.update_settings(player, player_table)

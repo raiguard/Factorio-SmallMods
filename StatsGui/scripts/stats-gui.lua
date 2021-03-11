@@ -4,10 +4,11 @@ local stats_gui = {}
 
 function stats_gui.build(player, player_table)
   local single_line = player_table.settings.single_line
+  local style = player_table.settings.adjust_for_ups and "statsgui_frame" or "statsgui_frame_no_ups"
 
   local window = player.gui.screen.add{
     type = "frame",
-    style = "statsgui_frame",
+    style = style,
     direction = single_line and "horizontal" or "vertical",
     ignored_by_interaction = true
   }
@@ -24,7 +25,6 @@ function stats_gui.destroy(player_table)
 end
 
 function stats_gui.update(player, player_table)
-
   local window = player_table.stats_window
   if not window then return end
   local children = window.children

@@ -26,3 +26,24 @@ styles.statsgui_frame = {
     right_padding = 287
   }
 }
+
+styles.statsgui_frame_no_ups = {
+  type = "frame_style",
+  parent = "invisible_frame",
+  horizontal_flow_style = {
+    type = "horizontal_flow_style",
+    horizontal_spacing = 20,
+    horizontal_align = "right",
+    horizontally_stretchable = "on",
+    top_padding = 10,
+    right_padding = 287
+  },
+  vertical_flow_style = {
+    type = "vertical_flow_style",
+    vertical_spacing = 0,
+    horizontal_align = "right",
+    horizontally_stretchable = "on",
+    top_padding = 10,
+    right_padding = 287
+  }
+}
