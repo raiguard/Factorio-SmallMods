@@ -21,7 +21,13 @@ local function check_stack(player)
   if cursor_stack and cursor_stack.valid_for_read then
     local name = cursor_stack.name
     if name == "pg-guide" then
-      return cursor_stack.blueprint_icons[1].signal.name, true
+      -- Cursor Enhancements will recall last item but won't get the icon
+      local icon = cursor_stack.blueprint_icons[1]
+      if icon then
+        return icon.signal.name, true
+      else
+        player.clear_cursor()
+      end
     else
       return name
     end
