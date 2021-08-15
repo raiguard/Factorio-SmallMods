@@ -94,7 +94,7 @@ remote.add_interface("StatsGui", {
   add_preprocessor = function(interface, func)
     -- create a dummy function that calls the specified remote interface and returns what it returns
     preprocessors[#preprocessors + 1] = function()
-      return remote.call(interface, func, player)
+      return remote.call(interface, func)
     end
   end,
   add_sensor = function(interface, func)
