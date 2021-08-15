@@ -41,7 +41,7 @@ function stats_gui.update(player, player_table)
         window.add{
           type = "label",
           style = "statsgui_label",
-          caption = caption
+          caption = caption,
         }
       end
     end
